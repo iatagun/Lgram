@@ -32,28 +32,42 @@ class TransitionAnalyzer:
         return genders
 
     def classify_transition(self, current_entities, next_entities, current_sentence, next_sentence):
-        current_genders = self.get_gender(current_entities)
-        next_genders = self.get_gender(next_entities)
+        # Define specific entities and pronouns
+        specific_current_entities = {e for e in current_entities if e[0].isupper()}
+        specific_next_entities = {e for e in next_entities if e[0].isupper()}
+        pronouns = {'She': 'female', 'He': 'male', 'It': None, 'They': None}
+        
+        transition_words = set()
+        
+        # Handle direct pronoun references
+        for pronoun, gender in pronouns.items():
+            if pronoun in current_entities:
+                # Map pronoun to possible entities in the next sentence
+                for entity in specific_next_entities:
+                    if gender and entity in gender_dict and gender_dict[entity] == gender:
+                        transition_words.add(entity)  # Add named entity to transition words
+                    elif not gender:
+                        transition_words.add(entity)
 
-        # Zamirlerin referanslarını kontrol edin
-        for entity, gender in current_genders.items():
-            if gender == 'female' and 'She' in current_entities:
-                if entity in next_entities:
-                    return "Retaining Transition"
-            elif gender == 'male' and 'He' in current_entities:
-                if entity in next_entities:
-                    return "Retaining Transition"
+        # Check if any specific current entities are directly referred to in the next entities
+        if specific_current_entities & specific_next_entities:
+            transition_words.update(specific_current_entities & specific_next_entities)
 
-        # Geçiş türlerini belirleme
+        if transition_words:
+            return "Retaining Transition", transition_words
+
+        # Check for entity overlap
         if current_entities & next_entities:
             if len(next_entities - current_entities) == 0:
-                return "Continuation Transition"
+                return "Continuation Transition", current_entities & next_entities
             else:
-                return "Retaining Transition"
+                return "Retaining Transition", current_entities & next_entities
         elif len(next_entities) > 0 and len(current_entities) > 0:
-            return "New Topic Transition"
+            return "New Topic Transition", (current_entities, next_entities)
         else:
-            return "Shift Transition"
+            return "Shift Transition", (current_entities, next_entities)
+
+
 
     def analyze(self):
         sentence_pairs = self.preprocess()
@@ -69,7 +83,7 @@ class TransitionAnalyzer:
             combined_current_entities = set(chain.from_iterable(current_entities))
             combined_next_entities = set(chain.from_iterable(next_entities))
             
-            transition = self.classify_transition(combined_current_entities, combined_next_entities, current_sentences, next_sentences)
+            transition, transition_words = self.classify_transition(combined_current_entities, combined_next_entities, current_sentences, next_sentences)
             
             # Ele alınan sözcük ikililerini yazdır
             results.append({
@@ -79,7 +93,8 @@ class TransitionAnalyzer:
                 'current_entities': combined_current_entities,
                 'next_entities': combined_next_entities,
                 'current_words': current_sentences.split(),  # Cümledeki kelimeler
-                'next_words': next_sentences.split()         # Cümledeki kelimeler
+                'next_words': next_sentences.split(),         # Cümledeki kelimeler
+                'transition_words': transition_words          # Geçiş türüne neden olan sözcük ikilileri
             })
 
         return results
@@ -101,4 +116,5 @@ for idx, result in enumerate(results):
     print("Transition Type:", result['transition'])
     print("Current Entities (Possible Centers):", result['current_entities'])
     print("Next Entities (Possible Centers):", result['next_entities'])
+    print("Transition Words:", result['transition_words'])  # Geçiş türünü belirleyen sözcük ikilileri
     print()
