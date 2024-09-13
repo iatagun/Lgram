@@ -1,8 +1,8 @@
 import nltk
 from nltk import word_tokenize, pos_tag
 from itertools import chain
+from get_gender import get_gender, gender_dict
 
-# NLTK'nin gerekli verilerini indirin
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 
@@ -11,25 +11,40 @@ class TransitionAnalyzer:
         self.text = text
 
     def preprocess(self):
-        # Metni cümlelere ayırın
         sentences = nltk.sent_tokenize(self.text)
-        # Cümle çiftlerini oluşturun
         sentence_pairs = [(sentences[i], sentences[i + 1]) for i in range(len(sentences) - 1)]
         return sentence_pairs
 
     def pos_tag_sentences(self, sentences):
-        # Her cümleyi POS etiketleri ile işleyin
         return [pos_tag(word_tokenize(sentence)) for sentence in sentences]
 
     def extract_entities(self, tagged_sentences):
-        # Her cümledeki varlıkları çıkartın
         entities = []
         for sentence in tagged_sentences:
             entities.append(set(word for word, tag in sentence if tag in ['NNP', 'PRP', 'PRP$', 'NN', 'NNS']))
         return entities
 
-    def classify_transition(self, current_entities, next_entities):
-        # Centering Theory'ye göre geçiş türlerini sınıflandırın
+    def get_gender(self, entities):
+        genders = {}
+        for entity in entities:
+            if entity in gender_dict:
+                genders[entity] = gender_dict[entity]
+        return genders
+
+    def classify_transition(self, current_entities, next_entities, current_sentence, next_sentence):
+        current_genders = self.get_gender(current_entities)
+        next_genders = self.get_gender(next_entities)
+
+        # Zamirlerin referanslarını kontrol edin
+        for entity, gender in current_genders.items():
+            if gender == 'female' and 'She' in current_entities:
+                if entity in next_entities:
+                    return "Retaining Transition"
+            elif gender == 'male' and 'He' in current_entities:
+                if entity in next_entities:
+                    return "Retaining Transition"
+
+        # Geçiş türlerini belirleme
         if current_entities & next_entities:
             if len(next_entities - current_entities) == 0:
                 return "Continuation Transition"
@@ -54,13 +69,17 @@ class TransitionAnalyzer:
             combined_current_entities = set(chain.from_iterable(current_entities))
             combined_next_entities = set(chain.from_iterable(next_entities))
             
-            transition = self.classify_transition(combined_current_entities, combined_next_entities)
+            transition = self.classify_transition(combined_current_entities, combined_next_entities, current_sentences, next_sentences)
+            
+            # Ele alınan sözcük ikililerini yazdır
             results.append({
                 'current_sentences': current_sentences,
                 'next_sentences': next_sentences,
                 'transition': transition,
                 'current_entities': combined_current_entities,
-                'next_entities': combined_next_entities
+                'next_entities': combined_next_entities,
+                'current_words': current_sentences.split(),  # Cümledeki kelimeler
+                'next_words': next_sentences.split()         # Cümledeki kelimeler
             })
 
         return results
