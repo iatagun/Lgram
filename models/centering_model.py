@@ -24,34 +24,30 @@ class TransitionAnalyzer:
             entities.append(set(word for word, tag in sentence if tag in ['NNP', 'PRP', 'PRP$', 'NN', 'NNS']))
         return entities
 
-    def get_gender(self, entities):
-        genders = {}
-        for entity in entities:
-            if entity in gender_dict:
-                genders[entity] = gender_dict[entity]
-        return genders
+    def get_gender(self, entity):
+        if entity in gender_dict:
+            return gender_dict[entity]
+        return None
 
     def classify_transition(self, current_entities, next_entities, current_sentence, next_sentence):
-        # Define specific entities and pronouns
         specific_current_entities = {e for e in current_entities if e[0].isupper()}
         specific_next_entities = {e for e in next_entities if e[0].isupper()}
         pronouns = {'She': 'female', 'He': 'male', 'It': None, 'They': None}
-        
-        transition_words = set()
-        
-        # Handle direct pronoun references
-        for pronoun, gender in pronouns.items():
-            if pronoun in current_entities:
-                # Map pronoun to possible entities in the next sentence
-                for entity in specific_next_entities:
-                    if gender and entity in gender_dict and gender_dict[entity] == gender:
-                        transition_words.add(entity)  # Add named entity to transition words
-                    elif not gender:
-                        transition_words.add(entity)
 
-        # Check if any specific current entities are directly referred to in the next entities
+        transition_words = set()
+
+        # Handle direct pronoun references by mapping pronouns to entities
+        for pronoun, gender in pronouns.items():
+            if pronoun in next_entities:  # Check pronoun in the next sentence
+                # Find the entity in the current sentence that matches the gender of the pronoun
+                for entity in specific_current_entities:
+                    if gender and self.get_gender(entity) == gender:
+                        transition_words.add((pronoun, entity))  # Correctly map the pronoun to the entity
+                        break  # Break after finding a match
+
+        # If no pronoun match is found, check if there is direct name-to-name retention
         if specific_current_entities & specific_next_entities:
-            transition_words.update(specific_current_entities & specific_next_entities)
+            transition_words.update((e, e) for e in specific_current_entities & specific_next_entities)
 
         if transition_words:
             return "Retaining Transition", transition_words
@@ -67,8 +63,6 @@ class TransitionAnalyzer:
         else:
             return "Shift Transition", (current_entities, next_entities)
 
-
-
     def analyze(self):
         sentence_pairs = self.preprocess()
         results = []
@@ -76,16 +70,16 @@ class TransitionAnalyzer:
         for current_sentences, next_sentences in sentence_pairs:
             current_tagged = self.pos_tag_sentences([current_sentences])
             next_tagged = self.pos_tag_sentences([next_sentences])
-            
+
             current_entities = self.extract_entities(current_tagged)
             next_entities = self.extract_entities(next_tagged)
-            
+
             combined_current_entities = set(chain.from_iterable(current_entities))
             combined_next_entities = set(chain.from_iterable(next_entities))
-            
+
             transition, transition_words = self.classify_transition(combined_current_entities, combined_next_entities, current_sentences, next_sentences)
-            
-            # Ele alınan sözcük ikililerini yazdır
+
+            # Sonuçları yazdır
             results.append({
                 'current_sentences': current_sentences,
                 'next_sentences': next_sentences,
