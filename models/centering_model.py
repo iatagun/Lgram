@@ -2,9 +2,12 @@ import nltk
 from nltk import word_tokenize, pos_tag
 from itertools import chain
 from get_gender import get_gender, gender_dict
+import pandas as pd
 
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng')
 
 class TransitionAnalyzer:
     def __init__(self, text):
@@ -92,7 +95,20 @@ class TransitionAnalyzer:
             })
 
         return results
+    def prepare_training_data(results):
+        data = []
+        for result in results:
+            features = {
+                'current_entities': ' '.join(result['current_entities']),
+                'next_entities': ' '.join(result['next_entities']),
+                'current_words': ' '.join(result['current_words']),
+                'next_words': ' '.join(result['next_words']),
+                'transition': result['transition']
+            }
+            data.append(features)
 
+        df = pd.DataFrame(data)
+        return df
 # Örnek kullanım:
 text = (
     "Sarah went to the bakery to buy some bread. She has been going to this bakery for years. "
@@ -101,6 +117,7 @@ text = (
 )
 analyzer = TransitionAnalyzer(text)
 results = analyzer.analyze()
+
 
 # Sonuçları yazdırın
 for idx, result in enumerate(results):
@@ -112,3 +129,20 @@ for idx, result in enumerate(results):
     print("Next Entities (Possible Centers):", result['next_entities'])
     print("Transition Words:", result['transition_words'])  # Geçiş türünü belirleyen sözcük ikilileri
     print()
+def prepare_training_data(results):
+    data = []
+    for result in results:
+        features = {
+            'current_entities': ' '.join(result['current_entities']),
+            'next_entities': ' '.join(result['next_entities']),
+            'current_words': ' '.join(result['current_words']),
+            'next_words': ' '.join(result['next_words']),
+            'transition': result['transition']
+        }
+        data.append(features)
+
+    df = pd.DataFrame(data)
+    return df
+
+df = prepare_training_data(results)
+print(df)
