@@ -32,7 +32,8 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
 2. **Dil Modelini Yükleyin**:
 
    ```bash
-   pip install spacy
+   python -m spacy download en_core_web_sm
+
 
 ## Kullanım
    ```python
