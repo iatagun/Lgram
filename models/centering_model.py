@@ -1,5 +1,4 @@
 import spacy
-from itertools import chain
 
 # Load the English NLP model
 nlp = spacy.load("en_core_web_sm")
@@ -9,14 +8,12 @@ class TransitionAnalyzer:
         self.text = text
 
     def preprocess(self):
-        # Split the text into sentences
         doc = nlp(self.text)
         sentences = list(doc.sents)
         sentence_pairs = [(sentences[i], sentences[i + 1]) for i in range(len(sentences) - 1)]
         return sentence_pairs
 
     def extract_nps(self, sentence):
-        # Extract noun phrases from a given sentence
         return [chunk.text for chunk in sentence.noun_chunks]
 
     def classify_transition(self, current_entities, next_entities, prev_cb):
@@ -24,32 +21,34 @@ class TransitionAnalyzer:
         cp = next_entities if next_entities else set()
 
         if not current_entities and not cp:
-            return "Center Establishment (EST)"  # No entities present
-        if cb == current_entities:  # Retaining current CB
+            return "Center Establishment (EST)"
+        if cb == current_entities:
             if cb == cp:
-                return "Center Continuation (CON)"  # Same Center
+                return "Center Continuation (CON)"
             else:
-                return "Center Retaining (RET)"  # Retaining, but different mention
-        elif cb != current_entities:  # New entities introduced
-            if cb & cp:  # Overlapping entities
-                return "Smooth Shift (SSH)"  # Shift to a more salient Center
+                return "Center Retaining (RET)"
+        elif cb != current_entities:
+            if cb & cp:
+                return "Smooth Shift (SSH)"
             else:
-                # Check for proper nouns and pronouns
                 proper_nouns = {e for e in current_entities if e.istitle()}
                 pronouns = {e for e in next_entities if e in ["He", "She", "They", "It"]}
                 
                 if proper_nouns and pronouns:
-                    return "Center Continuation (CON)"  # Pronoun refers back to a proper noun
+                    return "Center Continuation (CON)"
                 else:
-                    return "Rough Shift (RSH)"  # Major shift, unrelated
+                    return "Rough Shift (RSH)"
         else:
-            return "New Topic Transition"  # Unrelated entities
+            return "New Topic Transition"
 
     def annotate_anaphoric_relations(self, current_entities, next_entities):
         anaphoric_info = {}
         for entity in current_entities:
-            if entity in next_entities:
-                anaphoric_info[entity] = {"type": "identity", "antecedent": entity}
+            if entity.lower() in (e.lower() for e in next_entities):
+                anaphoric_info[entity] = {
+                    "type": "identity",
+                    "antecedent": entity
+                }
         return anaphoric_info
 
     def analyze(self):
