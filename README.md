@@ -1,6 +1,10 @@
 # Transition Analyzer
 
-Transition Analyzer, metin analizi için geliştirilmiş bir Python kütüphanesidir. Cümleler arasındaki geçişleri sınıflandırarak ve anaforik ilişkileri etiketleyerek metinlerin anlamını daha iyi anlamaya yardımcı olur.
+Transition Analyzer, metin analizi için geliştirilmiş bir Python kütüphanesidir. Bu kütüphane, merkezleme kuramını temel alarak cümleler arasındaki bağdaşıklık ilişkilerini analiz eder. Merkezleme kuramı, bir metin içerisindeki belirli unsurların (özellikle isimler ve zamirler) birbirleriyle nasıl ilişkilendiğini inceleyerek metinlerin akışını ve anlamını daha iyi kavrayabilmemize yardımcı olur.
+
+Bu araç, bilgisayarlı metin üretiminde bağdaşıklığı sağlamak için kritik öneme sahiptir. Cümleler arasındaki geçişlerin doğru bir şekilde sınıflandırılması, metinlerin daha tutarlı ve anlaşılır olmasını sağlar. Kullanıcıların metinlerini analiz ederek, geçiş türlerini belirler ve anaforik ilişkileri etiketler. Bu sayede, üretilecek metinlerin bağdaşıklığı artırılır, okuyucunun dikkatini çeker ve metinlerin akışkanlığını sağlar.
+
+Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle çiftleri arasındaki ilişkiyi analiz eder ve bu ilişkileri farklı geçiş türlerine ayırır. Böylece, kullanıcılar metin üretiminde daha etkili sonuçlar elde edebilirler.
 
 ## Özellikler
 
