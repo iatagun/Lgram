@@ -1,22 +1,54 @@
 import spacy
 
-# Load the English NLP model
+# İngilizce NLP modelini yükleyin
 nlp = spacy.load("en_core_web_sm")
 
 class TransitionAnalyzer:
     def __init__(self, text):
+        """
+        TransitionAnalyzer sınıfının başlangıç fonksiyonu.
+        
+        Parametreler:
+        text (str): Analiz edilecek metin.
+        """
         self.text = text
 
     def preprocess(self):
+        """
+        Metni cümlelere ayırır ve cümle çiftlerini oluşturur.
+
+        Dönüş:
+        List: Cümle çiftleri listesi.
+        """
         doc = nlp(self.text)
         sentences = list(doc.sents)
         sentence_pairs = [(sentences[i], sentences[i + 1]) for i in range(len(sentences) - 1)]
         return sentence_pairs
 
     def extract_nps(self, sentence):
+        """
+        Verilen cümledeki isim tamlamalarını çıkarır.
+
+        Parametreler:
+        sentence (spacy.tokens.Span): Analiz edilecek cümle.
+
+        Dönüş:
+        List: İsim tamlamalarının listesi.
+        """
         return [chunk.text for chunk in sentence.noun_chunks]
 
     def classify_transition(self, current_entities, next_entities, prev_cb):
+        """
+        Cümleler arasındaki geçişi sınıflandırır.
+
+        Parametreler:
+        current_entities (set): Mevcut cümledeki varlıklar.
+        next_entities (set): Sonraki cümledeki varlıklar.
+        prev_cb (set): Önceki merkez varlıklar.
+
+        Dönüş:
+        str: Geçiş türü.
+        """
         cb = prev_cb
         cp = next_entities if next_entities else set()
 
@@ -42,6 +74,16 @@ class TransitionAnalyzer:
             return "New Topic Transition"
 
     def annotate_anaphoric_relations(self, current_entities, next_entities):
+        """
+        Anaforik ilişkileri etiketler.
+
+        Parametreler:
+        current_entities (set): Mevcut cümledeki varlıklar.
+        next_entities (set): Sonraki cümledeki varlıklar.
+
+        Dönüş:
+        dict: Anaforik bilgiler.
+        """
         anaphoric_info = {}
         for entity in current_entities:
             if entity.lower() in (e.lower() for e in next_entities):
@@ -52,6 +94,12 @@ class TransitionAnalyzer:
         return anaphoric_info
 
     def analyze(self):
+        """
+        Metni analiz eder ve geçiş bilgilerini döndürür.
+
+        Dönüş:
+        List: Analiz sonuçları listesi.
+        """
         sentence_pairs = self.preprocess()
         results = []
         prev_cb = set()
@@ -66,7 +114,7 @@ class TransitionAnalyzer:
             transition = self.classify_transition(combined_current_nps, combined_next_nps, prev_cb)
             anaphoric_relations = self.annotate_anaphoric_relations(combined_current_nps, combined_next_nps)
 
-            prev_cb = combined_current_nps  # Update CB for next iteration
+            prev_cb = combined_current_nps  # Sonraki iterasyon için CB'yi güncelle
 
             results.append({
                 'current_sentences': current_sentence.text,
@@ -79,7 +127,7 @@ class TransitionAnalyzer:
 
         return results
 
-# Example text
+# Örnek metin
 text = (
     "Alice was excited about her upcoming vacation. She had been planning it for months. "
     "Her friend Bob decided to join her. They both agreed that visiting Paris would be the highlight of the trip. "
@@ -89,7 +137,7 @@ text = (
 analyzer = TransitionAnalyzer(text)
 results = analyzer.analyze()
 
-# Print results
+# Sonuçları yazdır
 for idx, result in enumerate(results):
     print(f"Pair {idx + 1}:")
     print("Current Sentences:", result['current_sentences'])
