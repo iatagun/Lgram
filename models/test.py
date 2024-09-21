@@ -9,8 +9,15 @@ text = (
 model = CenteringModel(text)
 total_score = model.score_transitions()
 
-for score in model.scores:
-    print(f"Transition from: {score['current_sentences']} to {score['next_sentences']}")
-    print(f"Transition Type: {score['transition']}, Score: {score['score']}")
+# Anlaşılır bir formatta çıktı için
+for idx, score in enumerate(model.scores, start=1):
+    print(f"--- Transition {idx} ---")
+    print(f"Current Sentence: {score['current_sentences']}")
+    print(f"Next Sentence: {score['next_sentences']}")
+    print(f"Transition Type: {score['transition']}")
+    print(f"Score: {score['score']}")
+    print()  # Boş satır ile ayrım yap
 
+# Toplam skor
 print(f"Total Transition Score: {total_score}")
+
