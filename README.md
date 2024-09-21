@@ -59,25 +59,23 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
       print()
 
 # Geçiş Analizi Sonuçları
+```
+--- Transition 1 ---
+Current Sentence: Alice was excited about her upcoming vacation.
+Next Sentence: She had been planning it for months.
+Transition Type: Center Continuation (CON)
+Score: 3
 
+--- Transition 2 ---
+Current Sentence: She had been planning it for months.
+Next Sentence: Her friend Bob decided to join her.
+Transition Type: Rough Shift (RSH)
+Score: 1
 
-   ```
-   --- Transition 1 ---
-   Current Sentence: Alice was excited about her upcoming vacation.
-   Next Sentence: She had been planning it for months.
-   Transition Type: Center Continuation (CON)
-   Score: 3
+--- Transition 3 ---
+Current Sentence: Her friend Bob decided to join her.
+Next Sentence: They both agreed that visiting Paris would be the highlight of the trip.
+Transition Type: Center Continuation (CON)
+Score: 3
 
-   --- Transition 2 ---
-   Current Sentence: She had been planning it for months.
-   Next Sentence: Her friend Bob decided to join her.
-   Transition Type: Rough Shift (RSH)
-   Score: 1
-
-   --- Transition 3 ---
-   Current Sentence: Her friend Bob decided to join her.
-   Next Sentence: They both agreed that visiting Paris would be the highlight of the trip.
-   Transition Type: Center Continuation (CON)
-   Score: 3
-
-   Total Transition Score: 7
+Total Transition Score: 7
