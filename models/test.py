@@ -2,8 +2,7 @@ from centering_model import CenteringModel
 
 text = (
     "Alice was excited about her upcoming vacation. She had been planning it for months. "
-    "Her friend Bob decided to join her. They both agreed that visiting Paris would be the highlight of the trip. "
-    "Bob had always dreamed of seeing the Eiffel Tower. Later, they discussed what to do in the city."
+    "Her friend Bob decided to join her. They both agreed that visiting Paris would be the highlight of the trip."
 )
 
 model = CenteringModel(text)
