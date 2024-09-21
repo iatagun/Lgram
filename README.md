@@ -57,7 +57,7 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
       print("Next NPs (Possible Centers):", result['next_nps'])
       print("Anaphoric Relations:", result['anaphoric_relations'])
       print()
-
+   ```
 # Geçiş Analizi Sonuçları
    ```
    --- Transition 1 ---
@@ -79,3 +79,4 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
    Score: 3
 
    Total Transition Score: 7
+   
