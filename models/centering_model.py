@@ -56,17 +56,3 @@ class CenteringModel:
         # Geçiş türünü bul ve skoru al
         mapped_type = transition_mapping.get(transition_type, None)
         return self.scorer.score_transition(mapped_type)
-
-# Örnek kullanım
-text = (
-    "Alice was excited about her upcoming vacation. She had been planning it for months. "
-    "Her friend Bob decided to join her. They both agreed that visiting Paris would be the highlight of the trip."
-)
-
-centering_model = CenteringModel(text)
-total_score = centering_model.score_transitions()
-
-# Sonuçları yazdır
-print("Total Score:", total_score)
-for score_detail in centering_model.scores:
-    print(score_detail)

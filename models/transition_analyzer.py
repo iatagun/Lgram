@@ -126,24 +126,3 @@ class TransitionAnalyzer:
             })
 
         return results
-
-# Örnek metin
-text = (
-    "Alice was excited about her upcoming vacation. She had been planning it for months. "
-    "Her friend Bob decided to join her. They both agreed that visiting Paris would be the highlight of the trip. "
-    "Bob had always dreamed of seeing the Eiffel Tower. Later, they discussed what to do in the city."
-)
-
-analyzer = TransitionAnalyzer(text)
-results = analyzer.analyze()
-
-# Sonuçları yazdır
-for idx, result in enumerate(results):
-    print(f"Pair {idx + 1}:")
-    print("Current Sentences:", result['current_sentences'])
-    print("Next Sentences:", result['next_sentences'])
-    print("Transition Type:", result['transition'])
-    print("Current NPs (Possible Centers):", result['current_nps'])
-    print("Next NPs (Possible Centers):", result['next_nps'])
-    print("Anaphoric Relations:", result['anaphoric_relations'])
-    print()
