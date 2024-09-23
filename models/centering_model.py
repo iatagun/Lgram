@@ -40,7 +40,8 @@ class CenteringModel:
                 'score': score
             })
 
-        return total_score
+        # Hem toplam skoru hem de detaylı skorlama sonuçlarını döndür
+        return total_score, self.scores
 
     def calculate_transition_score(self, transition_type):
         # Geçiş türünü kısa bir anahtarla eşleştir
@@ -53,6 +54,6 @@ class CenteringModel:
             "Center Establishment (EST)": "EST"
         }
 
-        # Geçiş türünü bul ve skoru al
-        mapped_type = transition_mapping.get(transition_type, None)
+        # Geçiş türünü bul ve skoru al, eşleşme yoksa varsayılan olarak 'NTT' kullan
+        mapped_type = transition_mapping.get(transition_type, "NTT")
         return self.scorer.score_transition(mapped_type)
