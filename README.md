@@ -85,20 +85,20 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
 ## Süreç Detayları
 
 1. **N-gram Kullanımı**:
-   - İlk aşamada, `SentenceGenerator` sınıfı içinde cümleler mevcut metinden alınarak n-gram tabanlı bir yapı oluşturulabilir. N-gram, belirli bir kelime dizisi uzunluğunu temsil eder; örneğin, `n=1` (unigram), `n=2` (bigram) gibi.
-   - Bu yapı, kelimeler arasındaki geçişleri modellemek için kullanılabilir, ancak burada esas olarak mevcut cümlelerden rastgele seçim yapılmaktadır.
+- İlk aşamada, `SentenceGenerator` sınıfı içinde cümleler mevcut metinden alınarak n-gram tabanlı bir yapı oluşturulabilir. N-gram, belirli bir kelime dizisi uzunluğunu temsil eder; örneğin, `n=1` (unigram), `n=2` (bigram) gibi.
+- Bu yapı, kelimeler arasındaki geçişleri modellemek için kullanılabilir, ancak burada esas olarak mevcut cümlelerden rastgele seçim yapılmaktadır.
 
 2. **Merkezleme Modelinin Kullanımı**:
-   - Geçiş türü tahmininde `best_transition_model.keras` modelini kullanarak, mevcut cümle ile yeni cümle arasındaki ilişkiyi değerlendiriyoruz. Bu model, belirli bir bağlamda uygun cümle geçişlerini tahmin etmek üzere eğitilmiştir.
-   - Cümle geçişinin uygun olup olmadığını belirlemek için model, cümlelerin belirli bir özellikler setini (örneğin, benzerlik oranı) değerlendirir.
+- Geçiş türü tahmininde `best_transition_model.keras` modelini kullanarak, mevcut cümle ile yeni cümle arasındaki ilişkiyi değerlendiriyoruz. Bu model, belirli bir bağlamda uygun cümle geçişlerini tahmin etmek üzere eğitilmiştir.
+- Cümle geçişinin uygun olup olmadığını belirlemek için model, cümlelerin belirli bir özellikler setini (örneğin, benzerlik oranı) değerlendirir.
 
 3. **Döngü ve Metin Üretimi**:
-   - Başlangıç cümlesi ile başlayan bir döngü kurulur. Her döngü adımında, yeni bir cümle üretilir ve mevcut cümle ile kıyaslanır.
-   - Eğer geçiş modeli yeni cümleyi uygun bulmazsa (örneğin, cümleler çok benzer veya geçiş türü istenilen biçimde değilse), yeni bir cümle seçilir.
-   - Uygun bir cümle bulunduğunda, bu cümle `generated_text` değişkenine eklenir ve mevcut cümle güncellenir.
+- Başlangıç cümlesi ile başlayan bir döngü kurulur. Her döngü adımında, yeni bir cümle üretilir ve mevcut cümle ile kıyaslanır.
+- Eğer geçiş modeli yeni cümleyi uygun bulmazsa (örneğin, cümleler çok benzer veya geçiş türü istenilen biçimde değilse), yeni bir cümle seçilir.
+- Uygun bir cümle bulunduğunda, bu cümle `generated_text` değişkenine eklenir ve mevcut cümle güncellenir.
 
 4. **Devamlılık**:
-   - Bu döngü, belirtilen `num_sentences` kadar devam eder ve her seferinde cümle geçişlerini değerlendirir. Sonuç olarak, mantıklı ve bağlamla uyumlu bir metin oluşturur.
+- Bu döngü, belirtilen `num_sentences` kadar devam eder ve her seferinde cümle geçişlerini değerlendirir. Sonuç olarak, mantıklı ve bağlamla uyumlu bir metin oluşturur.
 
 ## Özetle
 Metin üretimi sürecinde hem n-gram tabanlı cümle seçimleri hem de merkezleme modeli (transition model) birlikte çalışarak, yeni ve uyumlu cümleler oluşturur. Bu iki bileşen, bir döngü içinde birbirini besler ve bağdaşık bir metin oluşturulmasını sağlar.
