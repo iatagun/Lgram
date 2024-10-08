@@ -79,7 +79,7 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
    Score: 3
 
    Total Transition Score: 7
-
+   ```
      
 # Sentence Generator
 
