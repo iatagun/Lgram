@@ -64,8 +64,10 @@ class TextGeneratorModel:
         self.model.save("C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_generator_model.h5")
         print("Text generator model saved successfully.")
 
-    def generate_text(self, seed_text, next_words=10, temperature=0.7):
+    def generate_text(self, seed_text, next_words=10, temperature=0.8):
         generated_text = seed_text
+        previous_sentences = []
+
         for _ in range(next_words):
             token_list = self.tokenizer.texts_to_sequences([generated_text])[0]
             token_list = pad_sequences([token_list], maxlen=self.seq_length, padding='pre')
@@ -73,15 +75,22 @@ class TextGeneratorModel:
 
             # Apply temperature
             predictions = predictions ** (1 / temperature)
-            predictions = predictions / np.sum(predictions)  # Normalize
+            predictions = predictions / np.sum(predictions)
 
-            # Sample from predictions
-            predicted = np.random.choice(range(len(predictions)), p=predictions)
-            output_word = self.tokenizer.index_word.get(predicted, '')
+            # Sample the next word
+            predicted_word_index = np.random.choice(range(len(predictions)), p=predictions)
+            predicted_word = self.tokenizer.index_word.get(predicted_word_index, '')
 
-            generated_text += " " + output_word
+            # Avoid repetition by checking similarity to previous sentences
+            new_sentence = generated_text + " " + predicted_word
+            if any(are_sentences_similar(new_sentence, sent) for sent in previous_sentences):
+                continue  # Skip if the sentence is too similar
+
+            previous_sentences.append(new_sentence)
+            generated_text += " " + predicted_word
 
         return generated_text.strip()
+
 
 
 # Step 2: Use the transition_model.h5 for topic prediction
@@ -170,7 +179,8 @@ if __name__ == "__main__":
     initial_sentence = "Kaelan revealed that a dark force was awakening, threatening to consume Eldoria. The spirit faltered for a moment, but then its eyes glinted with malice."
     
     # Keep generating sentences, predicting the transition after each sentence
-    generated_text = ai_generator.generate_text_with_topic_prediction(initial_sentence, num_sentences=5, temperature=1.2)
+    generated_text = ai_generator.generate_text_with_topic_prediction(initial_sentence, num_sentences=5, temperature=0.85)
+
 
     print("Generated Text:")
     print(generated_text)
