@@ -79,8 +79,10 @@ Transition Analyzer, doğal dil işleme (NLP) tekniklerini kullanarak, cümle ç
    Score: 3
 
    Total Transition Score: 7
-   
+
+     
 # Sentence Generator
+
 
 ## Süreç Detayları
 
@@ -107,25 +109,25 @@ Metin üretimi sürecinde hem n-gram tabanlı cümle seçimleri hem de merkezlem
 
 Aşağıda, `SentenceGenerator` sınıfının nasıl kullanılacağına dair kısa bir örnek verilmiştir:
 
-```python
-# Gerekli kütüphaneleri içe aktarın
-from your_module import SentenceGenerator, load_text_data
+   ```python
+   # Gerekli kütüphaneleri içe aktarın
+   from your_module import SentenceGenerator, load_text_data
 
-# Metin dosyasının yolunu belirtin
-text_file_path = "path/to/text_gen_data.txt"
-transition_model_path = "path/to/best_transition_model.keras"
+   # Metin dosyasının yolunu belirtin
+   text_file_path = "path/to/text_gen_data.txt"
+   transition_model_path = "path/to/best_transition_model.keras"
 
-# Metin verisini yükleyin
-text = load_text_data(text_file_path)
+   # Metin verisini yükleyin
+   text = load_text_data(text_file_path)
 
-# Cümle üreteciyi oluşturun
-sentence_generator = SentenceGenerator(text, transition_model_path)
+   # Cümle üreteciyi oluşturun
+   sentence_generator = SentenceGenerator(text, transition_model_path)
 
-# Başlangıç cümlesi belirleyin
-initial_sentence = "Deep within the enchanted woods of Eldoria, a long-forgotten prophecy began to awaken."
+   # Başlangıç cümlesi belirleyin
+   initial_sentence = "Deep within the enchanted woods of Eldoria, a long-forgotten prophecy began to awaken."
 
-# Metin üretin
-generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=5)
+   # Metin üretin
+   generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=5)
 
-print("Generated Text:")
-print(generated_text)
+   print("Generated Text:")
+   print(generated_text)
