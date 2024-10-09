@@ -131,7 +131,8 @@ Aşağıda, `SentenceGenerator` sınıfının nasıl kullanılacağına dair kı
 
    print("Generated Text:")
    print(generated_text)
-# Geçiş Analizi Sonuçları
+   ```
+# Sentence Generator Sonuçları
    ```
    Deep within the enchanted woods of Eldoria, a long-forgotten prophecy began to awaken, hinting at a destiny intertwined with ancient magic and untold adventures. They moved cautiously, aware that they were not alone “I can feel it At last, with one final surge of energy, Elara unleashed the full power of the artifacts, banishing the darkness from Valoria forever “We have each other, and that’s stronger than any darkness!”
 
