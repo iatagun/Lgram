@@ -95,8 +95,6 @@ class SentenceGenerator:
 
         return ' '.join(sentence)
 
-
-
     def generate_text(self, initial_sentence, num_sentences):
         generated_text = initial_sentence
         current_sentence = initial_sentence
@@ -104,16 +102,20 @@ class SentenceGenerator:
         for _ in range(num_sentences):
             new_sentence = self.generate_sentence()
 
-            # Geçiş türünü tahmin et
+            # Predict transition type
             transition_type = self.predict_transition(current_sentence, new_sentence)
 
-            # Eğer geçiş türü uygun değilse yeni cümle seç
+            # If transition type is not suitable, select a new sentence
             while self.are_sentences_similar(new_sentence, current_sentence) or transition_type[0] == 0:
                 new_sentence = self.generate_sentence()
                 transition_type = self.predict_transition(current_sentence, new_sentence)
 
             generated_text += " " + new_sentence
             current_sentence = new_sentence
+
+        # Ensure the generated text ends with a period
+        if not generated_text.strip().endswith('.'):
+            generated_text += '.'
 
         return generated_text.strip()
 
