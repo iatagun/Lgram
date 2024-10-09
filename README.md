@@ -131,3 +131,17 @@ Aşağıda, `SentenceGenerator` sınıfının nasıl kullanılacağına dair kı
 
    print("Generated Text:")
    print(generated_text)
+# Geçiş Analizi Sonuçları
+   ```
+   Deep within the enchanted woods of Eldoria, a long-forgotten prophecy began to awaken, hinting at a destiny intertwined with ancient magic and untold adventures. They moved cautiously, aware that they were not alone “I can feel it At last, with one final surge of energy, Elara unleashed the full power of the artifacts, banishing the darkness from Valoria forever “We have each other, and that’s stronger than any darkness!”
+
+   Mira took Elara’s hand, and one by one, the others joined, forming a circle of light “What do you have there?” she asked And thus, the guardians of Eldoria continued their quest, their spirits intertwined with the magic of friendship and the light of hope, forever ready to embrace the adventures that lay ahead The cave was treacherous, filled with illusions that played tricks on the mind As Elara and her friends ventured into the Vale of Shadows, a sense of foreboding settled around them “We are seekers of knowledge Elara stepped forward, her heart pounding A brilliant light enveloped the realm, dispelling the shadows and restoring harmony to Eldoria With every trial they faced, their bond deepened, and the magic of Eldoria pulsed stronger within them “Remember who you are, Elara,” Kaelan whispered, guiding her through the valley ”
+
+   “What will happen now?” Elara asked, her heart racing I will shatter your bond!”
+
+   With a flick of its wrist, it unleashed a wave of dark energy that crashed against them like a tidal wave Elara felt a rush of understanding as she unrolled it, revealing the interconnectedness of all things in Eldoria The darkness had not only been defeated; they had grown stronger and more united than ever Elara knew that together, they could face any darkness that threatened their world ”
+
+   Determined, Elara asked, “What happened to your people?”
+
+   Mira’s gaze turned distant But first, you must prove your worth “Foolish mortals,” it hissed “I am Mira, the last of the Valorians But greed led to our downfall “Who dares to trespass in Valoria?” she demanded, her voice echoing with authority With hearts full of hope and determination, Elara, Mira, and their companions continued on their journey, ready to seek out the Elders and discover the next chapter of their adventure Elara felt a surge of energy emanating from it “We did it,” Mira whispered, tears of joy glistening in her eyes “Did you see that?” Mira asked, her eyes wide A brilliant light enveloped the realm, dispelling the shadows and restoring harmony to Eldoria It felt as if they were calling to her
+   ```
