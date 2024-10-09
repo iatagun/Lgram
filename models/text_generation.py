@@ -85,7 +85,7 @@ if __name__ == "__main__":
     initial_sentence = "Deep within the enchanted woods of Eldoria, a long-forgotten prophecy began to awaken, hinting at a destiny intertwined with ancient magic and untold adventures."
     
     # Metin üret
-    generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=5)
+    generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=15)
     
     print("Generated Text:")
     print(generated_text)
