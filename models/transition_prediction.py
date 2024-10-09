@@ -6,7 +6,6 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from analyze_transitions import analyze_transitions  # Adjust the import path as necessary
 
 # Metin dosyasını yükleme
@@ -67,8 +66,8 @@ model = tf.keras.Sequential([
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # Early stopping ve model checkpoint ayarları
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-model_checkpoint = ModelCheckpoint(os.path.join(model_save_dir, 'best_transition_model.keras'), save_best_only=True)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+model_checkpoint = tf.keras.callbacks.ModelCheckpoint(os.path.join(model_save_dir, 'best_transition_model.keras'), save_best_only=True)
 
 # Modeli eğitme
 model.fit(X_train, y_train, epochs=500, batch_size=8, validation_data=(X_test, y_test),
