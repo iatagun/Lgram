@@ -1,16 +1,13 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import load_model
 from difflib import SequenceMatcher
 import random
 
 class SentenceGenerator:
     def __init__(self, text, transition_model_path, seq_length=15):
         self.sentences = self._split_into_sentences(text)
-        self.transition_model = load_model(transition_model_path)
-        self.tokenizer = Tokenizer()
+        self.transition_model = tf.keras.models.load_model(transition_model_path)
+        self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
         self.tokenizer.fit_on_texts(self.sentences)
         self.seq_length = seq_length
 
@@ -28,8 +25,8 @@ class SentenceGenerator:
         current_sequence = self.tokenize(current_sentence)
         new_sequence = self.tokenize(new_sentence)
 
-        current_sequence_padded = pad_sequences([current_sequence], maxlen=self.seq_length, padding='post')
-        new_sequence_padded = pad_sequences([new_sequence], maxlen=self.seq_length, padding='post')
+        current_sequence_padded = tf.keras.preprocessing.sequence.pad_sequences([current_sequence], maxlen=self.seq_length, padding='post')
+        new_sequence_padded = tf.keras.preprocessing.sequence.pad_sequences([new_sequence], maxlen=self.seq_length, padding='post')
 
         input_data = np.concatenate((current_sequence_padded, new_sequence_padded), axis=1)
         prediction = self.transition_model.predict(input_data)
