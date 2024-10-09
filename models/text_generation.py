@@ -7,7 +7,6 @@ import nltk
 from nltk import word_tokenize
 from nltk import trigrams
 from nltk import bigrams
-import spacy
 
 class DynamicNGram:
     def __init__(self, text, n=2):
@@ -40,15 +39,15 @@ class SentenceGenerator:
         self.tokenizer.fit_on_texts(self.sentences)
         self.seq_length = seq_length
         
-        # Load SpaCy model
-        self.nlp = spacy.load("en_core_web_sm")
-        
         # Initialize models for bigram and trigram
         self.model_bigram = defaultdict(lambda: defaultdict(lambda: 0))
         self.model_trigram = defaultdict(lambda: defaultdict(lambda: 0))
         
-        # Build the bigram and trigram models
+        # Build the n-gram models
         self._build_ngram_models(text)
+        
+        # Set min and max n-gram values based on statistics
+        self.min_ngram_length, self.max_ngram_length = self.set_ngram_bounds()
 
     def _split_into_sentences(self, text):
         return [sentence.strip() for sentence in text.split('.') if sentence]
@@ -98,62 +97,80 @@ class SentenceGenerator:
             for w3 in self.model_trigram[w1_w2]:
                 self.model_trigram[w1_w2][w3] /= total_count
 
+    def set_ngram_bounds(self):
+        # Calculate n-gram frequencies
+        ngram_counts = defaultdict(int)
+
+        for n in range(2, 6):  # Example: checking for n-grams of length 2 to 5
+            dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=n)
+            total_ngrams = sum(len(v) for v in dynamic_ngram_model.model.values())
+            ngram_counts[n] = total_ngrams
+
+        # Set min and max n-gram lengths based on frequency analysis
+        min_length = min(ngram_counts, key=ngram_counts.get)
+        max_length = max(ngram_counts, key=ngram_counts.get)
+
+        return min_length, max_length
+
     def generate_sentence(self, min_length=5, max_length=10, prob_threshold=0.02):
-        start_word = random.choice(list(self.model_bigram.keys()))
-        sentence = [start_word]
+        # Use dynamic n-gram length
+        ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
+
+        # Create dynamic n-gram model with the chosen length
+        dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=ngram_length)
+        
+        # Select start words
+        start_words = random.choice(list(dynamic_ngram_model.model.keys()))
+        sentence = list(start_words)
 
         while len(sentence) < max_length:
-            next_word_probs = self.model_bigram[sentence[-1]]
-            filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
-
-            if filtered_probs:
-                next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
-                if next_word is not None:  # Ensure next_word is not None
-                    sentence.append(next_word)
+            next_word_probs = dynamic_ngram_model.predict_next_word(sentence)
+            if next_word_probs:
+                filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
+                if filtered_probs:
+                    next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
+                    if next_word:
+                        sentence.append(next_word)
+                    else:
+                        break  # Stop if next word is None
                 else:
-                    break  # Break if no valid next word is found
+                    break  # Stop if no words meet the probability threshold
             else:
-                break  # Break if no valid next words are available
+                break  # Stop if no prediction for the next word
 
+        # End the sentence with punctuation
         if len(sentence) >= min_length:
-            sentence[-1] += '.' 
+            sentence[-1] += '.'  # Add a period to the last word
 
-        return ' '.join(sentence).capitalize() if sentence else ""
+        # Ensure the first word is capitalized
+        if len(sentence) > 1:
+            sentence[0] = sentence[0].capitalize()
+    
+        return ' '.join(sentence)
 
-    def generate_text(self, initial_sentence, num_sentences=30):
+    def generate_text(self, initial_sentence, num_sentences):
         generated_text = initial_sentence
         current_sentence = initial_sentence
 
-        sentences_count = 1  # Initialize counter for sentences
-
-        while sentences_count < num_sentences:
+        for _ in range(num_sentences):
             new_sentence = self.generate_sentence()
 
-            # Check for sentence coherence and similarity
-            while self.are_sentences_similar(new_sentence, current_sentence):
-                new_sentence = self.generate_sentence()
+            # Predict transition type
+            transition_type = self.predict_transition(current_sentence, new_sentence)
 
-            if new_sentence:  # Ensure the new_sentence is not empty
-                generated_text += " " + new_sentence
-                current_sentence = new_sentence
-                sentences_count += 1  # Increment counter for each new sentence
+            # If transition type is not suitable, select a new sentence
+            while self.are_sentences_similar(new_sentence, current_sentence) or transition_type[0] == 0:
+                new_sentence = self.generate_sentence()
+                transition_type = self.predict_transition(current_sentence, new_sentence)
+
+            generated_text += " " + new_sentence
+            current_sentence = new_sentence
 
         # Ensure the generated text ends with a period
         if not generated_text.strip().endswith('.'):
             generated_text += '.'
 
         return generated_text.strip()
-
-    def refine_text(self, text):
-        doc = self.nlp(text)
-        refined_sentences = []
-        
-        for sent in doc.sents:
-            # You can add your own refinements here
-            # For example, correcting grammar or enhancing clarity
-            refined_sentences.append(sent.text.strip())
-
-        return ' '.join(refined_sentences)
 
 # Load text data
 def load_text_data(file_path):
@@ -177,8 +194,5 @@ if __name__ == "__main__":
     # Generate text
     generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=30)
     
-    # Refine the generated text for better coherence
-    refined_text = sentence_generator.refine_text(generated_text)
-    
     print("Generated Text:")
-    print(refined_text)
+    print(generated_text)
