@@ -7,6 +7,30 @@ import nltk
 from nltk import word_tokenize
 from nltk import trigrams
 from nltk import bigrams
+import spacy
+
+class DynamicNGram:
+    def __init__(self, text, n=2):
+        self.model = defaultdict(lambda: defaultdict(lambda: 0))
+        self.n = n
+        self._build_ngram_model(text)
+
+    def _build_ngram_model(self, text):
+        tokenized_text = [list(map(str.lower, word_tokenize(sent))) for sent in nltk.sent_tokenize(text)]
+        for sentence in tokenized_text:
+            ngrams = [tuple(sentence[i:i+self.n]) for i in range(len(sentence) - self.n + 1)]
+            for ngram in ngrams:
+                self.model[ngram[:-1]][ngram[-1]] += 1
+        
+        for w1 in self.model:
+            total_count = float(sum(self.model[w1].values()))
+            for w2 in self.model[w1]:
+                self.model[w1][w2] /= total_count
+
+    def predict_next_word(self, context):
+        context_tuple = tuple(context[-(self.n-1):])
+        return self.model.get(context_tuple, {})
+
 
 class SentenceGenerator:
     def __init__(self, text, transition_model_path, seq_length=15):
@@ -15,6 +39,9 @@ class SentenceGenerator:
         self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
         self.tokenizer.fit_on_texts(self.sentences)
         self.seq_length = seq_length
+        
+        # Load SpaCy model
+        self.nlp = spacy.load("en_core_web_sm")
         
         # Initialize models for bigram and trigram
         self.model_bigram = defaultdict(lambda: defaultdict(lambda: 0))
@@ -71,47 +98,45 @@ class SentenceGenerator:
             for w3 in self.model_trigram[w1_w2]:
                 self.model_trigram[w1_w2][w3] /= total_count
 
-    def generate_sentence(self, length=10, prob_threshold=0.05):
-        start_words = random.choice(list(self.model_trigram.keys()))
-        sentence = list(start_words)
+    def generate_sentence(self, min_length=5, max_length=10, prob_threshold=0.02):
+        start_word = random.choice(list(self.model_bigram.keys()))
+        sentence = [start_word]
 
-        for _ in range(length - 2):
-            next_word_probs = self.model_trigram.get((sentence[-2], sentence[-1]), {})
-            if next_word_probs:
-                filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
-                if filtered_probs:
-                    next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
-                    if next_word: 
-                        sentence.append(next_word)
-                    else:
-                        break  # Stop if next word is None
+        while len(sentence) < max_length:
+            next_word_probs = self.model_bigram[sentence[-1]]
+            filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
+
+            if filtered_probs:
+                next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
+                if next_word is not None:  # Ensure next_word is not None
+                    sentence.append(next_word)
                 else:
-                    break  # Stop if no words meet the probability threshold
+                    break  # Break if no valid next word is found
             else:
-                break  # Stop if no prediction for the next word
-        
-        # Ensure no None values in sentence
-        sentence = [word for word in sentence if word is not None]
+                break  # Break if no valid next words are available
 
-        return ' '.join(sentence)
+        if len(sentence) >= min_length:
+            sentence[-1] += '.' 
 
-    def generate_text(self, initial_sentence, num_sentences):
+        return ' '.join(sentence).capitalize() if sentence else ""
+
+    def generate_text(self, initial_sentence, num_sentences=30):
         generated_text = initial_sentence
         current_sentence = initial_sentence
 
-        for _ in range(num_sentences):
+        sentences_count = 1  # Initialize counter for sentences
+
+        while sentences_count < num_sentences:
             new_sentence = self.generate_sentence()
 
-            # Predict transition type
-            transition_type = self.predict_transition(current_sentence, new_sentence)
-
-            # If transition type is not suitable, select a new sentence
-            while self.are_sentences_similar(new_sentence, current_sentence) or transition_type[0] == 0:
+            # Check for sentence coherence and similarity
+            while self.are_sentences_similar(new_sentence, current_sentence):
                 new_sentence = self.generate_sentence()
-                transition_type = self.predict_transition(current_sentence, new_sentence)
 
-            generated_text += " " + new_sentence
-            current_sentence = new_sentence
+            if new_sentence:  # Ensure the new_sentence is not empty
+                generated_text += " " + new_sentence
+                current_sentence = new_sentence
+                sentences_count += 1  # Increment counter for each new sentence
 
         # Ensure the generated text ends with a period
         if not generated_text.strip().endswith('.'):
@@ -119,27 +144,41 @@ class SentenceGenerator:
 
         return generated_text.strip()
 
-# Metin dosyasını yükleme
+    def refine_text(self, text):
+        doc = self.nlp(text)
+        refined_sentences = []
+        
+        for sent in doc.sents:
+            # You can add your own refinements here
+            # For example, correcting grammar or enhancing clarity
+            refined_sentences.append(sent.text.strip())
+
+        return ' '.join(refined_sentences)
+
+# Load text data
 def load_text_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
-# Örnek kullanım
+# Example usage
 if __name__ == "__main__":
     text_file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_gen_data.txt"
     transition_model_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\best_transition_model.keras"
     
-    # Metin verisini yükle
+    # Load text data
     text = load_text_data(text_file_path)
 
-    # Cümle üreteciyi oluştur
+    # Create the sentence generator
     sentence_generator = SentenceGenerator(text, transition_model_path)
 
-    # Başlangıç cümlesi
-    initial_sentence = "Deep within the enchanted woods of Eldoria, a long-forgotten prophecy began to awaken, hinting at a destiny intertwined with ancient magic and untold adventures."
+    # Initial sentence
+    initial_sentence = "Mira whispered, tears of joy glistening in her eyes."
     
-    # Metin üret
+    # Generate text
     generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=30)
     
+    # Refine the generated text for better coherence
+    refined_text = sentence_generator.refine_text(generated_text)
+    
     print("Generated Text:")
-    print(generated_text)
+    print(refined_text)
