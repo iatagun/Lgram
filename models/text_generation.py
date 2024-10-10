@@ -101,7 +101,7 @@ class SentenceGenerator:
         # Calculate n-gram frequencies
         ngram_counts = defaultdict(int)
 
-        for n in range(2, 6):  # Example: checking for n-grams of length 2 to 5
+        for n in range(3, 6):  # Example: checking for n-grams of length 2 to 5
             dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=n)
             total_ngrams = sum(len(v) for v in dynamic_ngram_model.model.values())
             ngram_counts[n] = total_ngrams
@@ -112,7 +112,7 @@ class SentenceGenerator:
 
         return min_length, max_length
 
-    def generate_sentence(self, min_length=5, max_length=10, prob_threshold=0.02):
+    def generate_sentence(self, min_length=4, max_length=10, prob_threshold=0.01):
         # Use dynamic n-gram length
         ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
 
