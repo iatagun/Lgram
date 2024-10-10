@@ -1,214 +1,66 @@
-import numpy as np
-import tensorflow as tf
-from difflib import SequenceMatcher
 import random
 from collections import defaultdict
 import nltk
 from nltk import word_tokenize
-from nltk import trigrams
 from nltk import bigrams
-import string  # Noktalama işaretlerini işlemek için ekledik
 
-class DynamicNGram:
+class StatisticalModel:
     def __init__(self, text, n=2):
-        self.model = defaultdict(lambda: defaultdict(lambda: 0))
         self.n = n
+        self.model = defaultdict(lambda: defaultdict(lambda: 0))
         self._build_ngram_model(text)
 
     def _build_ngram_model(self, text):
+        # Tokenize the text
         tokenized_text = [list(map(str.lower, word_tokenize(sent))) for sent in nltk.sent_tokenize(text)]
         for sentence in tokenized_text:
-            ngrams = [tuple(sentence[i:i+self.n]) for i in range(len(sentence) - self.n + 1)]
-            for ngram in ngrams:
-                self.model[ngram[:-1]][ngram[-1]] += 1
-        
+            for ngram in bigrams(sentence, pad_right=True, pad_left=True):
+                self.model[ngram[0]][ngram[1]] += 1
+
+        # Transform counts to probabilities
         for w1 in self.model:
             total_count = float(sum(self.model[w1].values()))
             for w2 in self.model[w1]:
                 self.model[w1][w2] /= total_count
 
-    def predict_next_word(self, context):
-        context_tuple = tuple(context[-(self.n-1):])
-        return self.model.get(context_tuple, {})
-
-
-class SentenceGenerator:
-    def __init__(self, text, transition_model_path, seq_length=15):
-        self.sentences = self._split_into_sentences(text)
-        self.transition_model = tf.keras.models.load_model(transition_model_path)
-        self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
-        self.tokenizer.fit_on_texts(self.sentences)
-        self.seq_length = seq_length
-        
-        # Initialize models for bigram and trigram
-        self.model_bigram = defaultdict(lambda: defaultdict(lambda: 0))
-        self.model_trigram = defaultdict(lambda: defaultdict(lambda: 0))
-        
-        # Build the n-gram models
-        self._build_ngram_models(text)
-        
-        # Set min and max n-gram values based on statistics
-        self.min_ngram_length, self.max_ngram_length = self.set_ngram_bounds()
-
-    def _split_into_sentences(self, text):
-        return [sentence.strip() for sentence in text.split('.') if sentence]
-
-    def remove_punctuation(self, text):
-        """Noktalama işaretlerini kaldır."""
-        return text.translate(str.maketrans('', '', string.punctuation.replace('.', '')))
-
-    def are_sentences_similar(self, sentence1, sentence2, threshold=0.8):
-        similarity = SequenceMatcher(None, sentence1, sentence2).ratio()
-        return similarity > threshold
-
-    def predict_transition(self, current_sentence, new_sentence):
-        current_sequence = self.tokenize(current_sentence)
-        new_sequence = self.tokenize(new_sentence)
-
-        current_sequence_padded = tf.keras.preprocessing.sequence.pad_sequences([current_sequence], maxlen=self.seq_length, padding='post')
-        new_sequence_padded = tf.keras.preprocessing.sequence.pad_sequences([new_sequence], maxlen=self.seq_length, padding='post')
-
-        input_data = np.concatenate((current_sequence_padded, new_sequence_padded), axis=1)
-        prediction = self.transition_model.predict(input_data)
-
-        return np.argmax(prediction, axis=1)
-
-    def tokenize(self, sentence):
-        # Noktalama işaretlerini kaldır ve kelimeleri indeksle
-        cleaned_sentence = self.remove_punctuation(sentence)
-        return [self.tokenizer.word_index[word] for word in cleaned_sentence.split() if word in self.tokenizer.word_index]
-
-    def _build_ngram_models(self, text):
-        # Tokenize the text
-        tokenized_text = [list(map(str.lower, word_tokenize(sent))) for sent in nltk.sent_tokenize(text)]
-
-        # Build bigram model
-        for sentence in tokenized_text:
-            for w1, w2 in bigrams(sentence, pad_right=True, pad_left=True):
-                self.model_bigram[w1][w2] += 1
-
-        # Transform counts to probabilities for bigrams
-        for w1 in self.model_bigram:
-            total_count = float(sum(self.model_bigram[w1].values()))
-            for w2 in self.model_bigram[w1]:
-                self.model_bigram[w1][w2] /= total_count
-
-        # Build trigram model
-        for sentence in tokenized_text:
-            for w1, w2, w3 in trigrams(sentence, pad_right=True, pad_left=True):
-                self.model_trigram[(w1, w2)][w3] += 1
-
-        # Transform counts to probabilities for trigrams
-        for w1_w2 in self.model_trigram:
-            total_count = float(sum(self.model_trigram[w1_w2].values()))
-            for w3 in self.model_trigram[w1_w2]:
-                self.model_trigram[w1_w2][w3] /= total_count
-
-    def set_ngram_bounds(self):
-        # Calculate n-gram frequencies
-        ngram_counts = defaultdict(int)
-
-        for n in range(3, 6):  # Example: checking for n-grams of length 2 to 5
-            dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=n)
-            total_ngrams = sum(len(v) for v in dynamic_ngram_model.model.values())
-            ngram_counts[n] = total_ngrams
-
-        # Set min and max n-gram lengths based on frequency analysis
-        min_length = min(ngram_counts, key=ngram_counts.get)
-        max_length = max(ngram_counts, key=ngram_counts.get)
-
-        return min_length, max_length
-
-    def generate_sentence(self, min_length=4, max_length=10, prob_threshold=0.01):
-        # Use dynamic n-gram length
-        ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
-
-        # Create dynamic n-gram model with the chosen length
-        dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=ngram_length)
-        
-        # Select start words
-        start_words = random.choice(list(dynamic_ngram_model.model.keys()))
-        sentence = list(start_words)
-        selected_words = []  # List to keep track of selected words from the model
+    def generate_sentence(self, max_length=10):
+        # Start with a random word
+        current_word = random.choice(list(self.model.keys()))
+        sentence = [current_word]
 
         while len(sentence) < max_length:
-            next_word_probs = dynamic_ngram_model.predict_next_word(sentence)
-            if next_word_probs:
-                filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
-                if filtered_probs:
-                    next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
-                    selected_words.append(next_word)  # Track selected words
-                    if next_word:
-                        sentence.append(next_word)
-                    else:
-                        break  # Stop if next word is None
-                else:
-                    break  # Stop if no words meet the probability threshold
-            else:
-                break  # Stop if no prediction for the next word
-
-        # End the sentence with punctuation
-        if len(sentence) >= min_length:
-            sentence[-1] += '.'  # Add a period to the last word
-
-        # Ensure the first word is capitalized
-        if len(sentence) > 1:
-            sentence[0] = sentence[0].capitalize()
-    
-        return ' '.join(sentence), selected_words  # Return both the sentence and selected words
-
-    def generate_text(self, initial_sentence, num_sentences):
-        generated_text = initial_sentence
-        current_sentence = initial_sentence
-
-        for i in range(num_sentences):
-            new_sentence, selected_words = self.generate_sentence()
-
-            # Predict transition type using the transition model
-            transition_type = self.predict_transition(current_sentence, new_sentence)
+            next_word_probs = self.model[current_word]
+            if not next_word_probs:
+                break  # Stop if no next word probabilities
             
-            # Log the transition prediction to demonstrate model influence
-            print(f"Transition from sentence {i} to sentence {i+1}: {transition_type}")
-            print(f"Selected words for transition: {selected_words}")  # Show selected words
+            # Randomly choose the next word based on probabilities
+            next_word = random.choices(list(next_word_probs.keys()), weights=list(next_word_probs.values()), k=1)[0]
+            if next_word:  # Check if next_word is valid
+                sentence.append(next_word)  # Append the chosen next word
+                current_word = next_word
+            else:
+                break  # Stop if no words are found
 
-            # If transition type is not suitable, select a new sentence
-            while self.are_sentences_similar(new_sentence, current_sentence) or transition_type[0] == 0:
-                new_sentence, selected_words = self.generate_sentence()
-                transition_type = self.predict_transition(current_sentence, new_sentence)
-
-                # Log the new transition prediction for transparency
-                print(f"New transition for sentence {i+1}: {transition_type}")
-                print(f"Selected words for new transition: {selected_words}")  # Show selected words
-
-            generated_text += " " + new_sentence
-            current_sentence = new_sentence
-
-        # Ensure the generated text ends with a period
-        if not generated_text.strip().endswith('.'):
-            generated_text += '.'
-
-        return generated_text.strip()
+        # End the sentence with a period
+        if sentence:  # Check if sentence is not empty
+            sentence[-1] += '.'  # Add a period to the last word
+        return ' '.join(sentence).capitalize() if sentence else ''
 
 # Load text data
 def load_text_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
-# Example usage
 if __name__ == "__main__":
+    # Örnek metin dosyası yolu
     text_file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_gen_data.txt"
-    transition_model_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\best_transition_model.keras"
     
-    # Load text data
+    # Metin verisini yükle
     text = load_text_data(text_file_path)
 
-    # Create a SentenceGenerator instance
-    sentence_generator = SentenceGenerator(text, transition_model_path)
+    # İstatistiksel modeli oluştur
+    statistical_model = StatisticalModel(text)
 
-    # Generate text starting from an initial sentence
-    initial_sentence = "Mira whispered, tears of joy glistening in her eyes."
-    generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=20)
-
-    # Output the generated text
-    print("\nGenerated Text:")
-    print(generated_text)
+    # Cümleler oluştur
+    for _ in range(5):  # 5 cümle üret
+        print(statistical_model.generate_sentence())

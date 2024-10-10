@@ -119,7 +119,7 @@ class SentenceGenerator:
 
         return min_length, max_length
 
-    def generate_sentence(self, min_length=4, max_length=10, prob_threshold=0.01):
+    def generate_sentence(self, min_length=4, max_length=10, prob_threshold=0.005):
         # Use dynamic n-gram length
         ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
 
