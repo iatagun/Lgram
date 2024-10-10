@@ -97,8 +97,8 @@ text = load_text_data(text_file_path)
 sentence_generator = SentenceGenerator(text, transition_model_path)
 
 # Generate text starting from an initial sentence
-initial_sentence = "As the spirit began to fade, it gifted each of them a glowing seed."
-generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=30)
+initial_sentence = "As Elara woke to the first light of dawn, she felt the fire of hope and determination burning brighter within her than ever before."
+generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=20)
 
 # Output the generated text
 print("\nGenerated Text:")
