@@ -8,11 +8,16 @@ from text_generation import SentenceGenerator, load_text_data
 
 def evaluate_fluency(text):
     sentences = nltk.sent_tokenize(text)
-    avg_sentence_length = np.mean([len(nltk.word_tokenize(sent)) for sent in sentences])
-    num_complex_sentences = sum(1 for sent in sentences if len(nltk.sent_tokenize(sent)) > 1)
+    avg_sentence_length = np.mean([len(nltk.word_tokenize(sent)) for sent in sentences]) if sentences else 0
+    num_complex_sentences = sum(1 for sent in sentences if len(nltk.word_tokenize(sent)) > 20)  # Adjusted threshold for complexity
     
-    fluency_score = (avg_sentence_length / 20) + (num_complex_sentences / len(sentences))
-    fluency_score = min(fluency_score, 1.0)  # Ensure score does not exceed 1.0
+    # Calculate fluency score considering no division by zero
+    if len(sentences) > 0:
+        fluency_score = (avg_sentence_length / 20) + (num_complex_sentences / len(sentences))
+        fluency_score = min(fluency_score, 1.0)  # Ensure score does not exceed 1.0
+    else:
+        fluency_score = 0
+    
     return fluency_score
 
 def evaluate_accuracy(generated_text, reference_texts):
@@ -30,17 +35,22 @@ def evaluate_transitions(text):
     sentences = nltk.sent_tokenize(text)
     transition_scores = []
     
+    # Use more advanced methods or thresholding to improve the transition evaluation
     for i in range(1, len(sentences)):
         prev_sent = sentences[i - 1]
         curr_sent = sentences[i]
         
-        vectorizer = CountVectorizer().fit_transform([prev_sent, curr_sent])
+        # Combine sentences for context
+        combined = prev_sent + " " + curr_sent
+        
+        vectorizer = CountVectorizer().fit_transform([combined])
         vectors = vectorizer.toarray()
-        cosine_sim = cosine_similarity(vectors)[0][1]
+        cosine_sim = cosine_similarity(vectors)[0][0]  # Similarity of combined sentences
         transition_scores.append(cosine_sim)
     
     avg_transition_score = np.mean(transition_scores) if transition_scores else 0
     return avg_transition_score
+
 
 def evaluate_consistency(text):
     sentences = nltk.sent_tokenize(text)
@@ -88,7 +98,7 @@ input_text = load_text_data(text_file_path)
 
 # Create a SentenceGenerator instance and generate text
 sentence_generator = SentenceGenerator(input_text, transition_model_path)
-initial_sentence = "You had better ask his old master."
+initial_sentence = "It was successful. That is all."
 num_sentences_to_generate = 20
 
 # Generate text using the sentence generator

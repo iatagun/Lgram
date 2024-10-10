@@ -31,6 +31,18 @@ class DynamicNGram:
         context_tuple = tuple(context[-(self.n-1):])
         return self.model.get(context_tuple, {})
 
+    def get_word_vector(self, word):
+        """Placeholder for retrieving a word vector; should be replaced with actual embeddings."""
+        return np.random.rand(100)
+
+    def is_semantically_relevant(self, last_word, next_word):
+        """Check if the next word is semantically relevant to the last word."""
+        last_word_vec = self.get_word_vector(last_word)
+        next_word_vec = self.get_word_vector(next_word)
+
+        # Calculate cosine similarity
+        similarity = np.dot(last_word_vec, next_word_vec) / (np.linalg.norm(last_word_vec) * np.linalg.norm(next_word_vec))
+        return similarity > 0.5  # Define a threshold for relevance
 
 class SentenceGenerator:
     def __init__(self, text, transition_model_path, seq_length=15):
@@ -108,7 +120,7 @@ class SentenceGenerator:
         # Calculate n-gram frequencies
         ngram_counts = defaultdict(int)
 
-        for n in range(3, 6):  # Example: checking for n-grams of length 2 to 5
+        for n in range(3, 6):  # Example: checking for n-grams of length 3 to 5
             dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=n)
             total_ngrams = sum(len(v) for v in dynamic_ngram_model.model.values())
             ngram_counts[n] = total_ngrams
@@ -121,17 +133,21 @@ class SentenceGenerator:
 
     def is_coherent(self, last_word, next_word):
         """Check if the next word maintains coherence with the last word."""
-        # Implement your logic for coherence checks here.
-        # Example of simple coherence checks (this can be expanded):
         if last_word in ['is', 'are', 'was', 'were']:
             return next_word[0].islower()  # Following word should be lowercase
         elif last_word[-1] in ['.', '!', '?']:
             return next_word[0].isupper()  # Following word should start with uppercase if previous is punctuation
         return True  # Default to true if no specific checks apply
 
-    def generate_sentence(self, min_length=3, max_length=20, prob_threshold=0.00001):
+    def sample_with_temperature(self, probabilities, temperature=1.0):
+        """Sample from the probability distribution with temperature scaling."""
+        probabilities = np.asarray(probabilities).astype(float)
+        probabilities = np.exp(probabilities / temperature)  # Apply temperature
+        probabilities /= np.sum(probabilities)  # Normalize
+        return np.random.choice(len(probabilities), p=probabilities)
+
+    def generate_sentence(self, min_length=3, max_length=20, prob_threshold=0.00001, temperature=1.0):
         """Generate a sentence using a dynamic n-gram model with robust word selection."""
-        
         # Use dynamic n-gram length
         ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
 
@@ -142,9 +158,8 @@ class SentenceGenerator:
         start_words = random.choice(list(dynamic_ngram_model.model.keys()))
         sentence = list(start_words)
 
-        # Keep track of the number of attempts
         attempts = 0
-        max_attempts = 50  # Limit the number of attempts to avoid infinite loops
+        max_attempts = 50  # Limit attempts to avoid infinite loops
 
         while len(sentence) < max_length and attempts < max_attempts:
             next_word_probs = dynamic_ngram_model.predict_next_word(sentence)
@@ -153,15 +168,18 @@ class SentenceGenerator:
                 # Filter probabilities based on the threshold
                 filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
                 if filtered_probs:
-                    # Use weighted random choice to select the next word
-                    next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
+                    # Use temperature sampling for the next word
+                    words = list(filtered_probs.keys())
+                    probs = list(filtered_probs.values())
+                    selected_index = self.sample_with_temperature(probs, temperature)
+                    next_word = words[selected_index]
 
-                    # Check if the chosen word maintains coherence
-                    if self.is_coherent(sentence[-1], next_word):
+                    # Check if the chosen word maintains coherence and relevance
+                    if self.is_coherent(sentence[-1], next_word) and dynamic_ngram_model.is_semantically_relevant(sentence[-1], next_word):
                         sentence.append(next_word)
                         attempts = 0  # Reset attempts if a valid word is added
                     else:
-                        attempts += 1  # Increment attempts if coherence is not maintained
+                        attempts += 1  # Increment attempts if coherence or relevance is not maintained
                 else:
                     break  # Stop if no words meet the probability threshold
             else:
@@ -169,41 +187,35 @@ class SentenceGenerator:
 
         # Ensure the sentence is of adequate length
         if len(sentence) >= min_length:
-            # End the sentence with punctuation
             if sentence[-1][-1] not in ['.', '!', '?']:  # Check if the last word already has punctuation
                 sentence[-1] += '.'  # Add a period to the last word
 
-            # Ensure the first word is capitalized
-            sentence[0] = sentence[0].capitalize()
+            sentence[0] = sentence[0].capitalize()  # Capitalize the first word
+            return ' '.join(sentence)  # Return the generated sentence
 
-            # Refine the sentence for clarity and coherence
-            refined_sentence = self.refine_sentence(' '.join(sentence))
-            return refined_sentence
+        return ""  # Return an empty string if no valid sentence was generated
+
+    def generate_text(self, initial_sentence=None, num_sentences=5):
+        """Generate a specified number of coherent sentences."""
+        text = []
+        
+        if initial_sentence:
+            text.append(initial_sentence)
+            current_sentence = initial_sentence
         else:
-            return ""  # Return an empty string if the sentence is too short
+            current_sentence = random.choice(self.sentences)  # Start with a random sentence
+            text.append(current_sentence)  # Include it in the output
 
-    def refine_sentence(self, sentence):
-        """Refine the generated sentence for better coherence."""
-        # Simple post-processing can be enhanced further
-        words = sentence.split()
-        # Ensure the first word is capitalized and remove redundant spaces
-        if words:
-            words[0] = words[0].capitalize()
-        return ' '.join(words).replace('..', '.').strip()  # Clean up punctuation
-
-    def generate_text(self, initial_sentence, num_sentences):
-        generated_text = initial_sentence
-        current_sentence = initial_sentence
-
-        for i in range(num_sentences):
-            new_sentence = self.generate_sentence()
-            if new_sentence:
-                generated_text += ' ' + new_sentence
-                current_sentence = new_sentence
+        for _ in range(num_sentences - 1):  # Generate the remaining sentences
+            generated_sentence = self.generate_sentence()
+            if generated_sentence:
+                text.append(generated_sentence)
+                current_sentence = generated_sentence  # Update current sentence for next generation
             else:
-                break  # Stop if no new sentence is generated
+                break
 
-        return generated_text.strip()
+        return ' '.join(text) if text else "No coherent text generated."
+
 
 
 # Load text data
