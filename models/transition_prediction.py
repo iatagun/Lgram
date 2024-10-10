@@ -70,7 +70,7 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=1
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(os.path.join(model_save_dir, 'best_transition_model.keras'), save_best_only=True)
 
 # Modeli eğitme
-model.fit(X_train, y_train, epochs=500, batch_size=8, validation_data=(X_test, y_test),
+model.fit(X_train, y_train, epochs=300, batch_size=8, validation_data=(X_test, y_test),
           class_weight=class_weights_dict, callbacks=[early_stopping, model_checkpoint])
 
 # Test kaybı ve doğruluğunu hesapla

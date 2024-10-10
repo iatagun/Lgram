@@ -7,7 +7,7 @@ import nltk
 from nltk import word_tokenize
 from nltk import trigrams
 from nltk import bigrams
-import string  # Noktalama işaretlerini işlemek için ekledik
+import string
 
 class DynamicNGram:
     def __init__(self, text, n=2):
@@ -39,14 +39,14 @@ class SentenceGenerator:
         self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
         self.tokenizer.fit_on_texts(self.sentences)
         self.seq_length = seq_length
-        
+
         # Initialize models for bigram and trigram
         self.model_bigram = defaultdict(lambda: defaultdict(lambda: 0))
         self.model_trigram = defaultdict(lambda: defaultdict(lambda: 0))
-        
+
         # Build the n-gram models
         self._build_ngram_models(text)
-        
+
         # Set min and max n-gram values based on statistics
         self.min_ngram_length, self.max_ngram_length = self.set_ngram_bounds()
 
@@ -119,17 +119,16 @@ class SentenceGenerator:
 
         return min_length, max_length
 
-    def generate_sentence(self, min_length=4, max_length=10, prob_threshold=0.005):
+    def generate_sentence(self, min_length=3, max_length=12, prob_threshold=0.01):
         # Use dynamic n-gram length
         ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
 
         # Create dynamic n-gram model with the chosen length
         dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=ngram_length)
-        
+
         # Select start words
         start_words = random.choice(list(dynamic_ngram_model.model.keys()))
         sentence = list(start_words)
-        selected_words = []  # List to keep track of selected words from the model
 
         while len(sentence) < max_length:
             next_word_probs = dynamic_ngram_model.predict_next_word(sentence)
@@ -137,7 +136,6 @@ class SentenceGenerator:
                 filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
                 if filtered_probs:
                     next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
-                    selected_words.append(next_word)  # Track selected words
                     if next_word:
                         sentence.append(next_word)
                     else:
@@ -154,31 +152,41 @@ class SentenceGenerator:
         # Ensure the first word is capitalized
         if len(sentence) > 1:
             sentence[0] = sentence[0].capitalize()
+
+        # Refine sentence for clarity and coherence
+        refined_sentence = self.refine_sentence(' '.join(sentence))
     
-        return ' '.join(sentence), selected_words  # Return both the sentence and selected words
+        return refined_sentence
+
+    def refine_sentence(self, sentence):
+        """Refine the generated sentence for better coherence."""
+        # Simple post-processing can be enhanced further
+        words = sentence.split()
+        # Ensure the first word is capitalized and remove redundant spaces
+        if words:
+            words[0] = words[0].capitalize()
+        return ' '.join(words).replace('..', '.').strip()  # Clean up punctuation
 
     def generate_text(self, initial_sentence, num_sentences):
         generated_text = initial_sentence
         current_sentence = initial_sentence
 
         for i in range(num_sentences):
-            new_sentence, selected_words = self.generate_sentence()
+            new_sentence = self.generate_sentence()
 
             # Predict transition type using the transition model
             transition_type = self.predict_transition(current_sentence, new_sentence)
-            
+
             # Log the transition prediction to demonstrate model influence
             print(f"Transition from sentence {i} to sentence {i+1}: {transition_type}")
-            print(f"Selected words for transition: {selected_words}")  # Show selected words
 
             # If transition type is not suitable, select a new sentence
             while self.are_sentences_similar(new_sentence, current_sentence) or transition_type[0] == 0:
-                new_sentence, selected_words = self.generate_sentence()
+                new_sentence = self.generate_sentence()
                 transition_type = self.predict_transition(current_sentence, new_sentence)
 
                 # Log the new transition prediction for transparency
                 print(f"New transition for sentence {i+1}: {transition_type}")
-                print(f"Selected words for new transition: {selected_words}")  # Show selected words
 
             generated_text += " " + new_sentence
             current_sentence = new_sentence
@@ -197,18 +205,13 @@ def load_text_data(file_path):
 # Example usage
 if __name__ == "__main__":
     text_file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_gen_data.txt"
-    transition_model_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\best_transition_model.keras"
+    transition_model_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\transition_model.h5"
+    input_text = load_text_data(text_file_path)
     
-    # Load text data
-    text = load_text_data(text_file_path)
+    sentence_generator = SentenceGenerator(input_text, transition_model_path)
+    initial_sentence = "As the spirit began to fade, it gifted each of them a glowing seed."
+    num_sentences_to_generate = 5
 
-    # Create a SentenceGenerator instance
-    sentence_generator = SentenceGenerator(text, transition_model_path)
-
-    # Generate text starting from an initial sentence
-    initial_sentence = "Mira whispered, tears of joy glistening in her eyes."
-    generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=20)
-
-    # Output the generated text
-    print("\nGenerated Text:")
+    generated_text = sentence_generator.generate_text(initial_sentence, num_sentences_to_generate)
+    print("Generated Text:")
     print(generated_text)
