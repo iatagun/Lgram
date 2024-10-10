@@ -54,7 +54,7 @@ class SentenceGenerator:
         return [sentence.strip() for sentence in text.split('.') if sentence]
 
     def remove_punctuation(self, text):
-        """Noktalama işaretlerini kaldır."""
+        """Remove punctuation."""
         return text.translate(str.maketrans('', '', string.punctuation.replace('.', '')))
 
     def are_sentences_similar(self, sentence1, sentence2, threshold=0.8):
@@ -74,7 +74,7 @@ class SentenceGenerator:
         return np.argmax(prediction, axis=1)
 
     def tokenize(self, sentence):
-        # Noktalama işaretlerini kaldır ve kelimeleri indeksle
+        # Remove punctuation and tokenize
         cleaned_sentence = self.remove_punctuation(sentence)
         return [self.tokenizer.word_index[word] for word in cleaned_sentence.split() if word in self.tokenizer.word_index]
 
@@ -119,44 +119,68 @@ class SentenceGenerator:
 
         return min_length, max_length
 
-    def generate_sentence(self, min_length=3, max_length=13, prob_threshold=0.005):
+    def is_coherent(self, last_word, next_word):
+        """Check if the next word maintains coherence with the last word."""
+        # Implement your logic for coherence checks here.
+        # Example of simple coherence checks (this can be expanded):
+        if last_word in ['is', 'are', 'was', 'were']:
+            return next_word[0].islower()  # Following word should be lowercase
+        elif last_word[-1] in ['.', '!', '?']:
+            return next_word[0].isupper()  # Following word should start with uppercase if previous is punctuation
+        return True  # Default to true if no specific checks apply
+
+    def generate_sentence(self, min_length=2, max_length=20, prob_threshold=0.0001):
+        """Generate a sentence using a dynamic n-gram model with robust word selection."""
+        
         # Use dynamic n-gram length
         ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
 
         # Create dynamic n-gram model with the chosen length
         dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=ngram_length)
 
-        # Select start words
+        # Select start words from the model
         start_words = random.choice(list(dynamic_ngram_model.model.keys()))
         sentence = list(start_words)
 
-        while len(sentence) < max_length:
+        # Keep track of the number of attempts
+        attempts = 0
+        max_attempts = 50  # Limit the number of attempts to avoid infinite loops
+
+        while len(sentence) < max_length and attempts < max_attempts:
             next_word_probs = dynamic_ngram_model.predict_next_word(sentence)
+
             if next_word_probs:
+                # Filter probabilities based on the threshold
                 filtered_probs = {word: prob for word, prob in next_word_probs.items() if prob > prob_threshold}
                 if filtered_probs:
+                    # Use weighted random choice to select the next word
                     next_word = random.choices(list(filtered_probs.keys()), weights=list(filtered_probs.values()))[0]
-                    if next_word:
+
+                    # Check if the chosen word maintains coherence
+                    if self.is_coherent(sentence[-1], next_word):
                         sentence.append(next_word)
+                        attempts = 0  # Reset attempts if a valid word is added
                     else:
-                        break  # Stop if next word is None
+                        attempts += 1  # Increment attempts if coherence is not maintained
                 else:
                     break  # Stop if no words meet the probability threshold
             else:
                 break  # Stop if no prediction for the next word
 
-        # End the sentence with punctuation
+        # Ensure the sentence is of adequate length
         if len(sentence) >= min_length:
-            sentence[-1] += '.'  # Add a period to the last word
+            # End the sentence with punctuation
+            if sentence[-1][-1] not in ['.', '!', '?']:  # Check if the last word already has punctuation
+                sentence[-1] += '.'  # Add a period to the last word
 
-        # Ensure the first word is capitalized
-        if len(sentence) > 1:
+            # Ensure the first word is capitalized
             sentence[0] = sentence[0].capitalize()
 
-        # Refine sentence for clarity and coherence
-        refined_sentence = self.refine_sentence(' '.join(sentence))
-    
-        return refined_sentence
+            # Refine the sentence for clarity and coherence
+            refined_sentence = self.refine_sentence(' '.join(sentence))
+            return refined_sentence
+        else:
+            return ""  # Return an empty string if the sentence is too short
 
     def refine_sentence(self, sentence):
         """Refine the generated sentence for better coherence."""
@@ -173,29 +197,14 @@ class SentenceGenerator:
 
         for i in range(num_sentences):
             new_sentence = self.generate_sentence()
-
-            # Predict transition type using the transition model
-            transition_type = self.predict_transition(current_sentence, new_sentence)
-
-            # Log the transition prediction to demonstrate model influence
-            print(f"Transition from sentence {i} to sentence {i+1}: {transition_type}")
-
-            # If transition type is not suitable, select a new sentence
-            while self.are_sentences_similar(new_sentence, current_sentence) or transition_type[0] == 0:
-                new_sentence = self.generate_sentence()
-                transition_type = self.predict_transition(current_sentence, new_sentence)
-
-                # Log the new transition prediction for transparency
-                print(f"New transition for sentence {i+1}: {transition_type}")
-
-            generated_text += " " + new_sentence
-            current_sentence = new_sentence
-
-        # Ensure the generated text ends with a period
-        if not generated_text.strip().endswith('.'):
-            generated_text += '.'
+            if new_sentence:
+                generated_text += ' ' + new_sentence
+                current_sentence = new_sentence
+            else:
+                break  # Stop if no new sentence is generated
 
         return generated_text.strip()
+
 
 # Load text data
 def load_text_data(file_path):

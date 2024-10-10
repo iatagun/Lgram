@@ -5,14 +5,17 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 
 def evaluate_fluency(text):
-    """Evaluate the fluency of generated text."""
+    """Evaluate the fluency of generated text based on average sentence length and complexity."""
     sentences = nltk.sent_tokenize(text)
     avg_sentence_length = np.mean([len(nltk.word_tokenize(sent)) for sent in sentences])
-    fluency_score = avg_sentence_length / 20  # Normalize to a scale of 0-1 for example
+    num_complex_sentences = sum(1 for sent in sentences if len(nltk.sent_tokenize(sent)) > 1)
+    
+    fluency_score = (avg_sentence_length / 20) + (num_complex_sentences / len(sentences))
+    fluency_score = min(fluency_score, 1.0)  # Ensure score does not exceed 1.0
     return fluency_score
 
 def evaluate_accuracy(generated_text, reference_texts):
-    """Evaluate the accuracy of generated text against reference texts."""
+    """Evaluate the accuracy of generated text against reference texts based on semantic similarity."""
     vectorizer = CountVectorizer().fit_transform([generated_text] + reference_texts)
     vectors = vectorizer.toarray()
     cosine_matrix = cosine_similarity(vectors)
@@ -23,7 +26,7 @@ def evaluate_accuracy(generated_text, reference_texts):
     return avg_similarity
 
 def evaluate_transitions(text):
-    """Evaluate the transitions between sentences."""
+    """Evaluate the transitions between sentences based on semantic relationships."""
     sentences = nltk.sent_tokenize(text)
     transition_scores = []
     
@@ -42,7 +45,7 @@ def evaluate_transitions(text):
     return avg_transition_score
 
 def evaluate_consistency(text):
-    """Evaluate the consistency of the generated text."""
+    """Evaluate the consistency of the generated text based on thematic and lexical cohesion."""
     sentences = nltk.sent_tokenize(text)
     consistency_scores = []
     
@@ -60,7 +63,7 @@ def evaluate_consistency(text):
     return avg_consistency_score
 
 def evaluate_thematic_coherence(text):
-    """Evaluate the thematic coherence of the generated text."""
+    """Evaluate the thematic coherence of the generated text using LDA or TF-IDF for topic modeling."""
     sentences = nltk.sent_tokenize(text)
     thematic_scores = []
 
@@ -98,7 +101,7 @@ sentence_generator = SentenceGenerator(text, transition_model_path)
 
 # Generate text starting from an initial sentence
 initial_sentence = "As Elara woke to the first light of dawn, she felt the fire of hope and determination burning brighter within her than ever before."
-generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=20)
+generated_text = sentence_generator.generate_text(initial_sentence, num_sentences=10)
 
 # Output the generated text
 print("\nGenerated Text:")
