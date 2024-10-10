@@ -139,14 +139,14 @@ class SentenceGenerator:
             return next_word[0].isupper()  # Following word should start with uppercase if previous is punctuation
         return True  # Default to true if no specific checks apply
 
-    def sample_with_temperature(self, probabilities, temperature=1.0):
+    def sample_with_temperature(self, probabilities, temperature=0.1):
         """Sample from the probability distribution with temperature scaling."""
         probabilities = np.asarray(probabilities).astype(float)
         probabilities = np.exp(probabilities / temperature)  # Apply temperature
         probabilities /= np.sum(probabilities)  # Normalize
         return np.random.choice(len(probabilities), p=probabilities)
 
-    def generate_sentence(self, min_length=3, max_length=20, prob_threshold=0.00001, temperature=1.0):
+    def generate_sentence(self, min_length=3, max_length=20, prob_threshold=0.00001, temperature=0.3):
         """Generate a sentence using a dynamic n-gram model with robust word selection."""
         # Use dynamic n-gram length
         ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
