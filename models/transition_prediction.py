@@ -6,41 +6,41 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import class_weight
-from analyze_transitions import analyze_transitions  # Adjust the import path as necessary
+from analyze_transitions import analyze_transitions
 
-# Metin dosyasını yükleme
-def load_text_data(file_path):
+# Metin dosyasını belirli boyutlarda yükleme
+def load_text_data_in_chunks(file_path, chunk_size=9000):
     with open(file_path, 'r', encoding='utf-8') as file:
-        text = file.read()
-    return text
+        while True:
+            chunk = file.read(chunk_size)
+            if not chunk:
+                break
+            yield chunk
 
 # Örnek metin dosyası
-file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_data.txt'  # Dosya yolunu buraya girin
-text = load_text_data(file_path)
+file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_data.txt'
 
-# Geçiş analizini yap ve DataFrame'i al
-transition_df = analyze_transitions(text)
+# Geçiş analizini yapacak DataFrame'leri birleştirme
+all_transition_dfs = []
 
-# Özellikleri ve etiketleri hazırlama
-transition_df['features'] = transition_df['current_sentence'] + " " + transition_df['next_sentence']
-transition_df['label'] = transition_df['transition_type'].astype('category').cat.codes
+for chunk in load_text_data_in_chunks(file_path, chunk_size=5000):
+    transition_df = analyze_transitions(chunk)
+    transition_df['features'] = transition_df['current_sentence'] + " " + transition_df['next_sentence']
+    transition_df['label'] = transition_df['transition_type'].astype('category').cat.codes
+    all_transition_dfs.append(transition_df)
 
-# Veri inceleme: Geçiş DataFrame'inin başını ve sonunu yazdır
-print("Geçiş Analizi Sonucu:")
-print(transition_df.head())  # İlk 5 satırı göster
-print("\nGeçiş Analizi Sonucu (Son 5 Satır):")
-print(transition_df.tail())  # Son 5 satırı göster
+full_transition_df = pd.concat(all_transition_dfs, ignore_index=True)
 
 # Metin verilerini hazırlama
-sentences = transition_df['features'].tolist()  # DataFrame'den özellikleri çıkar
+sentences = full_transition_df['features'].tolist()
 tokenizer = tf.keras.preprocessing.text.Tokenizer()
-tokenizer.fit_on_texts(sentences)  # Özellikleri kullanarak fit et
-sequences = tokenizer.texts_to_sequences(sentences)  # Özellikleri dizelere dönüştür
+tokenizer.fit_on_texts(sentences)
+sequences = tokenizer.texts_to_sequences(sentences)
 max_length = max(len(s) for s in sequences)
 X_padded = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=max_length, padding='post')
 
 # Etiketleri hazırlama
-y = transition_df['label'].values  # DataFrame'den etiketleri çıkar
+y = full_transition_df['label'].values
 
 # Veriyi bölme
 X_train, X_test, y_train, y_test = train_test_split(X_padded, y, test_size=0.2, random_state=42)
@@ -50,27 +50,27 @@ class_weights = class_weight.compute_class_weight('balanced', classes=np.unique(
 class_weights_dict = {i: class_weights[i] for i in range(len(class_weights))}
 
 # Model kaydetme dizinini tanımlama
-model_save_dir = 'models'  # Klasör adı
-os.makedirs(model_save_dir, exist_ok=True)  # Klasörü oluştur (varsa hata vermez)
+model_save_dir = 'models'
+os.makedirs(model_save_dir, exist_ok=True)
 
 # Modeli inşa etme
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(input_dim=len(tokenizer.word_index) + 1, output_dim=64, input_length=max_length),
-    tf.keras.layers.LSTM(128, return_sequences=True),  # LSTM hücre sayısını artır
-    tf.keras.layers.LSTM(64, return_sequences=False),  # Ek bir LSTM katmanı ekle
-    tf.keras.layers.Dropout(0.5),  # Aşırı öğrenmeyi önlemek için Dropout ekle
-    tf.keras.layers.Dense(32, activation='relu'),
-    tf.keras.layers.Dense(len(transition_df['transition_type'].unique()), activation='softmax')  # Doğru sınıf sayısı
+    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, return_sequences=True)),  # Bidirectional LSTM
+    tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)),  # Ek bir Bidirectional LSTM katmanı
+    tf.keras.layers.Dropout(0.6),  # Dropout oranını artır
+    tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),  # L2 düzenlemesi
+    tf.keras.layers.Dense(len(full_transition_df['transition_type'].unique()), activation='softmax')
 ])
 
-model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.compile(loss='sparse_categorical_crossentropy', optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics=['accuracy'])
 
 # Early stopping ve model checkpoint ayarları
 early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(os.path.join(model_save_dir, 'best_transition_model.keras'), save_best_only=True)
 
 # Modeli eğitme
-model.fit(X_train, y_train, epochs=900, batch_size=8, validation_data=(X_test, y_test),
+model.fit(X_train, y_train, epochs=500, batch_size=32, validation_data=(X_test, y_test),
           class_weight=class_weights_dict, callbacks=[early_stopping, model_checkpoint])
 
 # Test kaybı ve doğruluğunu hesapla

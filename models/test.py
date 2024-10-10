@@ -2,7 +2,6 @@ import numpy as np
 import nltk
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
-from gensim.models import KeyedVectors
 
 # Your custom imports for the sentence generation
 from text_generation import SentenceGenerator, load_text_data
@@ -26,14 +25,8 @@ def evaluate_accuracy(generated_text, reference_texts):
     avg_similarity = np.mean(similarity_scores)  # Average similarity
     return avg_similarity
 
-def load_word2vec_model():
-    # Load the Word2Vec model from pre-trained vectors
-    model = KeyedVectors.load_word2vec_format("C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\GoogleNews-vectors-negative300.bin", binary=True)
-    return model
-
 def evaluate_transitions(text):
-    """Evaluate transitions between sentences using Word2Vec-based semantic similarity."""
-    model = load_word2vec_model()  # Load the Word2Vec model
+    """Evaluate transitions between sentences using traditional cosine similarity."""
     sentences = nltk.sent_tokenize(text)
     transition_scores = []
     
@@ -41,18 +34,10 @@ def evaluate_transitions(text):
         prev_sent = sentences[i - 1]
         curr_sent = sentences[i]
         
-        prev_tokens = nltk.word_tokenize(prev_sent)
-        curr_tokens = nltk.word_tokenize(curr_sent)
-        
-        # Filter tokens in the model's vocabulary
-        prev_vectors = [model[token] for token in prev_tokens if token in model]
-        curr_vectors = [model[token] for token in curr_tokens if token in model]
-        
-        if prev_vectors and curr_vectors:
-            prev_vector_avg = np.mean(prev_vectors, axis=0)
-            curr_vector_avg = np.mean(curr_vectors, axis=0)
-            cosine_sim = cosine_similarity([prev_vector_avg], [curr_vector_avg])[0][0]
-            transition_scores.append(cosine_sim)
+        vectorizer = CountVectorizer().fit_transform([prev_sent, curr_sent])
+        vectors = vectorizer.toarray()
+        cosine_sim = cosine_similarity(vectors)[0][1]
+        transition_scores.append(cosine_sim)
     
     avg_transition_score = np.mean(transition_scores) if transition_scores else 0
     return avg_transition_score
@@ -103,7 +88,7 @@ input_text = load_text_data(text_file_path)
 
 # Create a SentenceGenerator instance and generate text
 sentence_generator = SentenceGenerator(input_text, transition_model_path)
-initial_sentence = "As the spirit began to fade, it gifted each of them a glowing seed."
+initial_sentence = "You had better ask his old master."
 num_sentences_to_generate = 20
 
 # Generate text using the sentence generator

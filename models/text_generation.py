@@ -10,7 +10,7 @@ from nltk import bigrams
 import string
 
 class DynamicNGram:
-    def __init__(self, text, n=2):
+    def __init__(self, text, n=3):
         self.model = defaultdict(lambda: defaultdict(lambda: 0))
         self.n = n
         self._build_ngram_model(text)
@@ -129,7 +129,7 @@ class SentenceGenerator:
             return next_word[0].isupper()  # Following word should start with uppercase if previous is punctuation
         return True  # Default to true if no specific checks apply
 
-    def generate_sentence(self, min_length=2, max_length=20, prob_threshold=0.0001):
+    def generate_sentence(self, min_length=3, max_length=20, prob_threshold=0.00001):
         """Generate a sentence using a dynamic n-gram model with robust word selection."""
         
         # Use dynamic n-gram length
