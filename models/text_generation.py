@@ -214,7 +214,7 @@ def load_text_data(file_path):
 # Example usage
 if __name__ == "__main__":
     text_file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_gen_data.txt"
-    transition_model_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\transition_model.h5"
+    transition_model_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\best_transition_model.keras"
     input_text = load_text_data(text_file_path)
     
     sentence_generator = SentenceGenerator(input_text, transition_model_path)
