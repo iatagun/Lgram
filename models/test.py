@@ -2,9 +2,12 @@ import numpy as np
 import nltk
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
+import language_tool_python
 
 # Your custom imports for the sentence generation
 from text_generation import SentenceGenerator, load_text_data
+
+tool = language_tool_python.LanguageTool('en-US')
 
 def evaluate_fluency(text):
     sentences = nltk.sent_tokenize(text)
@@ -98,25 +101,46 @@ input_text = load_text_data(text_file_path)
 
 # Create a SentenceGenerator instance and generate text
 sentence_generator = SentenceGenerator(input_text, transition_model_path)
-initial_sentence = "It was successful. That is all."
-num_sentences_to_generate = 25
+initial_sentence = "At all times Hilda had rather a languid air."
+num_sentences_to_generate = 20
 
 # Generate text using the sentence generator
 generated_text = sentence_generator.generate_text(initial_sentence, num_sentences_to_generate)
-print("Generated Text:")
+
+print('generated_text: ')
 print(generated_text)
 
+matches = tool.check(generated_text)
+
+# Metindeki hataları düzelten bir fonksiyon
+def apply_corrections(text, matches):
+    corrected_text = text
+    # Her hatayı düzeltmek için ters sırayla ilerle
+    for match in reversed(matches):
+        start = match.offset  # Hatanın başladığı nokta
+        end = match.offset + match.errorLength  # Hatanın bittiği nokta
+        replacement = match.replacements[0] if match.replacements else match.context  # Önerilen düzeltme
+        # Metni düzelt
+        corrected_text = corrected_text[:start] + replacement + corrected_text[end:]
+    return corrected_text
+
+# Düzeltmeleri uygula
+corrected_text = apply_corrections(generated_text, matches)
+
+# Düzeltilmiş metni yazdır
+print("Düzeltilmiş metin:", corrected_text)
+
 # Load reference texts for evaluation
-reference_file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_gen_data.txt"
-with open(reference_file_path, 'r', encoding='utf-8') as file:
-    reference_texts = file.readlines()
+# reference_file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_gen_data.txt"
+# with open(reference_file_path, 'r', encoding='utf-8') as file:
+    # reference_texts = file.readlines()
 
 # Evaluate the generated text
-fl_score, acc_score, trans_score, cons_score, them_score = evaluate_generated_text(generated_text, reference_texts)
+# fl_score, acc_score, trans_score, cons_score, them_score = evaluate_generated_text(corrected_text, reference_texts)
 
 # Output the evaluation results
-print(f"\nFluency Score: {fl_score * 100:.2f}%")
-print(f"Accuracy Score: {acc_score * 100:.2f}%")
-print(f"Transition Score: {trans_score * 100:.2f}%")
-print(f"Consistency Score: {cons_score * 100:.2f}%")
-print(f"Thematic Coherence Score: {them_score * 100:.2f}%")
+# print(f"\nFluency Score: {fl_score * 100:.2f}%")
+# print(f"Accuracy Score: {acc_score * 100:.2f}%")
+# print(f"Transition Score: {trans_score * 100:.2f}%")
+# print(f"Consistency Score: {cons_score * 100:.2f}%")
+# print(f"Thematic Coherence Score: {them_score * 100:.2f}%")

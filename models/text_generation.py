@@ -8,6 +8,7 @@ from nltk import word_tokenize
 from nltk import trigrams
 from nltk import bigrams
 import string
+import re
 
 class DynamicNGram:
     def __init__(self, text, n=3):
@@ -33,19 +34,26 @@ class DynamicNGram:
 
     def get_word_vector(self, word):
         """Placeholder for retrieving a word vector; should be replaced with actual embeddings."""
-        return np.random.rand(100)
+        return np.random.rand(1000)
 
     def is_semantically_relevant(self, last_word, next_word):
         """Check if the next word is semantically relevant to the last word."""
         last_word_vec = self.get_word_vector(last_word)
         next_word_vec = self.get_word_vector(next_word)
 
-        # Calculate cosine similarity
-        similarity = np.dot(last_word_vec, next_word_vec) / (np.linalg.norm(last_word_vec) * np.linalg.norm(next_word_vec))
-        return similarity > 0.5  # Define a threshold for relevance
+        # Handle cases where a word vector is not found
+        if last_word_vec is None or next_word_vec is None:
+            return False
+
+        # Calculate cosine similarity with epsilon to avoid division by zero
+        epsilon = 1e-8  # Small value to prevent zero division
+        similarity = np.dot(last_word_vec, next_word_vec) / (np.linalg.norm(last_word_vec) * np.linalg.norm(next_word_vec) + epsilon)
+
+        return similarity > 0.3
+
 
 class SentenceGenerator:
-    def __init__(self, text, transition_model_path, seq_length=15):
+    def __init__(self, text, transition_model_path, seq_length=20):
         self.sentences = self._split_into_sentences(text)
         self.transition_model = tf.keras.models.load_model(transition_model_path)
         self.tokenizer = tf.keras.preprocessing.text.Tokenizer()
@@ -69,7 +77,7 @@ class SentenceGenerator:
         """Remove punctuation."""
         return text.translate(str.maketrans('', '', string.punctuation.replace('.', '')))
 
-    def are_sentences_similar(self, sentence1, sentence2, threshold=0.8):
+    def are_sentences_similar(self, sentence1, sentence2, threshold=0.3):
         similarity = SequenceMatcher(None, sentence1, sentence2).ratio()
         return similarity > threshold
 
@@ -120,7 +128,7 @@ class SentenceGenerator:
         # Calculate n-gram frequencies
         ngram_counts = defaultdict(int)
 
-        for n in range(3, 6):  # Example: checking for n-grams of length 3 to 5
+        for n in range(3, 5):  # Example: checking for n-grams of length 3 to 5
             dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=n)
             total_ngrams = sum(len(v) for v in dynamic_ngram_model.model.values())
             ngram_counts[n] = total_ngrams
@@ -133,29 +141,73 @@ class SentenceGenerator:
 
     def is_coherent(self, last_word, next_word):
         """Check if the next word maintains coherence with the last word."""
+        
+        # Handle 'is', 'are', 'was', 'were' - next word should be lowercase
         if last_word in ['is', 'are', 'was', 'were']:
-            return next_word[0].islower()  # Following word should be lowercase
+            return next_word[0].islower()
+
+        # Handle punctuation - next word should be uppercase after punctuation
         elif last_word[-1] in ['.', '!', '?']:
-            return next_word[0].isupper()  # Following word should start with uppercase if previous is punctuation
+            # Ensure conjunctions don't follow punctuation unless capitalized
+            if next_word.lower() in ['and', 'but', 'or']:
+                return False
+            # Check for valid sentence starters
+            sentence_starters = ['the', 'a', 'an', 'he', 'she', 'it', 'they', 'we']
+            if next_word.lower() not in sentence_starters:
+                return False
+            return next_word[0].isupper()
+        
+        # Preposition checks - ensure coherence with following word
+        prepositions = ['of', 'in', 'on', 'at', 'by', 'with', 'about', 'for', 'to', 'from', 'under']
+        if last_word in prepositions and next_word[0].isupper():
+            return False  # Prepositions should not be followed by capitalized words
+        
+        # Subject-verb agreement
+        subject_pronouns = ['he', 'she', 'it', 'they', 'we', 'I', 'you']
+        if last_word.lower() in subject_pronouns and not next_word.endswith('ing'):
+            return False  # The next word after a subject should likely be a verb
+        
+        # Article check
+        articles = ['the', 'a', 'an']
+        if last_word.lower() in articles and not next_word[0].islower():
+            return False  # Articles should not be followed by capitalized words
+
         return True  # Default to true if no specific checks apply
 
-    def sample_with_temperature(self, probabilities, temperature=0.1):
+
+    def sample_with_temperature(self, probabilities, temperature=0.3):
         """Sample from the probability distribution with temperature scaling."""
         probabilities = np.asarray(probabilities).astype(float)
         probabilities = np.exp(probabilities / temperature)  # Apply temperature
         probabilities /= np.sum(probabilities)  # Normalize
         return np.random.choice(len(probabilities), p=probabilities)
 
-    def generate_sentence(self, min_length=3, max_length=20, prob_threshold=0.00001, temperature=0.3):
+    def generate_sentence(self, min_length=2, max_length=20, prob_threshold=0.0001, temperature=0.3):
         """Generate a sentence using a dynamic n-gram model with robust word selection."""
-        # Use dynamic n-gram length
-        ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
+        # Create dynamic n-gram model with varying n-gram lengths
+        ngram_lengths = list(range(self.min_ngram_length, self.max_ngram_length + 1))
+        length_probs = {length: 0 for length in ngram_lengths}
+
+        # Evaluate the probability for each n-gram length
+        for n in ngram_lengths:
+            dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=n)
+            start_word_probs = dynamic_ngram_model.predict_next_word([])  # Assume empty sentence for start words
+            length_probs[n] = sum(start_word_probs.values())  # Sum probabilities to evaluate strength of n
+
+        # Select the n-gram length with the highest probability
+        ngram_length = max(length_probs, key=length_probs.get)
 
         # Create dynamic n-gram model with the chosen length
         dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=ngram_length)
 
         # Select start words from the model
-        start_words = random.choice(list(dynamic_ngram_model.model.keys()))
+        start_word_probs = dynamic_ngram_model.predict_next_word([])  # Assume empty sentence for start words
+        if start_word_probs:
+            # Sort words by probability in descending order and select the top one
+            start_words = max(start_word_probs, key=start_word_probs.get)
+        else:
+            start_words = random.choice(list(dynamic_ngram_model.model.keys()))  # Fallback if no probabilities
+
         sentence = list(start_words)
 
         attempts = 0
@@ -185,15 +237,13 @@ class SentenceGenerator:
             else:
                 break  # Stop if no prediction for the next word
 
-        # Ensure the sentence is of adequate length
-        if len(sentence) >= min_length:
-            if sentence[-1][-1] not in ['.', '!', '?']:  # Check if the last word already has punctuation
-                sentence[-1] += '.'  # Add a period to the last word
+        # Ensure the generated sentence meets the minimum length requirement
+        if len(sentence) < min_length:
+            return "Sentence is too short to meet the minimum length."  # Or handle it as you see fit
 
-            sentence[0] = sentence[0].capitalize()  # Capitalize the first word
-            return ' '.join(sentence)  # Return the generated sentence
+        return ' '.join(sentence)
 
-        return ""  # Return an empty string if no valid sentence was generated
+
 
     def generate_text(self, initial_sentence=None, num_sentences=5):
         """Generate a specified number of coherent sentences."""
@@ -203,7 +253,16 @@ class SentenceGenerator:
             text.append(initial_sentence)
             current_sentence = initial_sentence
         else:
-            current_sentence = random.choice(self.sentences)  # Start with a random sentence
+            # Create a dynamic n-gram model to select the strongest starting sentence
+            ngram_length = random.randint(self.min_ngram_length, self.max_ngram_length)
+            dynamic_ngram_model = DynamicNGram(' '.join(self.sentences), n=ngram_length)
+
+            # Get probabilities for starting sentences and select the one with the highest probability
+            start_sentence_probs = dynamic_ngram_model.predict_next_word([])  # Pass empty list to get starting sentences
+            if start_sentence_probs:
+                current_sentence = max(start_sentence_probs, key=start_sentence_probs.get)
+            else:
+                current_sentence = random.choice(self.sentences)  # Fallback if no predictions
             text.append(current_sentence)  # Include it in the output
 
         for _ in range(num_sentences - 1):  # Generate the remaining sentences
@@ -218,10 +277,20 @@ class SentenceGenerator:
 
 
 
-# Load text data
+
+# Load text data and preprocess
 def load_text_data(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
-        return file.read()
+        text = file.read()
+    
+    # Lowercase the text
+    text = text.lower()
+    
+    # Remove non-alphanumeric characters (keeping spaces)
+    text = re.sub(r'[^a-z0-9\s.]+', '', text)  # Allow dots for sentence splitting
+
+    return text  # Return as string instead of list
+
 
 # Example usage
 if __name__ == "__main__":
