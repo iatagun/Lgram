@@ -101,8 +101,8 @@ input_text = load_text_data(text_file_path)
 
 # Create a SentenceGenerator instance and generate text
 sentence_generator = SentenceGenerator(input_text, transition_model_path)
-initial_sentence = "At all times Hilda had rather a languid air."
-num_sentences_to_generate = 20
+initial_sentence = "This is one of those miserable thoroughfares which intervene between the Rue Richelieu and the Rue St. Roch."
+num_sentences_to_generate = 10
 
 # Generate text using the sentence generator
 generated_text = sentence_generator.generate_text(initial_sentence, num_sentences_to_generate)
