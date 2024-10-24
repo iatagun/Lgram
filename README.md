@@ -103,7 +103,24 @@ Bu Python kodu, metin verilerini kullanarak gelişmiş bir dil modeli oluşturur
 ## Örnek Kullanım
 - 5 cümle üretmek için başlangıç kelimeleri olarak `["he", "was", "still"]` kullanılır.
 
+## Üretilen Metin
 
+```
+Generated Text:
+ He was still held me so often sat down the strange that he yet when you wanted? 
+Foretell it is the solitary spot, is now hold your fancy for calling for the. 
+Outline of which had him out a fearsome figure outlined against _, untruthful, so. 
+Beauvais,[8 ] the most unheard - topped with whom especially in which he said i repeat. 
+Concentrated, " there was only in the party, " your path in the. Advances, his misfortune to obtain of reflection ). being prosecuted by it. 
+Researches to record that the city the debate, his pocket. " he found. 
+Repair. " said her aspect of his lip that ' " now she. 
+Others of wind had turned to europe, john holder, but neither refused to the. 
+Gladly abandoning, then! " indicating a timid cavalier; you as indefinite, and.
+```
+### Değerlendirme
 
+Üretilen metin, dilbilimsel ve yazılımsal bir çerçevede incelendiğinde, geçiş analizi açısından ilginç veriler sunmaktadır. Cümle yapılarının karmaşıklığı, metin içindeki referansların ve geçişlerin belirsizliğini artırırken, aynı zamanda metnin zenginliğini de vurgular. Örneğin, soyut ifadeler ve imgesel dil, sözdizimsel yapıların incelenmesine olanak tanır ve dilin işleyişine dair önemli ipuçları sunar.
+
+Yazılım geliştirme bağlamında, bu tür metinlerin analizi, doğal dil işleme (NLP) uygulamalarında geçişlerin ve bağlamın modellemesi açısından kritik bir rol oynar. Geçişlerin belirlenmesi ve analiz edilmesi, metinler arası ilişkilerin ortaya konmasına yardımcı olur, böylece metnin anlamı daha net bir şekilde anlaşılabilir. Sonuç olarak, bu metin, hem dilbilimsel inceleme hem de yazılımsal modelleme açısından zengin bir kaynak oluşturarak, geçiş analizi çalışmalarına değerli katkılarda bulunabilir.
 
 
