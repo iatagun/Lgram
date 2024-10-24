@@ -63,7 +63,6 @@ class EnhancedLanguageModel:
 
         return sentence_text
 
-
     def choose_word_with_context(self, next_words):
         if not next_words:
             return None  # No next words available
@@ -83,7 +82,6 @@ class EnhancedLanguageModel:
 
         chosen_word = np.random.choice(word_choices, p=probabilities)
         return chosen_word
-
 
     def clean_text(self, text):
         # Remove unwanted spaces before punctuation
@@ -107,6 +105,46 @@ class EnhancedLanguageModel:
             text = text[0].capitalize() + text[1:]
         
         return text
+
+    def post_process_sentences(self, sentences):
+        # Combine sentences into a single text for analysis
+        full_text = ' '.join(sentences)
+
+        # Use SpaCy to process the text
+        doc = nlp(full_text)
+
+        # Example: Check for coherence based on named entities or noun phrases
+        entities = set(ent.text for ent in doc.ents)  # Extract named entities
+        noun_phrases = set(chunk.text for chunk in doc.noun_chunks)  # Extract noun phrases
+
+        # Implement logic to ensure thematic consistency
+        # This is a simple heuristic based on the presence of common entities
+        if len(entities) < 2:  # If not enough entities, encourage rephrasing
+            print("Low entity diversity detected. Rephrasing might be needed.")
+
+        # Optional: Additional logic to adjust sentence structure or rephrase
+        adjusted_sentences = []
+        for sentence in sentences:
+            # Example rephrasing logic could be placed here
+            adjusted_sentences.append(self.clean_text(sentence))  # Clean each sentence
+
+        return adjusted_sentences
+
+    def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
+        generated_sentences = []
+
+        for i in tqdm(range(num_sentences), desc="Generating sentences"):
+            if i == 0:
+                generated_sentence = self.generate_sentence(start_words=input_words, length=length)
+            else:
+                generated_sentence = self.generate_sentence(length=length)
+
+            generated_sentences.append(generated_sentence)
+
+        # Post-process generated sentences for coherence and flow
+        processed_sentences = self.post_process_sentences(generated_sentences)
+        final_text = ' '.join(processed_sentences)
+        return final_text
 
     def save_model(self, filename):
         # Convert defaultdicts to regular dicts for pickling
@@ -140,27 +178,14 @@ try:
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
     # If the model does not exist, create a new one
-    language_model = EnhancedLanguageModel(text, n=2)
+    language_model = EnhancedLanguageModel(text, n=3)
     language_model.save_model(model_file)  # Save the newly created model
     print("Created and saved new model.")
 
 # Generate the specified number of sentences
-num_sentences = 10  # Number of sentences to generate
-generated_sentences = []
+num_sentences = 5  # Number of sentences to generate
+input_words = ["he", "was", "still"]  # Words to be used
 
-# Specify input words
-input_words = ["i", "am"]  # Words to be used
-
-# Use tqdm to show progress for overall sentence generation
-for i in tqdm(range(num_sentences), desc="Generating sentences"):
-    if i == 0:
-        # Use input_words for the first sentence
-        generated_sentence = language_model.generate_sentence(start_words=input_words, length=10)
-    else:
-        generated_sentence = language_model.generate_sentence(length=10)  # Generate sentence normally
-
-    generated_sentences.append(generated_sentence)  # Add the sentence to the list
-
-# Join sentences and form the final text
-final_text = ' '.join(generated_sentences)
-print("Generated Text:\n", final_text)
+# Use the integrated generate and post-process method
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
+print("Generated Text:\n", generated_text)
