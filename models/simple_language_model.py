@@ -178,7 +178,7 @@ try:
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
     # If the model does not exist, create a new one
-    language_model = EnhancedLanguageModel(text, n=3)
+    language_model = EnhancedLanguageModel(text, n=4)
     language_model.save_model(model_file)  # Save the newly created model
     print("Created and saved new model.")
 
@@ -187,5 +187,5 @@ num_sentences = 10  # Number of sentences to generate
 input_words = ["he", "was", "still"]  # Words to be used
 
 # Use the integrated generate and post-process method
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=11)
 print("Generated Text:\n", generated_text)
