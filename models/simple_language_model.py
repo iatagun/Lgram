@@ -183,9 +183,9 @@ except (FileNotFoundError, EOFError):
     print("Created and saved new model.")
 
 # Generate the specified number of sentences
-num_sentences = 5  # Number of sentences to generate
+num_sentences = 10  # Number of sentences to generate
 input_words = ["he", "was", "still"]  # Words to be used
 
 # Use the integrated generate and post-process method
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 print("Generated Text:\n", generated_text)
