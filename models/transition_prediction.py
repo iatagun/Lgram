@@ -9,7 +9,7 @@ from sklearn.utils import class_weight
 from analyze_transitions import analyze_transitions
 
 # Metin dosyasını belirli boyutlarda yükleme
-def load_text_data_in_chunks(file_path, chunk_size=10000):
+def load_text_data_in_chunks(file_path, chunk_size=19000):
     with open(file_path, 'r', encoding='utf-8') as file:
         while True:
             chunk = file.read(chunk_size)
@@ -23,7 +23,7 @@ file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_da
 # Geçiş analizini yapacak DataFrame'leri birleştirme
 all_transition_dfs = []
 
-for chunk in load_text_data_in_chunks(file_path, chunk_size=10000):
+for chunk in load_text_data_in_chunks(file_path, chunk_size=19000):
     transition_df = analyze_transitions(chunk)
     transition_df['features'] = transition_df['current_sentence'] + " " + transition_df['next_sentence']
     transition_df['label'] = transition_df['transition_type'].astype('category').cat.codes
@@ -58,7 +58,7 @@ model = tf.keras.Sequential([
     tf.keras.layers.Embedding(input_dim=len(tokenizer.word_index) + 1, output_dim=32, input_length=max_length),
     tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(128, return_sequences=True)),  # Bidirectional LSTM
     tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)),  # Ek bir Bidirectional LSTM katmanı
-    tf.keras.layers.Dropout(0.5),  # Dropout oranını artır
+    tf.keras.layers.Dropout(0.4),  # Dropout oranını artır
     tf.keras.layers.Dense(64, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),  # L2 düzenlemesi
     tf.keras.layers.Dense(len(full_transition_df['transition_type'].unique()), activation='softmax')
 ])
@@ -70,7 +70,7 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=1
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(os.path.join(model_save_dir, 'best_transition_model.keras'), save_best_only=True)
 
 # Modeli eğitme
-model.fit(X_train, y_train, epochs=30, batch_size=1, validation_data=(X_test, y_test),
+model.fit(X_train, y_train, epochs=500, batch_size=1, validation_data=(X_test, y_test),
           class_weight=class_weights_dict, callbacks=[early_stopping, model_checkpoint])
 
 # Test kaybı ve doğruluğunu hesapla
