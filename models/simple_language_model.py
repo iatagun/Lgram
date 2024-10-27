@@ -69,10 +69,10 @@ class EnhancedLanguageModel:
 
         word_choices = list(next_words.keys())
         probabilities = np.array(list(next_words.values()))
-        
+
         # Ensure probabilities are non-negative
         probabilities = np.maximum(probabilities, 0)
-        
+
         # Normalize probabilities
         total = probabilities.sum()
         if total > 0:
@@ -80,7 +80,29 @@ class EnhancedLanguageModel:
         else:
             probabilities = np.ones_like(probabilities) / len(probabilities)  # Equal distribution if all probabilities are zero
 
-        chosen_word = np.random.choice(word_choices, p=probabilities)
+        # Bağlam kelimesinin son kelime olduğunu varsayalım (veya başka bir bağlam belirleme yöntemi)
+        context_word = word_choices[-1] if word_choices else None
+
+        if context_word:
+            # Bağlam kelimesinin vektörünü al
+            context_vector = nlp(context_word).vector
+            similarity_scores = np.array([np.dot(context_vector, nlp(word).vector) for word in word_choices])  # Kosinüs benzerliği
+            
+            # Benzerlikler negatifse sıfırlama
+            similarity_scores = np.maximum(similarity_scores, 0)
+
+            # Benzerlikleri olasılıklara ekleyin
+            adjusted_probabilities = probabilities * (similarity_scores + 1)  # +1 eklenmesi, negatif benzerliklerden kaçınmak için
+            adjusted_probabilities /= adjusted_probabilities.sum()  # Normalizasyon
+            
+            # Olasılıkların pozitif olduğundan emin olun
+            adjusted_probabilities = np.maximum(adjusted_probabilities, 0)  # Pozitif olmasını sağla
+
+            # Seçim yap
+            chosen_word = np.random.choice(word_choices, p=adjusted_probabilities)
+        else:
+            chosen_word = np.random.choice(word_choices, p=probabilities)
+
         return chosen_word
 
     def clean_text(self, text):
@@ -178,14 +200,14 @@ try:
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
     # If the model does not exist, create a new one
-    language_model = EnhancedLanguageModel(text, n=4)
+    language_model = EnhancedLanguageModel(text, n=20)
     language_model.save_model(model_file)  # Save the newly created model
     print("Created and saved new model.")
 
 # Generate the specified number of sentences
-num_sentences = 10  # Number of sentences to generate
-input_words = ["he", "was", "still"]  # Words to be used
+num_sentences = 10 # Number of sentences to generate
+input_words = ["we", "know", "of", "them"]  # Words to be used
 
 # Use the integrated generate and post-process method
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=11)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
 print("Generated Text:\n", generated_text)
