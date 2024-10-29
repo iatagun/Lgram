@@ -159,7 +159,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no noun phrases are found
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=1.0):
         if not next_words:
             return None  # No next words available
 
@@ -325,7 +325,7 @@ class EnhancedLanguageModel:
                     generated_sentence = self.generate_sentence(start_words=input_words, length=length)
                 else:
                     last_sentence = generated_sentences[-1]
-                    last_pos = self.get_last_pos(last_sentence)
+                    last_pos = self.get_center_from_sentence(last_sentence)
                     discourse_marker = self.choose_discourse_marker(last_pos)
 
                     # More advanced length adjustment
@@ -371,12 +371,12 @@ class EnhancedLanguageModel:
             avg_similarity = np.mean(similarities)
 
             # Dynamic threshold based on average sentence length
-            threshold = 0.55  # Default threshold
+            threshold = 0.6  # Default threshold
             avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
             
             # Adjust threshold based on previous sentence length
             if avg_length > 15:  # Example: if previous sentences are longer than 15 words
-                threshold = 0.65
+                threshold = 0.7
 
             # Check if the average similarity is above the threshold
             return avg_similarity > threshold
