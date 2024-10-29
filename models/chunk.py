@@ -5,6 +5,7 @@ import spacy
 import numpy as np
 from tqdm import tqdm  # Import tqdm for progress bar
 import os
+import dynamicngramparaphraser
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_md")  # Use medium model for better embeddings
@@ -159,7 +160,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no noun phrases are found
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=1.7):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=2.0):
         if not next_words:
             return None  # No next words available
 
@@ -192,7 +193,7 @@ class EnhancedLanguageModel:
             adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
 
             # Increase the influence of similarity scores dynamically
-            influence_factor = 2.0 if similarity_scores.max() < 1.7 else 2.0
+            influence_factor = 1.7 if similarity_scores.max() < 1.7 else 2.0
             adjusted_probabilities = adjusted_probabilities ** influence_factor
 
             # Normalize again
@@ -288,19 +289,41 @@ class EnhancedLanguageModel:
             return doc[-1].tag_  # Return the last part of speech tag
         return None
 
-    def choose_discourse_marker(self, last_pos):
-        """ Choose an appropriate discourse marker based on the last POS. """
+    def choose_discourse_marker(self, last_pos, last_sentence):
+        """Choose an appropriate discourse marker based on the last POS and previous sentence."""
         markers = {
-            'CC': ['and', 'but'],  # Coordinating conjunction
-            'VB': ['therefore', 'furthermore'],  # Verb
-            'JJ': ['however', 'nevertheless'],  # Adjective
-            # Add more POS types and corresponding markers as needed
+            'CC': ['and', 'but', 'or', 'nor'],  # Coordinating conjunction
+            'VB': ['therefore', 'furthermore', 'consequently', 'thus'],  # Verb
+            'JJ': ['however', 'nevertheless', 'in contrast', 'on the other hand'],  # Adjective
+            'RB': ['meanwhile', 'likewise', 'similarly'],  # Adverb
+            'IN': ['because', 'since', 'although'],  # Preposition
+            'NN': ['for instance', 'in particular', 'to illustrate'],  # Noun
         }
 
         # Choose a marker based on the last POS
         if last_pos in markers:
-            return random.choice(markers[last_pos])
-        return ''  # Default to an empty string if no suitable marker
+            marker = random.choice(markers[last_pos])
+            return marker
+        
+        # Analyze the last sentence for context-based selection
+        # Basic keyword analysis for context
+        last_sentence_lower = last_sentence.lower()
+        
+        # If the last sentence mentions contrast, prefer contrasting markers
+        if 'but' in last_sentence_lower or 'however' in last_sentence_lower:
+            contrast_markers = ['however', 'nevertheless', 'on the other hand']
+            return random.choice(contrast_markers)
+        
+        # If the last sentence implies causation, prefer causal markers
+        if 'because' in last_sentence_lower or 'since' in last_sentence_lower:
+            causal_markers = ['therefore', 'thus', 'consequently']
+            return random.choice(causal_markers)
+
+        # Fallback mechanism for unspecified POS types
+        fallback_markers = ['additionally', 'moreover', 'in addition', 'furthermore']
+        return random.choice(fallback_markers)  # Return a random fallback marker
+
+
 
     def advanced_length_adjustment(self, last_sentence, base_length):
         """ Adjust length based on the structure of the last sentence. """
@@ -326,7 +349,7 @@ class EnhancedLanguageModel:
                 else:
                     last_sentence = generated_sentences[-1]
                     last_pos = self.get_center_from_sentence(last_sentence)
-                    discourse_marker = self.choose_discourse_marker(last_pos)
+                    discourse_marker = self.choose_discourse_marker(last_pos, last_sentence)
 
                     # More advanced length adjustment
                     adjusted_length = self.advanced_length_adjustment(last_sentence, length)
@@ -347,7 +370,53 @@ class EnhancedLanguageModel:
                 generated_sentences.append("This sentence could not be generated coherently.")  # Placeholder
 
         final_text = ' '.join(generated_sentences)
+        final_text = self.post_process_text(final_text)  # Call the new post-processing method
+
         return final_text
+
+    def post_process_text(self, text):
+        """Post-process the text to ensure proper punctuation and grammar rules."""
+        sentences = text.split('.')
+        cleaned_sentences = []
+
+        for sentence in sentences:
+            cleaned_sentence = sentence.strip()
+            if cleaned_sentence:
+                # Capitalize the first word
+                cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
+
+                # Remove unnecessary punctuation around conjunctions
+                cleaned_sentence = cleaned_sentence.replace(" .", ".")  # Remove space before period
+                cleaned_sentence = cleaned_sentence.replace(", and", " and").replace(" and,", " and")  # Handle 'and'
+                cleaned_sentence = cleaned_sentence.replace(", but", " but").replace(" but,", " but")  # Handle 'but'
+
+                # Additional cleaning rules
+                cleaned_sentence = cleaned_sentence.replace(" ,", ",")  # Remove space before commas
+                cleaned_sentence = cleaned_sentence.replace("  ", " ")  # Remove double spaces
+                
+                # Fixing trailing commas
+                if cleaned_sentence.endswith(","):
+                    cleaned_sentence = cleaned_sentence[:-1]
+                    
+                # Handle quotations (if needed)
+                # You can further customize this if your sentences have quotations
+                cleaned_sentence = cleaned_sentence.replace('"', '')  # Remove quotes, adjust as needed
+
+                # Optional: Capitalize proper nouns (if you have a list of proper nouns)
+                # Example: proper_nouns = ["Alice", "Bob"]
+                # for noun in proper_nouns:
+                #     cleaned_sentence = cleaned_sentence.replace(noun.lower(), noun)
+
+                cleaned_sentences.append(cleaned_sentence)
+
+        # Join the cleaned sentences and ensure final text ends with a period
+        final_output = '. '.join(cleaned_sentences).strip()
+        if final_output and not final_output.endswith('.'):
+            final_output += '.'
+
+        return final_output
+
+
 
 
     def is_sentence_coherent(self, sentence, previous_sentences=None):
@@ -481,11 +550,31 @@ except (FileNotFoundError, EOFError):
 
 # Generate the specified number of sentences
 num_sentences = 5 # Number of sentences to generate
-input_words = "I scattered the flour to try the result of that ancient trick.".split()  # Words to be used
+input_words = "It was a strange procession that we made.".split()  # Words to be used
 
 # Generate initial text using your integrated method
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 print("Generated Text:\n", generated_text)
+
+text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_data.txt"
+bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\bigram_model.pkl"
+trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\trigram_model.pkl"
+fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\fourgram_model.pkl"
+fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\fivegram_model.pkl"
+sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\sixgram_model.pkl"
+
+# Modeller varsa yükle, yoksa yeniden oluştur
+if os.path.exists(bigram_path) and os.path.exists(trigram_path) and os.path.exists(fourgram_path) and os.path.exists(fivegram_path) and os.path.exists(sixgram_path):
+    print("Modeller yükleniyor...")
+    bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model = dynamicngramparaphraser.load_ngram_model(bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
+else:
+    print("Modeller bulunamadı, yeniden oluşturuluyor...")
+    dynamicngramparaphraser.build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
+    bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model = dynamicngramparaphraser.load_ngram_model(bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
+
+paraphrased_version = dynamicngramparaphraser.generate_paraphrase(generated_text, bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model)
+
+print("Parafraz:", paraphrased_version)
 
 
 
