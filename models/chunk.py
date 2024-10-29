@@ -193,7 +193,7 @@ class EnhancedLanguageModel:
             adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
 
             # Increase the influence of similarity scores dynamically
-            influence_factor = 1.7 if similarity_scores.max() < 1.7 else 2.0
+            influence_factor = 1.7 if similarity_scores.max() < 0.7 else 1.5
             adjusted_probabilities = adjusted_probabilities ** influence_factor
 
             # Normalize again
@@ -336,13 +336,17 @@ class EnhancedLanguageModel:
 
         return adjusted_length
 
+    from tqdm import tqdm
+
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
         generated_sentences = []
         max_attempts = 9  # Max attempts to generate a coherent sentence
 
         for i in tqdm(range(num_sentences), desc="Generating sentences"):
             attempts = 0
-            while attempts < max_attempts:
+            coherent_sentence = False
+            
+            while attempts < max_attempts and not coherent_sentence:
                 # Allow variability in sentence length based on previous sentences
                 if i == 0:
                     generated_sentence = self.generate_sentence(start_words=input_words, length=length)
@@ -360,12 +364,12 @@ class EnhancedLanguageModel:
                 # Check the quality of the generated sentence
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
                     generated_sentences.append(generated_sentence)
-                    break  # Break if coherent
+                    coherent_sentence = True  # Mark as coherent
                 else:
                     attempts += 1
                     print(f"Attempt {attempts}: Generated incoherent sentence: {generated_sentence}")
 
-            if attempts == max_attempts:
+            if not coherent_sentence:
                 print(f"Max attempts reached for generating sentence {i + 1}. Adding a placeholder.")
                 generated_sentences.append("This sentence could not be generated coherently.")  # Placeholder
 
@@ -373,6 +377,7 @@ class EnhancedLanguageModel:
         final_text = self.post_process_text(final_text)  # Call the new post-processing method
 
         return final_text
+
 
     def post_process_text(self, text):
         """Post-process the text to ensure proper punctuation and grammar rules."""
@@ -550,7 +555,7 @@ except (FileNotFoundError, EOFError):
 
 # Generate the specified number of sentences
 num_sentences = 5 # Number of sentences to generate
-input_words = "It was a strange procession that we made.".split()  # Words to be used
+input_words = "The time ticked on.".split()  # Words to be used
 
 # Generate initial text using your integrated method
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
@@ -575,6 +580,14 @@ else:
 paraphrased_version = dynamicngramparaphraser.generate_paraphrase(generated_text, bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model)
 
 print("Parafraz:", paraphrased_version)
+
+log_file_path = "paraphrased_log.txt"  # Log dosyası adı
+
+# Metni dosyaya yazma
+with open(log_file_path, 'w') as log_file:  # 'w' moduyla açarak üzerine yazılır
+    log_file.write("Parafraz: " + paraphrased_version)
+
+print(f"Parafraz metni '{log_file_path}' dosyasına yazıldı.")
 
 
 

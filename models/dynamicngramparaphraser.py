@@ -5,6 +5,8 @@ import pickle
 from collections import defaultdict, Counter
 from itertools import islice
 from tqdm import tqdm
+from numpy import dot
+from numpy.linalg import norm
 
 # SpaCy modelini yükle
 nlp = spacy.load("en_core_web_md")  # veya "en_core_web_lg"
@@ -79,6 +81,24 @@ def load_ngram_model(bigram_path, trigram_path, fourgram_path, fivegram_path, si
         sixgram_model = pickle.load(f)
     return bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model
 
+def calculate_weighted_similarity(word_token, choice_token, freq, normalization=True):
+    """Verilen kelime ve seçim için ağırlıklı benzerliği hesaplar."""
+    
+    # Cosinus benzerliğini hesaplamak için gerekli vektörler
+    word_vector = word_token.vector
+    choice_vector = choice_token.vector
+
+    if normalization:
+        # Vektörleri normalize et
+        word_vector = word_vector / norm(word_vector) if norm(word_vector) != 0 else word_vector
+        choice_vector = choice_vector / norm(choice_vector) if norm(choice_vector) != 0 else choice_vector
+
+    # Cosinus benzerliği
+    similarity = dot(word_vector, choice_vector)
+
+    # Ağırlıklı benzerliği döndür
+    return similarity * (freq ** 0.5)  # Sıklığı kök alma ile hafifçe ağırlıklandır
+
 def select_best_match(word, choices):
     """Orijinal kelimeye en yakın eşleşmeyi seçer."""
     if isinstance(choices, list):  # Eğer `choices` bir listeyse Counter'a çevir
@@ -88,16 +108,21 @@ def select_best_match(word, choices):
     max_similarity = 0
     word_token = nlp(word)[0]
 
-    if word_token.has_vector:  # Eğer kelimenin vektörü varsa
-        for choice, freq in choices.items():
-            choice_token = nlp(choice)[0]
-            if choice_token.has_vector:  # Eşleşen kelimenin vektörü varsa
-                similarity = word_token.similarity(choice_token)
-                weighted_similarity = similarity * freq  # Sıklığa göre ağırlıklandırma
+    if not word_token.has_vector:
+        print(f"Hata: '{word}' kelimesinin vektörü yok.")
+        return best_choice
 
-                if weighted_similarity > max_similarity:
-                    max_similarity = weighted_similarity
-                    best_choice = choice
+    for choice, freq in choices.items():
+        choice_token = nlp(choice)[0]
+        if choice_token.has_vector:  # Eşleşen kelimenin vektörü varsa
+            weighted_similarity = calculate_weighted_similarity(word_token, choice_token, freq)
+            
+            # Benzerlik değerini güncelle
+            if weighted_similarity > max_similarity:
+                max_similarity = weighted_similarity
+                best_choice = choice
+        else:
+            print(f"Uyarı: '{choice}' kelimesinin vektörü yok, bu nedenle dikkate alınmıyor.")
 
     return best_choice  # En iyi eşleşmeyi döner
 
