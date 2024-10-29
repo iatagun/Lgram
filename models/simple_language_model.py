@@ -5,12 +5,6 @@ import spacy
 import numpy as np
 from tqdm import tqdm  # Import tqdm for progress bar
 import os
-import random
-from transformers import pipeline
-from transformers import GPT2Tokenizer, GPT2LMHeadModel, pipeline
-from sentence_transformers import SentenceTransformer, util
-import torch
-import re
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_md")  # Use medium model for better embeddings
@@ -87,7 +81,7 @@ class EnhancedLanguageModel:
         return self.clean_text(sentence_text)
 
     def is_complete_thought(self, sentence):
-        """Check if the current sentence forms a complete thought."""
+        """Check if the current sentence forms a complete thought with stricter criteria."""
         if not sentence:
             return False
 
@@ -102,15 +96,24 @@ class EnhancedLanguageModel:
         if doc[-1].text not in ['.', '!', '?']:
             return False
 
-        # Check if there are at least two words in the sentence (excluding the last punctuation)
-        if len(doc) < 2:  # A complete thought usually has at least a subject and a verb
+        # Check if there are at least three words in the sentence (including punctuation)
+        if len(doc) < 3:  # A complete thought typically has at least a subject, verb, and possibly an object
             return False
 
         # Ensure the sentence contains at least one subject and one verb
         has_subject = any(token.dep_ in ('nsubj', 'nsubjpass') for token in doc)
         has_verb = any(token.pos_ == 'VERB' for token in doc)
+        
+        # Ensure the sentence does not begin or end with conjunctions
+        if doc[0].pos_ == 'CCONJ' or doc[-2].pos_ == 'CCONJ':  # Check second-last token for conjunction
+            return False
 
-        return has_subject and has_verb  # Return True if both conditions are met
+        # Ensure there is no dependent clause that would make the sentence incomplete
+        has_dependent_clause = any(token.dep_ in ('advcl', 'acl', 'relcl') for token in doc)
+
+        # Return True only if both subject and verb are present, and it does not contain dependent clauses
+        return has_subject and has_verb and not has_dependent_clause
+
 
 
 
@@ -122,31 +125,41 @@ class EnhancedLanguageModel:
         # Initialize variables to hold the centers based on their grammatical roles
         subjects = []
         objects = []
+        pronouns = []
         candidates = defaultdict(int)  # To track frequency of noun phrases
 
         # Iterate through tokens to classify noun phrases based on their grammatical roles
         for token in doc:
             if token.dep_ in ('nsubj', 'nsubjpass'):  # Nominal subjects
                 subjects.append(token.text)
-                candidates[token.text] += 1  # Count occurrences
+                candidates[token.text] += 2  # Count occurrences with higher weight for subjects
             elif token.dep_ in ('dobj', 'pobj'):  # Direct objects
                 objects.append(token.text)
                 candidates[token.text] += 1  # Count occurrences
+            elif token.pos_ == 'PRON':  # Include pronouns with medium weight
+                pronouns.append(token.text)
+                candidates[token.text] += 1
 
         # Determine the most salient noun phrase based on centering theory
         if subjects:
-            # Prioritize subjects and sort them by frequency, then by first appearance in the sentence
+            # Prioritize subjects and sort by frequency, then by first appearance in the sentence
             subjects = sorted(subjects, key=lambda x: (-candidates[x], sentence.index(x)))
-            return subjects[0]  # Return the most salient subject
+            return subjects[0]  # Return the most salient subject as the center
 
         if objects:
-            # If no subjects are present, consider objects
+            # If no subjects, consider objects
             objects = sorted(objects, key=lambda x: (-candidates[x], sentence.index(x)))
-            return objects[0]  # Return the most salient object
+            return objects[0]  # Return the most salient object as the center
+
+        if pronouns:
+            # As a last resort, consider pronouns if no subject or object is found
+            pronouns = sorted(pronouns, key=lambda x: (-candidates[x], sentence.index(x)))
+            return pronouns[0]  # Return the most salient pronoun as the center
 
         return None  # Return None if no noun phrases are found
 
-    def choose_word_with_context(self, next_words, context_word=None):
+
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.75):
         if not next_words:
             return None  # No next words available
 
@@ -170,15 +183,16 @@ class EnhancedLanguageModel:
             # Compute similarity scores with the context word
             similarity_scores = np.array([np.dot(context_vector, nlp(word).vector) for word in word_choices])
 
-            # Ensure similarity scores are non-negative
+            # Ensure similarity scores are non-negative and apply semantic threshold
             similarity_scores = np.maximum(similarity_scores, 0)
+            similarity_scores = np.where(similarity_scores >= semantic_threshold, similarity_scores, 0)
 
             # Scale similarity scores to adjust probabilities
             adjusted_probabilities = probabilities * (similarity_scores + 1)  # Add 1 to avoid negative similarities
             adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
 
-            # Increase the influence of similarity scores
-            influence_factor = 1.2  # Increase this value to give more weight to similarity
+            # Increase the influence of similarity scores dynamically
+            influence_factor = 1.7 if similarity_scores.max() < 0.7 else 1.0
             adjusted_probabilities = adjusted_probabilities ** influence_factor
 
             # Normalize again
@@ -394,87 +408,17 @@ try:
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
     # If the model does not exist, create a new one
-    language_model = EnhancedLanguageModel(text, n=1000000000000000000)
+    language_model = EnhancedLanguageModel(text, n=3)
     language_model.save_model(model_file)  # Save the newly created model
     print("Created and saved new model.")
 
 # Generate the specified number of sentences
 num_sentences = 10 # Number of sentences to generate
-input_words = ["there", "was"]  # Words to be used
+input_words = ["he", "was"]  # Words to be used
 
 # Generate initial text using your integrated method
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
 print("Generated Text:\n", generated_text)
-
-# Load the GPT-2 paraphrasing model and the SentenceTransformer for embeddings
-model_name = "gpt2"
-tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-gpt2_model = GPT2LMHeadModel.from_pretrained(model_name)
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # Compact and effective for sentence similarity
-
-
-
-# Function to generate paraphrased text
-def paraphrase_text(text, max_length=50, num_return_sequences=3):
-    input_ids = tokenizer.encode(text, return_tensors='pt')
-    attention_mask = torch.ones(input_ids.shape, device=input_ids.device)
-
-    # Generate paraphrases with tuned parameters for better coherence
-    outputs = gpt2_model.generate(
-        input_ids,
-        max_length=max_length,
-        num_return_sequences=num_return_sequences,
-        num_beams=8,
-        early_stopping=True,
-        attention_mask=attention_mask,
-        pad_token_id=tokenizer.eos_token_id,
-        do_sample=True,
-        temperature=0.7,
-        repetition_penalty=1.2,  # Penalizes repetition
-        top_k=100,                # Limits the pool of next words for variety
-        top_p=0.90               # Nucleus sampling
-    )
-    
-    paraphrases = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
-    return paraphrases
-
-# Select the best paraphrase based on cosine similarity
-def best_paraphrase_by_similarity(original_text, paraphrase_variants):
-    original_embedding = embedding_model.encode(original_text, convert_to_tensor=True)
-    paraphrase_embeddings = embedding_model.encode(paraphrase_variants, convert_to_tensor=True)
-    similarities = util.pytorch_cos_sim(original_embedding, paraphrase_embeddings)
-    best_idx = torch.argmax(similarities).item()
-    return paraphrase_variants[best_idx]
-
-# Function to check for repetitive patterns
-def is_repetitive(text):
-    return bool(re.search(r'\b(\w+)\b(?:.*\b\1\b){2,}', text))
-    
-
-# Split the generated text into sentences
-sentences = generated_text.split('.')
-sentences = [sentence.strip() for sentence in sentences if sentence]
-
-# Paraphrased sentences list
-paraphrased_sentences = []
-
-for sentence in sentences:
-    if len(sentence.split()) > 5:
-        # Generate paraphrases
-        paraphrase_variants = paraphrase_text(sentence)
-        
-        # Choose the best paraphrase based on cosine similarity
-        best_paraphrase = best_paraphrase_by_similarity(sentence, paraphrase_variants)
-        
-        # Filter out repetitive paraphrases
-        if not is_repetitive(best_paraphrase) and best_paraphrase not in paraphrased_sentences:
-            paraphrased_sentences.append(best_paraphrase)
-
-# Combine paraphrased sentences into coherent text
-paraphrased_text = '. '.join(paraphrased_sentences) + '.'
-
-# Print the result
-print("Paraphrased Text:\n", paraphrased_text)
 
 
 
