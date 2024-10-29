@@ -192,7 +192,7 @@ class EnhancedLanguageModel:
             adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
 
             # Increase the influence of similarity scores dynamically
-            influence_factor = 1.6 if similarity_scores.max() < 0.7 else 1.0
+            influence_factor = 1.7 if similarity_scores.max() < 0.7 else 1.0
             adjusted_probabilities = adjusted_probabilities ** influence_factor
 
             # Normalize again
@@ -281,6 +281,38 @@ class EnhancedLanguageModel:
         return adjusted_sentences, report
 
 
+    def get_last_pos(self, sentence):
+        """ Get the last part of speech from the last generated sentence. """
+        doc = nlp(sentence)
+        if doc:
+            return doc[-1].tag_  # Return the last part of speech tag
+        return None
+
+    def choose_discourse_marker(self, last_pos):
+        """ Choose an appropriate discourse marker based on the last POS. """
+        markers = {
+            'CC': ['and', 'but'],  # Coordinating conjunction
+            'VB': ['therefore', 'furthermore'],  # Verb
+            'JJ': ['however', 'nevertheless'],  # Adjective
+            # Add more POS types and corresponding markers as needed
+        }
+
+        # Choose a marker based on the last POS
+        if last_pos in markers:
+            return random.choice(markers[last_pos])
+        return ''  # Default to an empty string if no suitable marker
+
+    def advanced_length_adjustment(self, last_sentence, base_length):
+        """ Adjust length based on the structure of the last sentence. """
+        last_words = last_sentence.split()
+        last_length = len(last_words)
+
+        # Adjust based on last sentence's length and the number of clauses or punctuation
+        clause_count = last_sentence.count(',') + last_sentence.count('and') + 1  # Rough count of clauses
+        adjusted_length = max(5, min(base_length + random.randint(-2, 2) + clause_count - 1, 30))
+
+        return adjusted_length
+
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
         generated_sentences = []
         max_attempts = 9  # Max attempts to generate a coherent sentence
@@ -292,10 +324,15 @@ class EnhancedLanguageModel:
                 if i == 0:
                     generated_sentence = self.generate_sentence(start_words=input_words, length=length)
                 else:
-                    # Adjust length based on previous sentence length
-                    last_length = len(generated_sentences[-1].split())
-                    adjusted_length = max(5, min(length + random.randint(-2, 2), 30))  # Example: keep between 5 and 30
-                    generated_sentence = self.generate_sentence(length=adjusted_length)
+                    last_sentence = generated_sentences[-1]
+                    last_pos = self.get_last_pos(last_sentence)
+                    discourse_marker = self.choose_discourse_marker(last_pos)
+
+                    # More advanced length adjustment
+                    adjusted_length = self.advanced_length_adjustment(last_sentence, length)
+
+                    # Generate a new sentence
+                    generated_sentence = f"{discourse_marker.capitalize()} {self.generate_sentence(length=adjusted_length)}"
 
                 # Check the quality of the generated sentence
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
@@ -309,9 +346,7 @@ class EnhancedLanguageModel:
                 print(f"Max attempts reached for generating sentence {i + 1}. Adding a placeholder.")
                 generated_sentences.append("This sentence could not be generated coherently.")  # Placeholder
 
-        # Post-process generated sentences for coherence and flow
-        processed_sentences = self.post_process_sentences(generated_sentences)
-        final_text = ' '.join(processed_sentences)
+        final_text = ' '.join(generated_sentences)
         return final_text
 
 
@@ -336,12 +371,12 @@ class EnhancedLanguageModel:
             avg_similarity = np.mean(similarities)
 
             # Dynamic threshold based on average sentence length
-            threshold = 0.3  # Default threshold
+            threshold = 0.55  # Default threshold
             avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
             
             # Adjust threshold based on previous sentence length
             if avg_length > 15:  # Example: if previous sentences are longer than 15 words
-                threshold = 0.4
+                threshold = 0.65
 
             # Check if the average similarity is above the threshold
             return avg_similarity > threshold
@@ -440,13 +475,13 @@ try:
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
     # If the model does not exist, create a new one
-    language_model = EnhancedLanguageModel(text, n=3)
+    language_model = EnhancedLanguageModel(text, n=2)
     language_model.save_model(model_file)  # Save the newly created model
     print("Created and saved new model.")
 
 # Generate the specified number of sentences
-num_sentences = 10 # Number of sentences to generate
-input_words = ["he", "was"]  # Words to be used
+num_sentences = 5 # Number of sentences to generate
+input_words = "I scattered the flour to try the result of that ancient trick.".split()  # Words to be used
 
 # Generate initial text using your integrated method
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
