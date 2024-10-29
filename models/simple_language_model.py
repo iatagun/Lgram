@@ -159,7 +159,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no noun phrases are found
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.75):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
         if not next_words:
             return None  # No next words available
 
@@ -192,7 +192,7 @@ class EnhancedLanguageModel:
             adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
 
             # Increase the influence of similarity scores dynamically
-            influence_factor = 1.7 if similarity_scores.max() < 0.7 else 1.0
+            influence_factor = 1.6 if similarity_scores.max() < 0.7 else 1.0
             adjusted_probabilities = adjusted_probabilities ** influence_factor
 
             # Normalize again

@@ -159,7 +159,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no noun phrases are found
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.75):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
         if not next_words:
             return None  # No next words available
 
@@ -192,7 +192,7 @@ class EnhancedLanguageModel:
             adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
 
             # Increase the influence of similarity scores dynamically
-            influence_factor = 1.7 if similarity_scores.max() < 0.7 else 1.0
+            influence_factor = 1.6 if similarity_scores.max() < 0.7 else 1.0
             adjusted_probabilities = adjusted_probabilities ** influence_factor
 
             # Normalize again
@@ -207,47 +207,79 @@ class EnhancedLanguageModel:
 
 
     def clean_text(self, text):
+        """Cleans the input text by removing unwanted spaces, fixing punctuation issues,
+        normalizing spaces, and ensuring proper capitalization.
+
+        Args:
+            text (str): The input text to clean.
+
+        Returns:
+            str: The cleaned text.
+        """
+        
         # Remove unwanted spaces before punctuation
         text = text.replace(" .", ".").replace(" ,", ",").replace(" ;", ";").replace(" :", ":").replace(" ?", "?").replace(" !", "!")
-        
+
         # Fix double punctuation issues
         text = text.replace("..", ".").replace(",,", ",").replace("!!", "!").replace("??", "?")
-        
-        # Remove leading and trailing quotes if they are misplaced
+
+        # Remove misplaced leading and trailing quotes
         text = text.strip("'").strip('"')
-        
-        # Add a period at the end of the sentence if not already there
-        if text and text[-1] not in ['.', '!', '?']:
-            text += '.'
-        
+
         # Normalize spaces: ensure only one space between words
         text = ' '.join(text.split())
         
         # Capitalize the first letter of the sentence
         if text:
             text = text[0].capitalize() + text[1:]
+
+        # Add a period at the end of the sentence if not already there
+        if text and text[-1] not in ['.', '!', '?']:
+            text += '.'
+
+        # Handle potential cases of trailing punctuation without space
+        text = text.replace('."', '"').replace("'", "'").replace(" ,", ",").replace(" ;", ";").replace(" :", ":")
         
         return text
 
-    def post_process_sentences(self, sentences):
+
+    def post_process_sentences(self, sentences, entity_diversity_threshold=2):
+        """Post-processes sentences to ensure coherence and thematic consistency.
+
+        Args:
+            sentences (list of str): The sentences to process.
+            entity_diversity_threshold (int): Minimum number of unique entities required for coherence.
+
+        Returns:
+            tuple: A tuple containing the adjusted sentences and a report on coherence.
+        """
+        
         # Combine sentences into a single text for analysis
         full_text = ' '.join(sentences)
 
         # Use SpaCy to process the text
         doc = nlp(full_text)
 
-        # Example: Check for coherence based on named entities or noun phrases
+        # Extract named entities and noun phrases
         entities = set(ent.text for ent in doc.ents)  # Extract named entities
         noun_phrases = set(chunk.text for chunk in doc.noun_chunks)  # Extract noun phrases
 
-        # Implement logic to ensure thematic consistency
-        if len(entities) < 2:  # If not enough entities, encourage rephrasing
-            print("Low entity diversity detected. Rephrasing might be needed.")
+        # Prepare a report on coherence
+        report = {
+            "entity_count": len(entities),
+            "noun_phrase_count": len(noun_phrases),
+            "needs_rephrasing": len(entities) < entity_diversity_threshold,
+        }
+
+        # Check for low entity diversity and provide feedback
+        if report["needs_rephrasing"]:
+            report["suggestion"] = "Low entity diversity detected. Rephrasing might be needed."
 
         # Adjust sentences by cleaning
         adjusted_sentences = [self.clean_text(sentence) for sentence in sentences]
 
-        return adjusted_sentences
+        return adjusted_sentences, report
+
 
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
         generated_sentences = []
