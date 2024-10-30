@@ -6,9 +6,12 @@ import numpy as np
 from tqdm import tqdm  # Import tqdm for progress bar
 import os
 import dynamicngramparaphraser
+import logging
+import time
+import getpass
 
 # Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_md")  # Use medium model for better embeddings
+nlp = spacy.load("en_core_web_lg")  # Use medium model for better embeddings
 
 class EnhancedLanguageModel:
     def __init__(self, text, n=2):
@@ -160,7 +163,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no noun phrases are found
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=2.0):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=5.0):
         if not next_words:
             return None  # No next words available
 
@@ -536,31 +539,42 @@ def load_text_from_file(file_path):
     
     return None  # Return None if there's an error
 
-# Load the text from the file
+
+import logging
+import time
+import getpass
+import os
+
+# İşlem süresi için başlangıç zamanı
+start_time = time.time()
+username = getpass.getuser()  # Mevcut kullanıcı adını al
+
+# Metni dosyadan yükle
 file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_data.txt'
 text = load_text_from_file(file_path)
 
-# Check if the model file exists
+# Model dosyasının varlığını kontrol et
 model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\language_model.pkl'
 
 try:
-    # Attempt to load the existing model
+    # Mevcut modeli yüklemeye çalış
     language_model = EnhancedLanguageModel.load_model(model_file)
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    # If the model does not exist, create a new one
+    # Model yoksa yeni bir tane oluştur
     language_model = EnhancedLanguageModel(text, n=2)
-    language_model.save_model(model_file)  # Save the newly created model
+    language_model.save_model(model_file)  # Yeni oluşturulan modeli kaydet
     print("Created and saved new model.")
 
-# Generate the specified number of sentences
-num_sentences = 5 # Number of sentences to generate
-input_words = "The time ticked on.".split()  # Words to be used
+# Belirtilen sayıda cümle üret
+num_sentences = 5  # Üretilecek cümle sayısı
+input_words = "It is a pity there is no key".split()  # Kullanılacak kelimeler
 
-# Generate initial text using your integrated method
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+# Entegre edilmiş yöntemle başlangıç metni üret
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
 print("Generated Text:\n", generated_text)
 
+# N-gram modellerini kontrol et ve yükle
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_data.txt"
 bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\bigram_model.pkl"
 trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\trigram_model.pkl"
@@ -577,17 +591,54 @@ else:
     dynamicngramparaphraser.build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
     bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model = dynamicngramparaphraser.load_ngram_model(bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
 
+# Parafraz işlemi
 paraphrased_version = dynamicngramparaphraser.generate_paraphrase(generated_text, bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model)
 
 print("Parafraz:", paraphrased_version)
 
-log_file_path = "paraphrased_log.txt"  # Log dosyası adı
+# Log dosyası ve yapılandırması
+log_file_path = "paraphrased_log.txt"
 
-# Metni dosyaya yazma
-with open(log_file_path, 'w') as log_file:  # 'w' moduyla açarak üzerine yazılır
-    log_file.write("Parafraz: " + paraphrased_version)
+# Loglama yapılandırması
+logging.basicConfig(
+    filename=log_file_path,
+    level=logging.INFO,
+    format='%(asctime)s - Kullanıcı: %(username)s - Fonksiyon: %(funcName)s - Seviyesi: %(levelname)s - Mesaj: %(message)s'
+)
 
-print(f"Parafraz metni '{log_file_path}' dosyasına yazıldı.")
+# Loglama için özel bir format ayarla
+class CustomLogFilter(logging.Filter):
+    def filter(self, record):
+        record.username = username
+        return True
+
+# Loglayıcıya özel filtreyi ekle
+logger = logging.getLogger()
+logger.addFilter(CustomLogFilter())
+
+try:
+    # Loga kaydedilecek mesajlar
+    logger.info("Parafraz işlemi başlatıldı.")
+    logger.info("Orijinal metin uzunluğu: %d karakter.", len(paraphrased_version))
+
+    # generated_text ve paraphrased_version'u satır satır yaz
+    logger.info("Üretilen metin:")
+    for line in generated_text.split('\n'):
+        logger.info(line)
+
+    logger.info("Parafraz edilen metin:")
+    for line in paraphrased_version.split('\n'):
+        logger.info(line)
+
+    # İşlem süresini hesapla
+    elapsed_time = time.time() - start_time
+    logger.info("İşlem süresi: %.2f saniye", elapsed_time)
+
+    print(f"Parafraz metni '{log_file_path}' dosyasına loglandı.")
+
+except Exception as e:
+    logger.error("Log dosyasına yazma hatası: %s", str(e))
+
 
 
 

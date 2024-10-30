@@ -9,7 +9,7 @@ from numpy import dot
 from numpy.linalg import norm
 
 # SpaCy modelini yükle
-nlp = spacy.load("en_core_web_md")  # veya "en_core_web_lg"
+nlp = spacy.load("en_core_web_lg")  # veya "en_core_web_lg"
 
 
 def generate_ngrams(tokens, n):
