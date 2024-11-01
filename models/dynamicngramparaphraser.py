@@ -7,10 +7,11 @@ from itertools import islice
 from tqdm import tqdm
 from numpy import dot
 from numpy.linalg import norm
+import json
 
 # SpaCy modelini yükle
 nlp = spacy.load("en_core_web_lg")  # veya "en_core_web_lg"
-
+corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\corrections.json"
 
 def generate_ngrams(tokens, n):
     """n-gram oluşturmak için yardımcı fonksiyon."""
@@ -97,7 +98,7 @@ def calculate_weighted_similarity(word_token, choice_token, freq, normalization=
     similarity = dot(word_vector, choice_vector)
 
     # Ağırlıklı benzerliği döndür
-    return similarity * (freq ** 0.5)  # Sıklığı kök alma ile hafifçe ağırlıklandır
+    return similarity * (freq ** 0.7)  # Sıklığı kök alma ile hafifçe ağırlıklandır
 
 def select_best_match(word, choices):
     """Orijinal kelimeye en yakın eşleşmeyi seçer."""
@@ -147,64 +148,104 @@ def reorder_sentence(sentence):
         else:  # Modifiers (adjectives, adverbs, etc.)
             modifiers.append(token)
 
-    # Basic reordering strategy: Subject-Verb-Object
+    # Enhanced reordering strategy: Subject-Verb-Object with checks
     if subjects and verbs:
-        reordered_tokens.append(random.choice(subjects))  # Select one subject
-        if verbs:
-            reordered_tokens.append(random.choice(verbs))  # Select one verb
+        # Select a subject, ensuring it's unique to avoid ambiguity
+        selected_subject = random.choice(subjects)
+        reordered_tokens.append(selected_subject)
+
+        # Select a verb, ensuring it agrees with the subject (singular/plural)
+        selected_verb = None
+        for verb in verbs:
+            if (selected_subject.tag_ == 'NNS' and verb.tag_ == 'VBZ') or \
+               (selected_subject.tag_ == 'NN' and verb.tag_ == 'VBP'):
+                continue  # Skip if there's a disagreement
+            selected_verb = verb
+            break
+        if selected_verb:
+            reordered_tokens.append(selected_verb)
+
+        # Select objects, ensuring there's no conflict
         if objects:
-            reordered_tokens.extend(objects)  # Add all objects
-        reordered_tokens.extend(modifiers)  # Add all modifiers
+            # Ensure at least one object is present
+            selected_objects = [obj for obj in objects if obj.head == selected_verb]  # Ensure they relate to the selected verb
+            if selected_objects:
+                reordered_tokens.extend(selected_objects)
+
+        # Add modifiers based on their relationship with the subject/verb
+        if selected_verb:
+            for mod in modifiers:
+                if mod.head == selected_verb or mod.head == selected_subject:
+                    reordered_tokens.append(mod)
+
+    # Ensure at least one subject, verb, and object to form a complete thought
+    if not reordered_tokens or len(reordered_tokens) < 3:
+        return "Sentence could not be reordered meaningfully."
 
     return " ".join([token.text for token in reordered_tokens])
 
+def correct_grammar(sentence):
+        """Correct common grammar mistakes in the given sentence."""
+        """Load corrections from a JSON file and correct grammar in the given sentence."""
+        # Load corrections from the JSON file
+        with open(corrections_file, 'r', encoding='utf-8') as f:
+            corrections = json.load(f)
+
+        # Ensure the input is a string
+        if not isinstance(sentence, str):
+            raise ValueError("Input must be a string.")
+
+        # Correct the grammar in the given sentence
+        for wrong, right in corrections.items():
+            sentence = sentence.replace(wrong, right)
+
+        return sentence
+
+
 def generate_paraphrase(text, bigram_model, trigram_model, fourgram_model, fivegram_model, sixgram_model):
-    """n-gram modellerini kullanarak paraphrase oluşturur."""
+    """Bağımlılık ilişkilerini kullanarak n-gram modelleri ile paraphrase oluşturur."""
     doc = nlp(text)
     paraphrased_sentences = []
 
-    # Metni cümlelere ayır
-    sentences = list(doc.sents)
-
-    for sentence in sentences:
+    # Her cümleyi işle
+    for sentence in doc.sents:
         paraphrased_text = []
+        
         for token in sentence:
             word = token.text
             lemma = token.lemma_
 
-            # Bağlama uygun n-gram seçenekleri belirleme
-            context = tuple(paraphrased_text[-5:]) if len(paraphrased_text) >= 5 else None
-            if context in sixgram_model:
-                choices = sixgram_model[context]
+            # Bağımlılık ilişkisine göre en iyi n-gram seçimi
+            dep_context = (token.head.text, token.dep_, token.pos_)  # Bağlı olduğu kelime, bağımlılık türü ve sözcük türü
+
+            # Bağımlılık bağlamına göre n-gram seçimi
+            if len(paraphrased_text) >= 5 and dep_context in sixgram_model:
+                choices = sixgram_model[dep_context]
                 paraphrased_text.append(select_best_match(word, choices))
-            elif len(paraphrased_text) >= 4 and tuple(paraphrased_text[-4:]) in fivegram_model:
-                context = tuple(paraphrased_text[-4:])
-                choices = fivegram_model[context]
+            elif len(paraphrased_text) >= 4 and dep_context in fivegram_model:
+                choices = fivegram_model[dep_context]
                 paraphrased_text.append(select_best_match(word, choices))
-            elif len(paraphrased_text) >= 3 and tuple(paraphrased_text[-3:]) in fourgram_model:
-                context = tuple(paraphrased_text[-3:])
-                choices = fourgram_model[context]
+            elif len(paraphrased_text) >= 3 and dep_context in fourgram_model:
+                choices = fourgram_model[dep_context]
                 paraphrased_text.append(select_best_match(word, choices))
-            elif len(paraphrased_text) >= 2 and tuple(paraphrased_text[-2:]) in trigram_model:
-                context = tuple(paraphrased_text[-2:])
-                choices = trigram_model[context]
+            elif len(paraphrased_text) >= 2 and dep_context in trigram_model:
+                choices = trigram_model[dep_context]
                 paraphrased_text.append(select_best_match(word, choices))
             elif (lemma,) in bigram_model:
-                # Bigram ile bağlama uygun bir kelime seçimi
                 choices = bigram_model[(lemma,)]
                 paraphrased_text.append(select_best_match(word, choices))
             else:
-                # Hiçbir eşleşme yoksa kelimeyi doğrudan ekle
                 paraphrased_text.append(word)
 
-        # Birleştir ve cümle sonunu nokta ile bitir, büyük harfle başlat
+        # Cümleyi birleştir ve biçimlendir
         final_sentence = " ".join(paraphrased_text).strip()
-        if final_sentence:  # Eğer cümle boş değilse
-            final_sentence = final_sentence[0].upper() + final_sentence[1:]  # İlk harfi büyük yap
-            if not final_sentence.endswith('.'):  # Eğer cümle noktada bitmiyorsa nokta ekle
+        if final_sentence:
+            final_sentence = final_sentence[0].upper() + final_sentence[1:]
+            if not final_sentence.endswith('.'):
                 final_sentence += '.'
             paraphrased_sentences.append(final_sentence)
-
-    return " ".join(paraphrased_sentences)
+    paraphrased_sentences = " ".join(paraphrased_sentences)
+    paraphrased_sentences = correct_grammar(paraphrased_sentences)
+    return paraphrased_sentences
 
 
