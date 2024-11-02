@@ -5,14 +5,33 @@ import spacy
 import numpy as np
 from tqdm import tqdm  # Import tqdm for progress bar
 import os
+import re
+import json
+import time
+import getpass
+from transition_analyzer import TransitionAnalyzer
+from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_md")  # Use medium model for better embeddings
+nlp = spacy.load("en_core_web_lg")  # Use medium model for better embeddings
+
+# N-gram modellerini kontrol et ve yükle
+text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
+bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\bigram_model.pkl"
+trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\trigram_model.pkl"
+fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fourgram_model.pkl"
+fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
+sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
+corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\corrections.json"
 
 class EnhancedLanguageModel:
     def __init__(self, text, n=2):
         self.n = n  # N-gram size
         self.model, self.total_counts = self.build_model(text)  # Combine model and total counts
+        self.load_ngram_models()  # N-gram modellerini yükle
+        self.dummy_text = "dummy_text"
+        self.correct_grammar(self.dummy_text)
+        
         
     def build_model(self, text):
         model = defaultdict(lambda: defaultdict(int))
@@ -45,126 +64,204 @@ class EnhancedLanguageModel:
 
         return dict(model), dict(total_counts)  # Convert to regular dicts
 
+    import pickle
+
+    def load_ngram_models(self):
+        with open(bigram_path, 'rb') as f:
+            self.bigram_model = pickle.load(f)
+        with open(trigram_path, 'rb') as f:
+            self.trigram_model = pickle.load(f)
+        with open(fourgram_path, 'rb') as f:
+            self.fourgram_model = pickle.load(f)
+        with open(fivegram_path, 'rb') as f:
+            self.fivegram_model = pickle.load(f)
+        with open(sixgram_path, 'rb') as f:
+            self.sixgram_model = pickle.load(f)
+
     def generate_sentence(self, start_words=None, length=10):
         if start_words is None:
-            start_words = random.choice(list(self.model.keys()))
+            start_words = random.choice(list(self.trigram_model.keys()))
         else:
+            # Ensure start_words matches expected length
             start_words = tuple(start_words)
-
+            if len(start_words) < self.n - 1:
+                raise ValueError(f"start_words must contain at least {self.n - 1} words.")
+        
         current_words = list(start_words)
         sentence = current_words.copy()
+        transition_analyzer = TransitionAnalyzer("")  # Initialize with dummy sentence
 
         for _ in tqdm(range(length), desc="Generating words"):
-            prefix = tuple(current_words[-(self.n-1):])  # Get the last n-1 words
-            next_words = self.model.get(prefix, {})
+            prefix = tuple(current_words[-(self.n-1):])  # Last n-1 words
+            
+            # Get next words from the appropriate model, dynamically adjusting for n-grams
+            next_words = {}
+            if self.n >= 2 and prefix in self.bigram_model:
+                next_words.update(self.bigram_model[prefix])
+            if self.n >= 3 and prefix in self.trigram_model:
+                next_words.update(self.trigram_model[prefix])
+            # Dynamically enable higher n-grams as needed
+            if hasattr(self, 'fourgram_model') and self.n >= 4 and prefix in self.fourgram_model:
+                next_words.update(self.fourgram_model[prefix])
+            if hasattr(self, 'fivegram_model') and self.n >= 5 and prefix in self.fivegram_model:
+                next_words.update(self.fivegram_model[prefix])
+            if hasattr(self, 'sixgram_model') and self.n >= 6 and prefix in self.sixgram_model:
+                next_words.update(self.sixgram_model[prefix])
 
+            # Stop if no viable next words
             if not next_words:
-                break  # Stop if no next words
+                break
 
-            # Determine the center based on the last generated sentence
+            # Process current sentence for transition analysis and grammar correction
             last_sentence = ' '.join(current_words)
-            context_word = self.get_center_from_sentence(last_sentence)
-
-            # Choose the next word considering the context
+            corrected_sentence = self.correct_grammar(last_sentence)
+            transition_analyzer = TransitionAnalyzer(corrected_sentence)
+            context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
             next_word = self.choose_word_with_context(next_words, context_word)
 
-            # Avoid repeating the last word in the sentence
+            # Avoid repeating the last word
             if next_word != current_words[-1]:
                 sentence.append(next_word)
                 current_words.append(next_word)
 
-            # Optionally, implement a stopping condition for coherence
-            if self.is_complete_thought(sentence):
+            # Check for complete thought after generating a reasonable length
+            if len(sentence) > length // 2 and self.is_complete_thought(sentence):
                 break
 
         sentence_text = ' '.join(sentence).strip()
+        sentence_text = self.correct_grammar(sentence_text)  # Final grammar check
         return self.clean_text(sentence_text)
 
+
+    def correct_grammar(self, sentence):
+        """Correct common grammar mistakes in the given sentence."""
+        """Load corrections from a JSON file and correct grammar in the given sentence."""
+        # Load corrections from the JSON file
+        with open(corrections_file, 'r', encoding='utf-8') as f:
+            corrections = json.load(f)
+
+        # Ensure the input is a string
+        if not isinstance(sentence, str):
+            raise ValueError("Input must be a string.")
+
+        # Correct the grammar in the given sentence
+        for wrong, right in corrections.items():
+            sentence = sentence.replace(wrong, right)
+
+        return sentence
+
     def is_complete_thought(self, sentence):
-        """Check if the current sentence forms a complete thought with stricter criteria."""
+        """Check if the current sentence forms a complete thought with refined criteria."""
         if not sentence:
             return False
 
-        # Ensure the input is a string, join if it's a list
+        # Ensure the input is a string
         if isinstance(sentence, list):
             sentence = ' '.join(sentence)  # Join list elements into a single string
+
+        # Correct grammar mistakes before analyzing the structure
+        sentence = self.correct_grammar(sentence)
 
         # Process the sentence with SpaCy to analyze its structure
         doc = nlp(sentence)
 
-        # Check if the last word is a punctuation mark indicating a complete thought
-        if doc[-1].text not in ['.', '!', '?']:
+        # Check if the last word is punctuation indicating a complete thought
+        if doc[-1].text not in ['.', '!', '?', '...']:
             return False
 
-        # Check if there are at least three words in the sentence (including punctuation)
-        if len(doc) < 3:  # A complete thought typically has at least a subject, verb, and possibly an object
+        # Check if there are at least three words in the sentence
+        if len(doc) < 3:
             return False
 
         # Ensure the sentence contains at least one subject and one verb
-        has_subject = any(token.dep_ in ('nsubj', 'nsubjpass') for token in doc)
-        has_verb = any(token.pos_ == 'VERB' for token in doc)
-        
-        # Ensure the sentence does not begin or end with conjunctions
-        if doc[0].pos_ == 'CCONJ' or doc[-2].pos_ == 'CCONJ':  # Check second-last token for conjunction
+        has_subject = any(token.dep_ in ('nsubj', 'nsubjpass', 'expl') for token in doc)  # Includes implicit subjects
+        has_verb = any(token.pos_ in ('VERB', 'AUX') for token in doc)  # Includes modal auxiliaries
+
+        # Check if the sentence starts or ends with conjunctions, or has conjunctions before punctuation
+        if doc[0].pos_ == 'CCONJ' or doc[-2].pos_ == 'CCONJ' or any(token.pos_ == 'CCONJ' and token.i == len(doc) - 2 for token in doc):
             return False
 
-        # Ensure there is no dependent clause that would make the sentence incomplete
-        has_dependent_clause = any(token.dep_ in ('advcl', 'acl', 'relcl') for token in doc)
+        # Check for the presence of dependent clauses indicating incomplete thoughts
+        has_dependent_clause = any(token.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass') for token in doc)
 
-        # Return True only if both subject and verb are present, and it does not contain dependent clauses
-        return has_subject and has_verb and not has_dependent_clause
+        # Adjust conditions to allow for some flexibility in structure
+        subject_count = sum(1 for token in doc if token.dep_ in ('nsubj', 'nsubjpass', 'expl'))
+        verb_conflict = any(token.dep_ == 'conj' and token.head.pos_ == 'VERB' for token in doc)
+
+        # Return True only if the structure is coherent
+        return has_subject and has_verb and not has_dependent_clause and subject_count >= 1 and not verb_conflict
 
 
 
 
-    def get_center_from_sentence(self, sentence):
-        """Extract the most salient noun phrase (center) from the sentence based on centering theory."""
+    def get_center_from_sentence(self, sentence, transition_analyzer):
+        """
+        Extracts the most salient noun phrase (center) from the sentence based on centering theory 
+        and TransitionAnalyzer results.
+        """
+        transition_analyzer = TransitionAnalyzer(sentence)
+        
+        # Run analysis
+        transition_results = transition_analyzer.analyze()  # Correct method call   
         doc = nlp(sentence)
+        
         noun_phrases = [chunk.text for chunk in doc.noun_chunks]  # Get all noun phrases
-
-        # Initialize variables to hold the centers based on their grammatical roles
+        
+        # Initialize structures to hold centers based on grammatical roles
         subjects = []
         objects = []
         pronouns = []
-        candidates = defaultdict(int)  # To track frequency of noun phrases
+        candidates = defaultdict(int)
 
-        # Iterate through tokens to classify noun phrases based on their grammatical roles
+        # Classify noun phrases based on their roles in the sentence
         for token in doc:
             if token.dep_ in ('nsubj', 'nsubjpass'):  # Nominal subjects
                 subjects.append(token.text)
-                candidates[token.text] += 2  # Count occurrences with higher weight for subjects
-            elif token.dep_ in ('dobj', 'pobj'):  # Direct objects
+                candidates[token.text] += 2
+            elif token.dep_ in ('dobj', 'pobj', 'attr', 'oprd'):  # Objects and attributes
                 objects.append(token.text)
-                candidates[token.text] += 1  # Count occurrences
-            elif token.pos_ == 'PRON':  # Include pronouns with medium weight
+                candidates[token.text] += 1
+            elif token.pos_ == 'PRON':  # Pronouns
                 pronouns.append(token.text)
                 candidates[token.text] += 1
 
-        # Determine the most salient noun phrase based on centering theory
+        # Prioritize subjects based on centering theory principles
         if subjects:
-            # Prioritize subjects and sort by frequency, then by first appearance in the sentence
             subjects = sorted(subjects, key=lambda x: (-candidates[x], sentence.index(x)))
-            return subjects[0]  # Return the most salient subject as the center
+            return subjects[0]
 
-        if objects:
-            # If no subjects, consider objects
-            objects = sorted(objects, key=lambda x: (-candidates[x], sentence.index(x)))
-            return objects[0]  # Return the most salient object as the center
+        # Use transition data to identify continuity with next sentences
+        for result in transition_results:
+            if result['current_sentences'] == sentence:
+                if result['transition'] == "Center Continuation (CON)":
+                    # Prefer noun phrases that continue across sentences
+                    continuation_nps = set(result['current_nps']).intersection(result['next_nps'])
+                    if continuation_nps:
+                        return next(iter(continuation_nps))
 
-        if pronouns:
-            # As a last resort, consider pronouns if no subject or object is found
-            pronouns = sorted(pronouns, key=lambda x: (-candidates[x], sentence.index(x)))
-            return pronouns[0]  # Return the most salient pronoun as the center
+                elif result['transition'] in ("Smooth Shift (SSH)", "Rough Shift (RSH)"):
+                    # For shifts, select salient noun phrase in the current sentence
+                    # Sort objects by both frequency and position for more precise centering
+                    objects = sorted(objects, key=lambda x: (-candidates[x], sentence.index(x)))
+                    if objects:
+                        return objects[0]
+                    elif pronouns:
+                        return pronouns[0]  # Prioritize pronouns as fallback option
 
-        return None  # Return None if no noun phrases are found
+        # If no transition match, use max scoring among noun phrases
+        valid_noun_phrases = [np for np in noun_phrases if np in candidates]
+        if valid_noun_phrases:
+            return max(valid_noun_phrases, key=candidates.get, default=None)
+
+        return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.99):
         if not next_words:
             return None  # No next words available
 
         word_choices = list(next_words.keys())
-        probabilities = np.array(list(next_words.values()))
+        probabilities = np.array(list(next_words.values()), dtype=float)  # Ensure float type
 
         # Ensure probabilities are non-negative
         probabilities = np.maximum(probabilities, 0)
@@ -177,26 +274,35 @@ class EnhancedLanguageModel:
             probabilities = np.ones_like(probabilities) / len(probabilities)  # Equal distribution if all probabilities are zero
 
         if context_word:
-            # Get context vector
+            # Check if the context word has a valid vector representation
             context_vector = nlp(context_word).vector
+            if context_vector is None or np.all(context_vector == 0):
+                return np.random.choice(word_choices, p=probabilities)  # Fallback to probabilities if context vector is invalid
+            context_vector = context_vector.reshape(1, -1)  # Reshape for cosine_similarity
             
-            # Compute similarity scores with the context word
-            similarity_scores = np.array([np.dot(context_vector, nlp(word).vector) for word in word_choices])
+            # Compute similarity scores with the context word using cosine similarity
+            word_vectors = np.array([nlp(word).vector for word in word_choices])
+            similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
 
             # Ensure similarity scores are non-negative and apply semantic threshold
             similarity_scores = np.maximum(similarity_scores, 0)
-            similarity_scores = np.where(similarity_scores >= semantic_threshold, similarity_scores, 0)
+            similarity_scores[similarity_scores < semantic_threshold] = 0  # Apply threshold
+            
+            # Scale similarity scores to adjust probabilities using softmax
+            adjusted_probabilities = np.exp(similarity_scores) * probabilities  # Scale probabilities by exp of similarity
+            
+            # Apply softmax for better distribution
+            adjusted_probabilities = np.exp(adjusted_probabilities) / np.sum(np.exp(adjusted_probabilities))
 
-            # Scale similarity scores to adjust probabilities
-            adjusted_probabilities = probabilities * (similarity_scores + 1)  # Add 1 to avoid negative similarities
-            adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize to sum to 1
-
-            # Increase the influence of similarity scores dynamically
-            influence_factor = 1.7 if similarity_scores.max() < 0.7 else 1.0
-            adjusted_probabilities = adjusted_probabilities ** influence_factor
-
-            # Normalize again
-            adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize again
+            # Increase the influence of similarity scores dynamically based on their range
+            if len(similarity_scores) > 0:
+                mean_similarity = np.mean(similarity_scores)
+                std_similarity = np.std(similarity_scores)
+                influence_factor = 1 + (similarity_scores - mean_similarity) / (std_similarity + 1e-5)  # Avoid division by zero
+                
+                # Apply influence factor to adjusted probabilities
+                adjusted_probabilities *= influence_factor
+                adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize again
 
             # Make selection
             chosen_word = np.random.choice(word_choices, p=adjusted_probabilities)
@@ -204,6 +310,8 @@ class EnhancedLanguageModel:
             chosen_word = np.random.choice(word_choices, p=probabilities)
 
         return chosen_word
+
+
 
 
     def clean_text(self, text):
@@ -219,16 +327,16 @@ class EnhancedLanguageModel:
         
         # Remove unwanted spaces before punctuation
         text = text.replace(" .", ".").replace(" ,", ",").replace(" ;", ";").replace(" :", ":").replace(" ?", "?").replace(" !", "!")
-
+        
         # Fix double punctuation issues
         text = text.replace("..", ".").replace(",,", ",").replace("!!", "!").replace("??", "?")
 
-        # Remove misplaced leading and trailing quotes
-        text = text.strip("'").strip('"')
-
         # Normalize spaces: ensure only one space between words
         text = ' '.join(text.split())
-        
+
+        # Handle misplaced leading and trailing quotes
+        text = text.strip("'\"")  # Strip both single and double quotes from both ends
+
         # Capitalize the first letter of the sentence
         if text:
             text = text[0].capitalize() + text[1:]
@@ -240,118 +348,211 @@ class EnhancedLanguageModel:
         # Handle potential cases of trailing punctuation without space
         text = text.replace('."', '"').replace("'", "'").replace(" ,", ",").replace(" ;", ";").replace(" :", ":")
         
+        # Remove any space before a punctuation mark, ensuring proper spacing
+        text = text.replace(" .", ".").replace(" ,", ",").replace(" ;", ";").replace(" :", ":").replace(" ?", "?").replace(" !", "!")
+        
         return text
 
 
-    def post_process_sentences(self, sentences, entity_diversity_threshold=2):
+    def post_process_sentences(self, sentences, entity_diversity_threshold=20, noun_phrase_diversity_threshold=15):
         """Post-processes sentences to ensure coherence and thematic consistency.
 
         Args:
             sentences (list of str): The sentences to process.
-            entity_diversity_threshold (int): Minimum number of unique entities required for coherence.
+            entity_diversity_threshold (int): Minimum number of unique named entities required for coherence.
+            noun_phrase_diversity_threshold (int): Minimum number of unique noun phrases required for coherence.
 
         Returns:
-            tuple: A tuple containing the adjusted sentences and a report on coherence.
+            tuple: A tuple containing the adjusted sentences and a detailed report on coherence.
         """
-        
-        # Combine sentences into a single text for analysis
+        # Combine sentences for holistic analysis
         full_text = ' '.join(sentences)
+        doc = nlp(full_text)  # Use SpaCy to analyze the text
 
-        # Use SpaCy to process the text
-        doc = nlp(full_text)
+        # Extract unique named entities and noun phrases
+        entities = {ent.text for ent in doc.ents}
+        noun_phrases = {chunk.text for chunk in doc.noun_chunks}
 
-        # Extract named entities and noun phrases
-        entities = set(ent.text for ent in doc.ents)  # Extract named entities
-        noun_phrases = set(chunk.text for chunk in doc.noun_chunks)  # Extract noun phrases
-
-        # Prepare a report on coherence
+        # Initialize report with detailed coherence metrics
         report = {
-            "entity_count": len(entities),
-            "noun_phrase_count": len(noun_phrases),
-            "needs_rephrasing": len(entities) < entity_diversity_threshold,
+            "total_entity_count": len(entities),
+            "total_noun_phrase_count": len(noun_phrases),
+            "entity_diversity_score": len(entities) / max(1, len(sentences)),
+            "noun_phrase_diversity_score": len(noun_phrases) / max(1, len(sentences)),
+            "needs_rephrasing": len(entities) < entity_diversity_threshold or len(noun_phrases) < noun_phrase_diversity_threshold,
+            "suggestions": [],
+            "distribution_analysis": {}
         }
 
-        # Check for low entity diversity and provide feedback
-        if report["needs_rephrasing"]:
-            report["suggestion"] = "Low entity diversity detected. Rephrasing might be needed."
+        # Check diversity thresholds
+        if len(entities) < entity_diversity_threshold:
+            report["suggestions"].append(
+                f"Low named entity diversity detected ({len(entities)} entities). "
+                f"Consider rephrasing to include a greater variety of entities."
+            )
+        if len(noun_phrases) < noun_phrase_diversity_threshold:
+            report["suggestions"].append(
+                f"Low noun phrase diversity detected ({len(noun_phrases)} noun phrases). "
+                f"Consider rephrasing to introduce new themes or ideas."
+            )
+        if report["entity_diversity_score"] < 1.0:
+            report["suggestions"].append(
+                "Entities are not distributed evenly across sentences; further expansion may help."
+            )
+        if report["noun_phrase_diversity_score"] < 1.0:
+            report["suggestions"].append(
+                "Noun phrases are not distributed evenly across sentences; consider diversifying."
+            )
 
-        # Adjust sentences by cleaning
+        # Distribution analysis: identify sentences with repetitive entities and noun phrases
+        for i, sent in enumerate(doc.sents):
+            sent_entities = {ent.text for ent in sent.ents}
+            sent_noun_phrases = {chunk.text for chunk in sent.noun_chunks}
+            
+            # Record the presence of entities and noun phrases in each sentence
+            report["distribution_analysis"][f"sentence_{i + 1}"] = {
+                "entities": list(sent_entities),
+                "noun_phrases": list(sent_noun_phrases)
+            }
+
+            # Provide targeted rephrasing suggestions for repetitive content
+            if i > 0:  # Compare with the previous sentence
+                prev_sent_entities = {ent.text for ent in doc.sents[i - 1].ents}
+                prev_sent_noun_phrases = {chunk.text for chunk in doc.sents[i - 1].noun_chunks}
+
+                # Check for overlap
+                if sent_entities & prev_sent_entities:
+                    report["suggestions"].append(
+                        f"Sentence {i + 1} shares entities with Sentence {i}. "
+                        "Consider rephrasing to improve thematic variety."
+                    )
+                if sent_noun_phrases & prev_sent_noun_phrases:
+                    report["suggestions"].append(
+                        f"Sentence {i + 1} shares noun phrases with Sentence {i}. "
+                        "Consider rephrasing to avoid repetition."
+                    )
+
+        # Adjust sentences by cleaning them individually
         adjusted_sentences = [self.clean_text(sentence) for sentence in sentences]
 
         return adjusted_sentences, report
 
 
-    def get_last_pos(self, sentence):
-        """ Get the last part of speech from the last generated sentence. """
-        doc = nlp(sentence)
-        if doc:
-            return doc[-1].tag_  # Return the last part of speech tag
-        return None
-
-    def choose_discourse_marker(self, last_pos):
-        """ Choose an appropriate discourse marker based on the last POS. """
-        markers = {
-            'CC': ['and', 'but'],  # Coordinating conjunction
-            'VB': ['therefore', 'furthermore'],  # Verb
-            'JJ': ['however', 'nevertheless'],  # Adjective
-            # Add more POS types and corresponding markers as needed
-        }
-
-        # Choose a marker based on the last POS
-        if last_pos in markers:
-            return random.choice(markers[last_pos])
-        return ''  # Default to an empty string if no suitable marker
 
     def advanced_length_adjustment(self, last_sentence, base_length):
         """ Adjust length based on the structure of the last sentence. """
         last_words = last_sentence.split()
         last_length = len(last_words)
 
-        # Adjust based on last sentence's length and the number of clauses or punctuation
-        clause_count = last_sentence.count(',') + last_sentence.count('and') + 1  # Rough count of clauses
-        adjusted_length = max(5, min(base_length + random.randint(-2, 2) + clause_count - 1, 30))
+        # Count clauses based on punctuation and conjunctions
+        clause_count = last_sentence.count(',') + last_sentence.count('and') + 1  # Basic clause count
+
+        # Analyze the sentence using SpaCy
+        doc = nlp(last_sentence)
+        noun_count = sum(1 for token in doc if token.pos_ == "NOUN")  # Count nouns
+        verb_count = sum(1 for token in doc if token.pos_ == "VERB")  # Count verbs
+        adjective_count = sum(1 for token in doc if token.pos_ == "ADJ")  # Count adjectives
+        adverb_count = sum(1 for token in doc if token.pos_ == "ADV")  # Count adverbs
+
+        # Calculate a complexity factor considering nouns, verbs, adjectives, and adverbs
+        complexity_factor = (noun_count + verb_count + adjective_count + adverb_count) // 2
+
+        # Introduce a variability factor based on the length of the last sentence
+        length_variability = (last_length - base_length) // 2  # Adjust based on previous length
+
+        # Adjust length with some variability
+        adjusted_length = max(5, min(base_length + random.randint(-2, 2) + clause_count + complexity_factor + length_variability, 30))
 
         return adjusted_length
 
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
         generated_sentences = []
-        max_attempts = 9  # Max attempts to generate a coherent sentence
+        max_attempts = 5  # Max attempts to generate a coherent sentence
 
         for i in tqdm(range(num_sentences), desc="Generating sentences"):
             attempts = 0
-            while attempts < max_attempts:
+            coherent_sentence = False
+            
+            while attempts < max_attempts and not coherent_sentence:
                 # Allow variability in sentence length based on previous sentences
                 if i == 0:
                     generated_sentence = self.generate_sentence(start_words=input_words, length=length)
                 else:
                     last_sentence = generated_sentences[-1]
-                    last_pos = self.get_last_pos(last_sentence)
-                    discourse_marker = self.choose_discourse_marker(last_pos)
-
-                    # More advanced length adjustment
+                    # Generate a new sentence with adjusted length
                     adjusted_length = self.advanced_length_adjustment(last_sentence, length)
 
                     # Generate a new sentence
-                    generated_sentence = f"{discourse_marker.capitalize()} {self.generate_sentence(length=adjusted_length)}"
+                    generated_sentence = self.generate_sentence(length=adjusted_length)
 
                 # Check the quality of the generated sentence
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
                     generated_sentences.append(generated_sentence)
-                    break  # Break if coherent
+                    coherent_sentence = True  # Mark as coherent
                 else:
                     attempts += 1
                     print(f"Attempt {attempts}: Generated incoherent sentence: {generated_sentence}")
 
-            if attempts == max_attempts:
-                print(f"Max attempts reached for generating sentence {i + 1}. Adding a placeholder.")
-                generated_sentences.append("This sentence could not be generated coherently.")  # Placeholder
+            if not coherent_sentence:
+                print(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
+                generated_sentences.append(generated_sentence)  # Add the incoherent sentence instead of a placeholder
 
         final_text = ' '.join(generated_sentences)
+        final_text = self.post_process_text(final_text)  # Call the new post-processing method
         return final_text
 
+    def get_proper_nouns(self, text):
+        """Identify proper nouns in the text using SpaCy."""
+        doc = nlp(text)
+        proper_nouns = []
+
+        for token in doc:
+            if token.pos_ == 'PROPN':  # Check if the token is a proper noun
+                proper_nouns.append(token.text)
+
+        return list(set(proper_nouns))  # Return unique proper nouns
+
+    def post_process_text(self, text):
+        """Post-process the text to ensure proper punctuation and grammar rules."""
+        # Split sentences by multiple delimiters (. ! ?)
+        sentences = re.split(r'(?<=[.!?]) +', text.strip())
+        cleaned_sentences = []
+
+        for sentence in sentences:
+            cleaned_sentence = sentence.strip()
+            if cleaned_sentence:
+                # Capitalize the first character of the sentence
+                cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
+
+                # Use regex to clean up spaces around punctuation
+                cleaned_sentence = re.sub(r'\s+[,.!?]', r'\g<0>', cleaned_sentence)  # Remove space before punctuation
+                cleaned_sentence = re.sub(r'[,.!?]\s+', r'\g<0>', cleaned_sentence)  # Remove space after punctuation
+                cleaned_sentence = re.sub(r'\s{2,}', ' ', cleaned_sentence)  # Remove double spaces
+                
+                # Fix trailing commas and redundant punctuation
+                cleaned_sentence = cleaned_sentence.rstrip(",")  # Remove trailing commas
+
+                # Handle quotations (could be customized further)
+                cleaned_sentence = re.sub(r'\"(.*?)\"', r'\1', cleaned_sentence)  # Remove quotes but keep content
+
+                # Optional: Capitalize proper nouns dynamically
+                # Assuming you have a method to get a list of proper nouns
+                proper_nouns = self.get_proper_nouns(cleaned_sentence)
+                for noun in proper_nouns:
+                    cleaned_sentence = cleaned_sentence.replace(noun.lower(), noun)
+
+                cleaned_sentences.append(cleaned_sentence)
+
+        # Join the cleaned sentences and ensure final text ends with a period
+        final_output = ' '.join(cleaned_sentences).strip()
+        if final_output and not final_output.endswith('.'):
+            final_output += '.'
+        
+        return final_output
 
     def is_sentence_coherent(self, sentence, previous_sentences=None):
         """Evaluate the coherence of a generated sentence using semantic similarity."""
+        # Check for basic sentence validity
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
             return False
 
@@ -359,29 +560,45 @@ class EnhancedLanguageModel:
         current_doc = nlp(sentence)
         current_embedding = current_doc.vector
 
+        # If there are no previous sentences, we consider it coherent
+        if previous_sentences is None or len(previous_sentences) == 0:
+            return True
+
         # Calculate semantic similarity with previous sentences
-        if previous_sentences:
-            previous_embeddings = [nlp(prev_sentence).vector for prev_sentence in previous_sentences]
-            similarities = [
-                current_embedding.dot(prev_embedding) / (np.linalg.norm(current_embedding) * np.linalg.norm(prev_embedding)) 
-                for prev_embedding in previous_embeddings
-            ]
+        previous_embeddings = [nlp(prev_sentence).vector for prev_sentence in previous_sentences]
+        
+        # Handle case where previous embeddings could be empty (safety)
+        if not previous_embeddings:
+            return True
 
-            # Calculate average similarity
-            avg_similarity = np.mean(similarities)
+        # Calculate cosine similarity
+        similarities = [
+            np.dot(current_embedding, prev_embedding) / 
+            (np.linalg.norm(current_embedding) * np.linalg.norm(prev_embedding) + 1e-8)  # Avoid division by zero
+            for prev_embedding in previous_embeddings
+        ]
 
-            # Dynamic threshold based on average sentence length
-            threshold = 0.55  # Default threshold
-            avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
-            
-            # Adjust threshold based on previous sentence length
-            if avg_length > 15:  # Example: if previous sentences are longer than 15 words
-                threshold = 0.65
+        # Calculate average similarity
+        avg_similarity = np.mean(similarities)
 
-            # Check if the average similarity is above the threshold
-            return avg_similarity > threshold
+        # Determine a dynamic threshold based on previous sentences
+        threshold = 0.7  # Default threshold
+        avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
 
-        return True  # If no previous sentences to compare, consider coherent
+        # Adjust threshold based on previous sentence length
+        if avg_length > 15:
+            threshold = 0.8
+        elif avg_length < 8:
+            threshold = 0.6  # More leniency for shorter sentences
+
+        # Optionally: Increase threshold if the variance in previous lengths is high
+        length_variance = np.var([len(prev_sentence.split()) for prev_sentence in previous_sentences])
+        if length_variance > 5:  # Arbitrary choice to account for diverse lengths
+            threshold += 0.05
+
+        # Check if the average similarity is above the threshold
+        return avg_similarity > threshold
+
 
     def save_model(self, filename, compress=False):
         """
@@ -425,7 +642,6 @@ class EnhancedLanguageModel:
         instance.total_counts = total_counts
         return instance
 
-
 def load_text_from_file(file_path):
     """
     Load text from a file, preprocess it by removing punctuation and symbols,
@@ -462,30 +678,34 @@ def load_text_from_file(file_path):
     
     return None  # Return None if there's an error
 
-# Load the text from the file
-file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\text_data.txt'
+
+# Metni dosyadan yükle
+file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt'
 text = load_text_from_file(file_path)
 
-# Check if the model file exists
-model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\language_model.pkl'
+# Model dosyasının varlığını kontrol et
+model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\language_model.pkl'
 
 try:
-    # Attempt to load the existing model
+    # Mevcut modeli yüklemeye çalış
     language_model = EnhancedLanguageModel.load_model(model_file)
     print("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    # If the model does not exist, create a new one
+    # Model yoksa yeni bir tane oluştur
     language_model = EnhancedLanguageModel(text, n=2)
-    language_model.save_model(model_file)  # Save the newly created model
+    language_model.save_model(model_file)  # Yeni oluşturulan modeli kaydet
     print("Created and saved new model.")
 
-# Generate the specified number of sentences
-num_sentences = 5 # Number of sentences to generate
-input_words = "I scattered the flour to try the result of that ancient trick.".split()  # Words to be used
+# Belirtilen sayıda cümle üret
+num_sentences = 5  # Üretilecek cümle sayısı
+input_words = ["i", "can"]
 
-# Generate initial text using your integrated method
+# Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
 print("Generated Text:\n", generated_text)
+
+
+
 
 
 

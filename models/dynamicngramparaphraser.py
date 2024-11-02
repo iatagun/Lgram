@@ -17,8 +17,8 @@ def generate_ngrams(tokens, n):
     """n-gram oluşturmak için yardımcı fonksiyon."""
     return zip(*[islice(tokens, i, None) for i in range(n)])
 
-def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path):
-    """Metin dosyasından bigram, trigram, fourgram, fivegram ve sixgram modelini oluşturup kaydeder."""
+def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path, frequency_threshold=3):
+    """Metin dosyasından n-gram modelini oluşturup kaydeder, düşük frekanslı n-gramları filtreler."""
     bigram_model = defaultdict(Counter)
     trigram_model = defaultdict(Counter)
     fourgram_model = defaultdict(Counter)
@@ -30,31 +30,54 @@ def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fiveg
         text = file.read()
         doc = nlp(text)
         tokens = [token.lemma_ for token in doc if not token.is_punct]
+        
+        # Bağlama duyarlı özellikler için kelime türü ve cümle bilgisi
+        pos_tags = [token.pos_ for token in doc if not token.is_punct]  # Kelime türlerini al
+        sentences = list(doc.sents)  # Cümleleri listele
 
-        # Bigram oluştur
+        # N-gram modellerini oluşturma ve frekans eşiklerini uygulama
+        def add_ngram_to_model(ngram_model, ngrams, context=None):
+            for ngram in ngrams:
+                prefix = ngram[:-1]
+                last_token = ngram[-1]
+                
+                # Eğer bir bağlam varsa, bağlamı da kullanarak n-gram'ı güncelle
+                if context:
+                    context_key = tuple(context)
+                    ngram_model[context_key][last_token] += 1
+                else:
+                    ngram_model[prefix][last_token] += 1
+
+        # Bigram modeli
         print("Bigram modeli oluşturuluyor...")
-        for bigram in tqdm(generate_ngrams(tokens, 2), total=len(tokens)-1):
-            bigram_model[bigram[:1]][bigram[1]] += 1
+        add_ngram_to_model(bigram_model, generate_ngrams(tokens, 2))
 
-        # Trigram oluştur
+        # Trigram modeli
         print("Trigram modeli oluşturuluyor...")
-        for trigram in tqdm(generate_ngrams(tokens, 3), total=len(tokens)-2):
-            trigram_model[trigram[:2]][trigram[2]] += 1
+        add_ngram_to_model(trigram_model, generate_ngrams(tokens, 3))
 
-        # Fourgram oluştur
+        # Fourgram modeli
         print("Fourgram modeli oluşturuluyor...")
-        for fourgram in tqdm(generate_ngrams(tokens, 4), total=len(tokens)-3):
-            fourgram_model[fourgram[:3]][fourgram[3]] += 1
+        add_ngram_to_model(fourgram_model, generate_ngrams(tokens, 4))
 
-        # Fivegram oluştur
+        # Fivegram modeli
         print("Fivegram modeli oluşturuluyor...")
-        for fivegram in tqdm(generate_ngrams(tokens, 5), total=len(tokens)-4):
-            fivegram_model[fivegram[:4]][fivegram[4]] += 1
+        add_ngram_to_model(fivegram_model, generate_ngrams(tokens, 5))
 
-        # Sixgram oluştur
+        # Sixgram modeli
         print("Sixgram modeli oluşturuluyor...")
-        for sixgram in tqdm(generate_ngrams(tokens, 6), total=len(tokens)-5):
-            sixgram_model[sixgram[:5]][sixgram[5]] += 1
+        add_ngram_to_model(sixgram_model, generate_ngrams(tokens, 6))
+
+    # Modelleri kaydetmeden önce frekans eşiği uygulayın
+    def filter_by_frequency(ngram_model, threshold):
+        return {prefix: Counter({word: count for word, count in suffixes.items() if count >= threshold})
+                for prefix, suffixes in ngram_model.items() if any(count >= threshold for count in suffixes.values())}
+
+    bigram_model = filter_by_frequency(bigram_model, frequency_threshold)
+    trigram_model = filter_by_frequency(trigram_model, frequency_threshold)
+    fourgram_model = filter_by_frequency(fourgram_model, frequency_threshold)
+    fivegram_model = filter_by_frequency(fivegram_model, frequency_threshold)
+    sixgram_model = filter_by_frequency(sixgram_model, frequency_threshold)
 
     # Modelleri pickle dosyasına kaydet
     with open(bigram_path, "wb") as f:
@@ -67,6 +90,34 @@ def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fiveg
         pickle.dump(dict(fivegram_model), f)
     with open(sixgram_path, "wb") as f:
         pickle.dump(dict(sixgram_model), f)
+
+    print("N-gram modelleri başarıyla oluşturuldu ve kaydedildi.")
+
+
+    # Modelleri kaydetmeden önce frekans eşiği uygulayın
+    def filter_by_frequency(ngram_model, threshold):
+        return {prefix: Counter({word: count for word, count in suffixes.items() if count >= threshold})
+                for prefix, suffixes in ngram_model.items() if any(count >= threshold for count in suffixes.values())}
+
+    bigram_model = filter_by_frequency(bigram_model, frequency_threshold)
+    trigram_model = filter_by_frequency(trigram_model, frequency_threshold)
+    fourgram_model = filter_by_frequency(fourgram_model, frequency_threshold)
+    fivegram_model = filter_by_frequency(fivegram_model, frequency_threshold)
+    sixgram_model = filter_by_frequency(sixgram_model, frequency_threshold)
+
+    # Modelleri pickle dosyasına kaydet
+    with open(bigram_path, "wb") as f:
+        pickle.dump(dict(bigram_model), f)
+    with open(trigram_path, "wb") as f:
+        pickle.dump(dict(trigram_model), f)
+    with open(fourgram_path, "wb") as f:
+        pickle.dump(dict(fourgram_model), f)
+    with open(fivegram_path, "wb") as f:
+        pickle.dump(dict(fivegram_model), f)
+    with open(sixgram_path, "wb") as f:
+        pickle.dump(dict(sixgram_model), f)
+
+    print("N-gram modelleri başarıyla oluşturuldu ve kaydedildi.")
 
 def load_ngram_model(bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path):
     """Bigram, trigram, fourgram, fivegram ve sixgram modellerini yükler."""
@@ -249,3 +300,12 @@ def generate_paraphrase(text, bigram_model, trigram_model, fourgram_model, fiveg
     return paraphrased_sentences
 
 
+# N-gram modellerini kontrol et ve yükle
+text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
+bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\bigram_model.pkl"
+trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\trigram_model.pkl"
+fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fourgram_model.pkl"
+fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
+sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
+
+build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
