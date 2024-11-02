@@ -256,7 +256,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.99):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.8):
         if not next_words:
             return None  # No next words available
 
@@ -698,7 +698,7 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = ["i", "can"]
+input_words = ["The", "detective"]
 
 # Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
