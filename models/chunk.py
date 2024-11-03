@@ -354,7 +354,7 @@ class EnhancedLanguageModel:
         return text
 
 
-    def post_process_sentences(self, sentences, entity_diversity_threshold=20, noun_phrase_diversity_threshold=15):
+    def post_process_sentences(self, sentences, entity_diversity_threshold=3, noun_phrase_diversity_threshold=3):
         """Post-processes sentences to ensure coherence and thematic consistency.
 
         Args:
@@ -498,6 +498,7 @@ class EnhancedLanguageModel:
                 generated_sentences.append(generated_sentence)  # Add the incoherent sentence instead of a placeholder
 
         final_text = ' '.join(generated_sentences)
+        final_text = self.correct_grammar(final_text)  # Final grammar check
         final_text = self.post_process_text(final_text)  # Call the new post-processing method
         return final_text
 
@@ -547,7 +548,7 @@ class EnhancedLanguageModel:
         final_output = ' '.join(cleaned_sentences).strip()
         if final_output and not final_output.endswith('.'):
             final_output += '.'
-        
+            final_output = self.correct_grammar(final_output)  # Final grammar check
         return final_output
 
     def is_sentence_coherent(self, sentence, previous_sentences=None):
@@ -698,10 +699,10 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = ["The", "detective"]
+input_words = ["i", "could", "say"]
 
 # Entegre edilmiş yöntemle başlangıç metni üret
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=23)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=17)
 print("Generated Text:\n", generated_text)
 
 
