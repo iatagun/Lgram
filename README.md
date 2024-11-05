@@ -107,15 +107,11 @@ Bu Python kodu, metin verilerini kullanarak gelişmiş bir dil modeli oluşturur
 
 ```
 Generated Text:
- He was still held me so often sat down the strange that he yet when you wanted? 
-Foretell it is the solitary spot, is now hold your fancy for calling for the. 
-Outline of which had him out a fearsome figure outlined against _, untruthful, so. 
-Beauvais,[8 ] the most unheard - topped with whom especially in which he said i repeat. 
-Concentrated, " there was only in the party, " your path in the. Advances, his misfortune to obtain of reflection ). being prosecuted by it. 
-Researches to record that the city the debate, his pocket. " he found. 
-Repair. " said her aspect of his lip that ' " now she. 
-Others of wind had turned to europe, john holder, but neither refused to the. 
-Gladly abandoning, then! " indicating a timid cavalier; you as indefinite, and.
+ I felt a sense of hope mingling with the fear. 
+ The misfortune to all might come to some sort of Mr. Rhodes be entertain a club of form. 
+ Twelve hundred thousand as regard the disappearance maybe we out for the intention of the stump and stop he immediately. 
+ The Orang Outang of all very glad to observe their footstep approach and manner in contention the Green Blinds. 
+ Return in his passion and I who I explain it immediately below the advantage he about six year and put her in secret chamber.
 ```
 ### Değerlendirme
 

@@ -256,7 +256,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.9):
         if not next_words:
             return None  # No next words available
 
@@ -354,7 +354,7 @@ class EnhancedLanguageModel:
         return text
 
 
-    def post_process_sentences(self, sentences, entity_diversity_threshold=2, noun_phrase_diversity_threshold=2):
+    def post_process_sentences(self, sentences, entity_diversity_threshold=4, noun_phrase_diversity_threshold=4):
         """Post-processes sentences to ensure coherence and thematic consistency.
 
         Args:
@@ -495,6 +495,7 @@ class EnhancedLanguageModel:
 
             if not coherent_sentence:
                 print(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
+                generated_sentence = self.correct_grammar(generated_sentence)
                 generated_sentences.append(generated_sentence)  # Add the incoherent sentence instead of a placeholder
 
         final_text = ' '.join(generated_sentences)
@@ -583,14 +584,14 @@ class EnhancedLanguageModel:
         avg_similarity = np.mean(similarities)
 
         # Determine a dynamic threshold based on previous sentences
-        threshold = 0.7  # Default threshold
+        threshold = 0.6  # Default threshold
         avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
 
         # Adjust threshold based on previous sentence length
         if avg_length > 15:
-            threshold = 0.8
+            threshold = 0.7
         elif avg_length < 8:
-            threshold = 0.6  # More leniency for shorter sentences
+            threshold = 0.5  # More leniency for shorter sentences
 
         # Optionally: Increase threshold if the variance in previous lengths is high
         length_variance = np.var([len(prev_sentence.split()) for prev_sentence in previous_sentences])
@@ -699,7 +700,7 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = "They have to know about Victor.".split()
+input_words = "I felt a sense of hope mingling with the fear.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=16)
