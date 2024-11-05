@@ -17,7 +17,7 @@ def generate_ngrams(tokens, n):
     """n-gram oluşturmak için yardımcı fonksiyon."""
     return zip(*[islice(tokens, i, None) for i in range(n)])
 
-def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path, frequency_threshold=3):
+def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path, frequency_threshold=2):
     """Metin dosyasından n-gram modelini oluşturup kaydeder, düşük frekanslı n-gramları filtreler."""
     bigram_model = defaultdict(Counter)
     trigram_model = defaultdict(Counter)

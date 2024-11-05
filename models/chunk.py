@@ -256,7 +256,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.8):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
         if not next_words:
             return None  # No next words available
 
@@ -354,7 +354,7 @@ class EnhancedLanguageModel:
         return text
 
 
-    def post_process_sentences(self, sentences, entity_diversity_threshold=3, noun_phrase_diversity_threshold=3):
+    def post_process_sentences(self, sentences, entity_diversity_threshold=2, noun_phrase_diversity_threshold=2):
         """Post-processes sentences to ensure coherence and thematic consistency.
 
         Args:
@@ -699,10 +699,10 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = ["i", "could", "say"]
+input_words = "They have to know about Victor.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=17)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=16)
 print("Generated Text:\n", generated_text)
 
 
