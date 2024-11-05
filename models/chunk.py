@@ -7,8 +7,6 @@ from tqdm import tqdm  # Import tqdm for progress bar
 import os
 import re
 import json
-import time
-import getpass
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -82,25 +80,23 @@ class EnhancedLanguageModel:
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
-            # Ensure start_words matches expected length
             start_words = tuple(start_words)
             if len(start_words) < self.n - 1:
                 raise ValueError(f"start_words must contain at least {self.n - 1} words.")
-        
+
         current_words = list(start_words)
         sentence = current_words.copy()
         transition_analyzer = TransitionAnalyzer("")  # Initialize with dummy sentence
 
         for _ in tqdm(range(length), desc="Generating words"):
             prefix = tuple(current_words[-(self.n-1):])  # Last n-1 words
-            
+
             # Get next words from the appropriate model, dynamically adjusting for n-grams
             next_words = {}
             if self.n >= 2 and prefix in self.bigram_model:
                 next_words.update(self.bigram_model[prefix])
             if self.n >= 3 and prefix in self.trigram_model:
                 next_words.update(self.trigram_model[prefix])
-            # Dynamically enable higher n-grams as needed
             if hasattr(self, 'fourgram_model') and self.n >= 4 and prefix in self.fourgram_model:
                 next_words.update(self.fourgram_model[prefix])
             if hasattr(self, 'fivegram_model') and self.n >= 5 and prefix in self.fivegram_model:
@@ -117,9 +113,11 @@ class EnhancedLanguageModel:
             corrected_sentence = self.correct_grammar(last_sentence)
             transition_analyzer = TransitionAnalyzer(corrected_sentence)
             context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
+            
+            # Choose the next word based on context and avoid repeating the last word
             next_word = self.choose_word_with_context(next_words, context_word)
 
-            # Avoid repeating the last word
+            # Ensure next word is not the same as the last word and is contextually appropriate
             if next_word != current_words[-1]:
                 sentence.append(next_word)
                 current_words.append(next_word)
@@ -354,17 +352,23 @@ class EnhancedLanguageModel:
         return text
 
 
-    def post_process_sentences(self, sentences, entity_diversity_threshold=4, noun_phrase_diversity_threshold=4):
+    def post_process_sentences(self, sentences, entity_diversity_threshold=None, noun_phrase_diversity_threshold=None):
         """Post-processes sentences to ensure coherence and thematic consistency.
-
+        
         Args:
             sentences (list of str): The sentences to process.
             entity_diversity_threshold (int): Minimum number of unique named entities required for coherence.
             noun_phrase_diversity_threshold (int): Minimum number of unique noun phrases required for coherence.
-
+        
         Returns:
             tuple: A tuple containing the adjusted sentences and a detailed report on coherence.
         """
+        # Default thresholds if not provided
+        if entity_diversity_threshold is None:
+            entity_diversity_threshold = 10 # Example default
+        if noun_phrase_diversity_threshold is None:
+            noun_phrase_diversity_threshold = 10 # Example default
+
         # Combine sentences for holistic analysis
         full_text = ' '.join(sentences)
         doc = nlp(full_text)  # Use SpaCy to analyze the text
@@ -384,27 +388,20 @@ class EnhancedLanguageModel:
             "distribution_analysis": {}
         }
 
-        # Check diversity thresholds
+        # Check diversity thresholds and provide detailed feedback
         if len(entities) < entity_diversity_threshold:
             report["suggestions"].append(
                 f"Low named entity diversity detected ({len(entities)} entities). "
-                f"Consider rephrasing to include a greater variety of entities."
+                "Consider rephrasing to include a greater variety of entities."
             )
         if len(noun_phrases) < noun_phrase_diversity_threshold:
             report["suggestions"].append(
                 f"Low noun phrase diversity detected ({len(noun_phrases)} noun phrases). "
-                f"Consider rephrasing to introduce new themes or ideas."
+                "Consider rephrasing to introduce new themes or ideas."
             )
-        if report["entity_diversity_score"] < 1.0:
-            report["suggestions"].append(
-                "Entities are not distributed evenly across sentences; further expansion may help."
-            )
-        if report["noun_phrase_diversity_score"] < 1.0:
-            report["suggestions"].append(
-                "Noun phrases are not distributed evenly across sentences; consider diversifying."
-            )
+        # Additional checks and suggestions can be added here...
 
-        # Distribution analysis: identify sentences with repetitive entities and noun phrases
+        # Distribution analysis
         for i, sent in enumerate(doc.sents):
             sent_entities = {ent.text for ent in sent.ents}
             sent_noun_phrases = {chunk.text for chunk in sent.noun_chunks}
@@ -420,7 +417,6 @@ class EnhancedLanguageModel:
                 prev_sent_entities = {ent.text for ent in doc.sents[i - 1].ents}
                 prev_sent_noun_phrases = {chunk.text for chunk in doc.sents[i - 1].noun_chunks}
 
-                # Check for overlap
                 if sent_entities & prev_sent_entities:
                     report["suggestions"].append(
                         f"Sentence {i + 1} shares entities with Sentence {i}. "
@@ -436,6 +432,7 @@ class EnhancedLanguageModel:
         adjusted_sentences = [self.clean_text(sentence) for sentence in sentences]
 
         return adjusted_sentences, report
+
 
 
 
@@ -703,7 +700,7 @@ num_sentences = 5  # Üretilecek cümle sayısı
 input_words = "I felt a sense of hope mingling with the fear.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=16)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 print("Generated Text:\n", generated_text)
 
 
