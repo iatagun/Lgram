@@ -101,7 +101,7 @@ Bu Python kodu, metin verilerini kullanarak gelişmiş bir dil modeli oluşturur
 3. Belirtilen sayıda cümle üretir ve sonucu ekrana yazdırır.
 
 ## Örnek Kullanım
-- 5 cümle üretmek için başlangıç kelimeleri olarak `["he", "was", "still"]` kullanılır.
+- 5 cümle üretmek için başlangıç kelimeleri olarak `"I felt a sense of hope mingling with the fear."` kullanılır.
 
 ## Üretilen Metin
 
