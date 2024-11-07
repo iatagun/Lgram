@@ -7,8 +7,6 @@ from tqdm import tqdm  # Import tqdm for progress bar
 import os
 import re
 import json
-import time
-import getpass
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -82,25 +80,23 @@ class EnhancedLanguageModel:
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
-            # Ensure start_words matches expected length
             start_words = tuple(start_words)
             if len(start_words) < self.n - 1:
                 raise ValueError(f"start_words must contain at least {self.n - 1} words.")
-        
+
         current_words = list(start_words)
         sentence = current_words.copy()
         transition_analyzer = TransitionAnalyzer("")  # Initialize with dummy sentence
 
         for _ in tqdm(range(length), desc="Generating words"):
             prefix = tuple(current_words[-(self.n-1):])  # Last n-1 words
-            
+
             # Get next words from the appropriate model, dynamically adjusting for n-grams
             next_words = {}
             if self.n >= 2 and prefix in self.bigram_model:
                 next_words.update(self.bigram_model[prefix])
             if self.n >= 3 and prefix in self.trigram_model:
                 next_words.update(self.trigram_model[prefix])
-            # Dynamically enable higher n-grams as needed
             if hasattr(self, 'fourgram_model') and self.n >= 4 and prefix in self.fourgram_model:
                 next_words.update(self.fourgram_model[prefix])
             if hasattr(self, 'fivegram_model') and self.n >= 5 and prefix in self.fivegram_model:
@@ -117,9 +113,11 @@ class EnhancedLanguageModel:
             corrected_sentence = self.correct_grammar(last_sentence)
             transition_analyzer = TransitionAnalyzer(corrected_sentence)
             context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
+            
+            # Choose the next word based on context and avoid repeating the last word
             next_word = self.choose_word_with_context(next_words, context_word)
 
-            # Avoid repeating the last word
+            # Ensure next word is not the same as the last word and is contextually appropriate
             if next_word != current_words[-1]:
                 sentence.append(next_word)
                 current_words.append(next_word)
@@ -256,7 +254,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.999):
         if not next_words:
             return None  # No next words available
 
@@ -354,7 +352,7 @@ class EnhancedLanguageModel:
         return text
 
 
-    def post_process_sentences(self, sentences, entity_diversity_threshold=2, noun_phrase_diversity_threshold=2):
+    def post_process_sentences(self, sentences, entity_diversity_threshold=None, noun_phrase_diversity_threshold=None):
         """Post-processes sentences to ensure coherence and thematic consistency.
 
         Args:
@@ -365,6 +363,12 @@ class EnhancedLanguageModel:
         Returns:
             tuple: A tuple containing the adjusted sentences and a detailed report on coherence.
         """
+        # Default thresholds if not provided
+        if entity_diversity_threshold is None:
+            entity_diversity_threshold = 5  # Example default
+        if noun_phrase_diversity_threshold is None:
+            noun_phrase_diversity_threshold = 5  # Example default
+
         # Combine sentences for holistic analysis
         full_text = ' '.join(sentences)
         doc = nlp(full_text)  # Use SpaCy to analyze the text
@@ -381,34 +385,29 @@ class EnhancedLanguageModel:
             "noun_phrase_diversity_score": len(noun_phrases) / max(1, len(sentences)),
             "needs_rephrasing": len(entities) < entity_diversity_threshold or len(noun_phrases) < noun_phrase_diversity_threshold,
             "suggestions": [],
-            "distribution_analysis": {}
+            "distribution_analysis": {},
+            "word_frequency_analysis": {},
         }
 
-        # Check diversity thresholds
+        # Check diversity thresholds and provide detailed feedback
         if len(entities) < entity_diversity_threshold:
             report["suggestions"].append(
                 f"Low named entity diversity detected ({len(entities)} entities). "
-                f"Consider rephrasing to include a greater variety of entities."
+                "Consider rephrasing to include a greater variety of entities."
             )
         if len(noun_phrases) < noun_phrase_diversity_threshold:
             report["suggestions"].append(
                 f"Low noun phrase diversity detected ({len(noun_phrases)} noun phrases). "
-                f"Consider rephrasing to introduce new themes or ideas."
-            )
-        if report["entity_diversity_score"] < 1.0:
-            report["suggestions"].append(
-                "Entities are not distributed evenly across sentences; further expansion may help."
-            )
-        if report["noun_phrase_diversity_score"] < 1.0:
-            report["suggestions"].append(
-                "Noun phrases are not distributed evenly across sentences; consider diversifying."
+                "Consider rephrasing to introduce new themes or ideas."
             )
 
-        # Distribution analysis: identify sentences with repetitive entities and noun phrases
+        # Additional checks and suggestions can be added here...
+
+        # Distribution analysis
         for i, sent in enumerate(doc.sents):
             sent_entities = {ent.text for ent in sent.ents}
             sent_noun_phrases = {chunk.text for chunk in sent.noun_chunks}
-            
+
             # Record the presence of entities and noun phrases in each sentence
             report["distribution_analysis"][f"sentence_{i + 1}"] = {
                 "entities": list(sent_entities),
@@ -420,7 +419,6 @@ class EnhancedLanguageModel:
                 prev_sent_entities = {ent.text for ent in doc.sents[i - 1].ents}
                 prev_sent_noun_phrases = {chunk.text for chunk in doc.sents[i - 1].noun_chunks}
 
-                # Check for overlap
                 if sent_entities & prev_sent_entities:
                     report["suggestions"].append(
                         f"Sentence {i + 1} shares entities with Sentence {i}. "
@@ -432,6 +430,19 @@ class EnhancedLanguageModel:
                         "Consider rephrasing to avoid repetition."
                     )
 
+        # Word frequency analysis to avoid overuse of common words or phrases
+        from collections import Counter
+        word_freq = Counter(token.text.lower() for token in doc if not token.is_stop and not token.is_punct)
+        frequent_words = {word: count for word, count in word_freq.items() if count > 1}
+
+        # Add frequency analysis to report
+        report["word_frequency_analysis"]["frequent_words"] = frequent_words
+        if frequent_words:
+            report["suggestions"].append(
+                "Some words or phrases are repeated frequently, which may impact readability. "
+                "Consider rephrasing to introduce variation."
+            )
+
         # Adjust sentences by cleaning them individually
         adjusted_sentences = [self.clean_text(sentence) for sentence in sentences]
 
@@ -439,29 +450,32 @@ class EnhancedLanguageModel:
 
 
 
+
+
     def advanced_length_adjustment(self, last_sentence, base_length):
-        """ Adjust length based on the structure of the last sentence. """
+        """ Adjust length based on the structure of the last sentence with improved clause and complexity handling. """
         last_words = last_sentence.split()
         last_length = len(last_words)
 
-        # Count clauses based on punctuation and conjunctions
-        clause_count = last_sentence.count(',') + last_sentence.count('and') + 1  # Basic clause count
+        # Improved clause count based on multiple conjunctions and punctuation
+        clause_count = sum(last_sentence.count(conj) for conj in [',', 'and', 'but', 'or', 'yet']) + 1
 
-        # Analyze the sentence using SpaCy
+        # Analyze the sentence using SpaCy for part-of-speech and dependency structure
         doc = nlp(last_sentence)
-        noun_count = sum(1 for token in doc if token.pos_ == "NOUN")  # Count nouns
-        verb_count = sum(1 for token in doc if token.pos_ == "VERB")  # Count verbs
-        adjective_count = sum(1 for token in doc if token.pos_ == "ADJ")  # Count adjectives
-        adverb_count = sum(1 for token in doc if token.pos_ == "ADV")  # Count adverbs
+        noun_count = sum(1 for token in doc if token.pos_ == "NOUN")
+        verb_count = sum(1 for token in doc if token.pos_ == "VERB")
+        adjective_count = sum(1 for token in doc if token.pos_ == "ADJ")
+        adverb_count = sum(1 for token in doc if token.pos_ == "ADV")
 
-        # Calculate a complexity factor considering nouns, verbs, adjectives, and adverbs
-        complexity_factor = (noun_count + verb_count + adjective_count + adverb_count) // 2
+        # Dynamic complexity factor using both POS counts and dependency relations
+        complexity_factor = ((noun_count + verb_count + adjective_count + adverb_count) +
+                            sum(1 for token in doc if token.dep_ in {"conj", "advcl", "relcl"})) // 2
 
-        # Introduce a variability factor based on the length of the last sentence
-        length_variability = (last_length - base_length) // 2  # Adjust based on previous length
+        # Refined length variability based on last sentence complexity and length
+        length_variability = ((last_length - base_length) + complexity_factor) // 3  # Adjust for finer control
 
-        # Adjust length with some variability
-        adjusted_length = max(5, min(base_length + random.randint(-2, 2) + clause_count + complexity_factor + length_variability, 30))
+        # Set adjusted length with enhanced variability and ensure it’s within limits
+        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 30))
 
         return adjusted_length
 
@@ -472,7 +486,7 @@ class EnhancedLanguageModel:
         for i in tqdm(range(num_sentences), desc="Generating sentences"):
             attempts = 0
             coherent_sentence = False
-            
+
             while attempts < max_attempts and not coherent_sentence:
                 # Allow variability in sentence length based on previous sentences
                 if i == 0:
@@ -495,11 +509,19 @@ class EnhancedLanguageModel:
 
             if not coherent_sentence:
                 print(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
+                # Grammar correction before appending
+                generated_sentence = self.correct_grammar(generated_sentence)
                 generated_sentences.append(generated_sentence)  # Add the incoherent sentence instead of a placeholder
 
         final_text = ' '.join(generated_sentences)
+        
+        # Perform grammar correction for the entire generated text
         final_text = self.correct_grammar(final_text)  # Final grammar check
+        
+        # Post-process the text (ensure punctuation and proper spacing)
         final_text = self.post_process_text(final_text)  # Call the new post-processing method
+
+        # Return the final processed text
         return final_text
 
     def get_proper_nouns(self, text):
@@ -525,22 +547,28 @@ class EnhancedLanguageModel:
                 # Capitalize the first character of the sentence
                 cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
 
-                # Use regex to clean up spaces around punctuation
-                cleaned_sentence = re.sub(r'\s+[,.!?]', r'\g<0>', cleaned_sentence)  # Remove space before punctuation
-                cleaned_sentence = re.sub(r'[,.!?]\s+', r'\g<0>', cleaned_sentence)  # Remove space after punctuation
+                # Clean up spaces around punctuation
+                cleaned_sentence = re.sub(r'\s+([,.!?])', r'\1', cleaned_sentence)  # Remove space before punctuation
+                cleaned_sentence = re.sub(r'([,.!?])\s+', r'\1 ', cleaned_sentence)  # Ensure space after punctuation
                 cleaned_sentence = re.sub(r'\s{2,}', ' ', cleaned_sentence)  # Remove double spaces
-                
-                # Fix trailing commas and redundant punctuation
-                cleaned_sentence = cleaned_sentence.rstrip(",")  # Remove trailing commas
 
-                # Handle quotations (could be customized further)
-                cleaned_sentence = re.sub(r'\"(.*?)\"', r'\1', cleaned_sentence)  # Remove quotes but keep content
+                # Remove trailing commas
+                cleaned_sentence = cleaned_sentence.rstrip(",")
 
-                # Optional: Capitalize proper nouns dynamically
-                # Assuming you have a method to get a list of proper nouns
-                proper_nouns = self.get_proper_nouns(cleaned_sentence)
-                for noun in proper_nouns:
-                    cleaned_sentence = cleaned_sentence.replace(noun.lower(), noun)
+                # Handle redundant punctuation (e.g., "Hello!!" -> "Hello!")
+                cleaned_sentence = re.sub(r'([.!?])\1+', r'\1', cleaned_sentence)
+
+                # Handle unnecessary conjunctions at the beginning
+                cleaned_sentence = re.sub(r'^(And|But|Or)\b,?\s+', '', cleaned_sentence, flags=re.IGNORECASE)
+
+                # Handle quotations (optional - remove or stylize)
+                cleaned_sentence = re.sub(r'"(.*?)"', r'“\1”', cleaned_sentence)  # Replace " with proper quotation marks
+
+                # Optional: Capitalize proper nouns dynamically using SpaCy NER
+                doc = nlp(cleaned_sentence)
+                for entity in doc.ents:
+                    if entity.label_ in ["PERSON", "ORG", "GPE"]:  # Capitalize certain entities
+                        cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b', entity.text, cleaned_sentence)
 
                 cleaned_sentences.append(cleaned_sentence)
 
@@ -548,11 +576,13 @@ class EnhancedLanguageModel:
         final_output = ' '.join(cleaned_sentences).strip()
         if final_output and not final_output.endswith('.'):
             final_output += '.'
-            final_output = self.correct_grammar(final_output)  # Final grammar check
+        
+        final_output = self.correct_grammar(final_output)  # Final grammar check
         return final_output
 
+
     def is_sentence_coherent(self, sentence, previous_sentences=None):
-        """Evaluate the coherence of a generated sentence using semantic similarity."""
+        """Evaluate the coherence of a generated sentence using semantic similarity and syntactic features."""
         # Check for basic sentence validity
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
             return False
@@ -583,21 +613,34 @@ class EnhancedLanguageModel:
         avg_similarity = np.mean(similarities)
 
         # Determine a dynamic threshold based on previous sentences
-        threshold = 0.7  # Default threshold
+        threshold = 0.6  # Default threshold
         avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
-
-        # Adjust threshold based on previous sentence length
-        if avg_length > 15:
-            threshold = 0.8
-        elif avg_length < 8:
-            threshold = 0.6  # More leniency for shorter sentences
-
-        # Optionally: Increase threshold if the variance in previous lengths is high
         length_variance = np.var([len(prev_sentence.split()) for prev_sentence in previous_sentences])
-        if length_variance > 5:  # Arbitrary choice to account for diverse lengths
+
+        # Adjust threshold based on sentence complexity
+        noun_count = sum(1 for token in current_doc if token.pos_ == "NOUN")
+        verb_count = sum(1 for token in current_doc if token.pos_ == "VERB")
+        adj_count = sum(1 for token in current_doc if token.pos_ == "ADJ")
+        adv_count = sum(1 for token in current_doc if token.pos_ == "ADV")
+
+        # Calculate complexity factor
+        complexity_factor = (noun_count + verb_count + adj_count + adv_count) / 4.0
+
+        # Adjust threshold based on average sentence length and complexity
+        if avg_length > 15:
+            threshold += 0.1
+        elif avg_length < 8:
+            threshold -= 0.1
+
+        # Adjust for length variance in previous sentences
+        if length_variance > 5:
             threshold += 0.05
 
-        # Check if the average similarity is above the threshold
+        # Adjust threshold based on complexity factor
+        if complexity_factor > 2:
+            threshold += 0.05
+
+        # Final coherence decision based on similarity and threshold
         return avg_similarity > threshold
 
 
@@ -699,8 +742,14 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = "They have to know about Victor.".split()
+input_words = "The next morning, Mia sent the entire ledger to the press, a digital bomb waiting to explode.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=16)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 print("Generated Text:\n", generated_text)
+
+
+
+
+
+
