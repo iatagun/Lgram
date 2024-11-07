@@ -742,7 +742,7 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = "I knew one thing for certain: no matter the outcome, we would fight until the very end.".split()
+input_words = "The next morning, Mia sent the entire ledger to the press, a digital bomb waiting to explode.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
