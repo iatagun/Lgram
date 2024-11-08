@@ -624,7 +624,7 @@ class EnhancedLanguageModel:
         adv_count = sum(1 for token in current_doc if token.pos_ == "ADV")
 
         # Calculate complexity factor
-        complexity_factor = (noun_count + verb_count + adj_count + adv_count) / 4.0
+        complexity_factor = (noun_count + verb_count + adj_count + adv_count) / 3.0
 
         # Adjust threshold based on average sentence length and complexity
         if avg_length > 15:
@@ -741,8 +741,8 @@ except (FileNotFoundError, EOFError):
     print("Created and saved new model.")
 
 # Belirtilen sayıda cümle üret
-num_sentences = 5  # Üretilecek cümle sayısı
-input_words = "The next morning, Mia sent the entire ledger to the press, a digital bomb waiting to explode.".split()
+num_sentences = 7  # Üretilecek cümle sayısı
+input_words = "I decided to employ a different tactic.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
