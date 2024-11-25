@@ -11,6 +11,7 @@ import json
 
 # SpaCy modelini yükle
 nlp = spacy.load("en_core_web_lg")  # veya "en_core_web_lg"
+nlp.max_length = 1030000 # or even higher
 corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\corrections.json"
 
 def generate_ngrams(tokens, n):

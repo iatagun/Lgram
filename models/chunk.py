@@ -9,10 +9,11 @@ import re
 import json
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
+from collections import Counter
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_lg")  # Use medium model for better embeddings
-
+nlp.max_length = 1030000 # or even higher
 # N-gram modellerini kontrol et ve yükle
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
 bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\bigram_model.pkl"
@@ -61,8 +62,6 @@ class EnhancedLanguageModel:
                 next_words[word] += (continuation_count / len(tokens))
 
         return dict(model), dict(total_counts)  # Convert to regular dicts
-
-    import pickle
 
     def load_ngram_models(self):
         with open(bigram_path, 'rb') as f:
@@ -180,17 +179,18 @@ class EnhancedLanguageModel:
             return False
 
         # Check for the presence of dependent clauses indicating incomplete thoughts
-        has_dependent_clause = any(token.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass') for token in doc)
+        has_dependent_clause = any(token.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass', 'xcomp') for token in doc)
 
         # Adjust conditions to allow for some flexibility in structure
         subject_count = sum(1 for token in doc if token.dep_ in ('nsubj', 'nsubjpass', 'expl'))
         verb_conflict = any(token.dep_ == 'conj' and token.head.pos_ == 'VERB' for token in doc)
 
+        # Handle incomplete thoughts caused by ellipses or unfinished clauses
+        if doc[-1].text == '...' and not has_verb:
+            return False
+
         # Return True only if the structure is coherent
         return has_subject and has_verb and not has_dependent_clause and subject_count >= 1 and not verb_conflict
-
-
-
 
     def get_center_from_sentence(self, sentence, transition_analyzer):
         """
@@ -254,7 +254,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.999):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.99):
         if not next_words:
             return None  # No next words available
 
@@ -276,20 +276,28 @@ class EnhancedLanguageModel:
             context_vector = nlp(context_word).vector
             if context_vector is None or np.all(context_vector == 0):
                 return np.random.choice(word_choices, p=probabilities)  # Fallback to probabilities if context vector is invalid
+            
             context_vector = context_vector.reshape(1, -1)  # Reshape for cosine_similarity
             
             # Compute similarity scores with the context word using cosine similarity
             word_vectors = np.array([nlp(word).vector for word in word_choices])
+            
+            # Use cosine similarity to compute the relationship between the context and candidate words
             similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
 
-            # Ensure similarity scores are non-negative and apply semantic threshold
-            similarity_scores = np.maximum(similarity_scores, 0)
+            # Apply semantic threshold: zero out scores below the threshold
+            similarity_scores = np.maximum(similarity_scores, 0)  # Ensure no negative values
             similarity_scores[similarity_scores < semantic_threshold] = 0  # Apply threshold
+
+            # If all similarity scores are below the threshold, fallback to probabilities
+            if np.sum(similarity_scores) == 0:
+                return np.random.choice(word_choices, p=probabilities)
+
+            # Scale similarity scores using softmax to ensure better distribution
+            exp_similarities = np.exp(similarity_scores)  # Exponentiate the similarity scores
+            adjusted_probabilities = exp_similarities * probabilities  # Combine with original probabilities
             
-            # Scale similarity scores to adjust probabilities using softmax
-            adjusted_probabilities = np.exp(similarity_scores) * probabilities  # Scale probabilities by exp of similarity
-            
-            # Apply softmax for better distribution
+            # Normalize adjusted probabilities
             adjusted_probabilities = np.exp(adjusted_probabilities) / np.sum(np.exp(adjusted_probabilities))
 
             # Increase the influence of similarity scores dynamically based on their range
@@ -302,54 +310,39 @@ class EnhancedLanguageModel:
                 adjusted_probabilities *= influence_factor
                 adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize again
 
-            # Make selection
+            # Make selection based on the final probabilities
             chosen_word = np.random.choice(word_choices, p=adjusted_probabilities)
         else:
             chosen_word = np.random.choice(word_choices, p=probabilities)
 
         return chosen_word
 
-
-
-
     def clean_text(self, text):
-        """Cleans the input text by removing unwanted spaces, fixing punctuation issues,
-        normalizing spaces, and ensuring proper capitalization.
-
-        Args:
-            text (str): The input text to clean.
-
-        Returns:
-            str: The cleaned text.
-        """
-        
-        # Remove unwanted spaces before punctuation
-        text = text.replace(" .", ".").replace(" ,", ",").replace(" ;", ";").replace(" :", ":").replace(" ?", "?").replace(" !", "!")
-        
-        # Fix double punctuation issues
-        text = text.replace("..", ".").replace(",,", ",").replace("!!", "!").replace("??", "?")
-
-        # Normalize spaces: ensure only one space between words
+        # Check if the input is empty or None
+        if not text:
+            return ""
+        # Normalize spaces: ensure only one space between words and trim excess spaces at the ends
         text = ' '.join(text.split())
-
-        # Handle misplaced leading and trailing quotes
-        text = text.strip("'\"")  # Strip both single and double quotes from both ends
-
+        # Remove unwanted spaces before punctuation marks
+        text = re.sub(r'\s([?.!,:;])', r'\1', text)
+        # Fix double punctuation issues
+        text = re.sub(r'([.,!?])\1+', r'\1', text)
+        # Handle misplaced leading and trailing quotes and whitespace
+        text = text.strip("'\"")
         # Capitalize the first letter of the sentence
-        if text:
-            text = text[0].capitalize() + text[1:]
-
+        text = text[0].capitalize() + text[1:] if text else ""
         # Add a period at the end of the sentence if not already there
         if text and text[-1] not in ['.', '!', '?']:
             text += '.'
-
-        # Handle potential cases of trailing punctuation without space
-        text = text.replace('."', '"').replace("'", "'").replace(" ,", ",").replace(" ;", ";").replace(" :", ":")
-        
-        # Remove any space before a punctuation mark, ensuring proper spacing
-        text = text.replace(" .", ".").replace(" ,", ",").replace(" ;", ";").replace(" :", ":").replace(" ?", "?").replace(" !", "!")
-        
+        # Handle any punctuation-related formatting issues
+        text = re.sub(r'(\w)([.,!?;])', r'\1 \2', text)  # Ensure space before punctuation
+        # Handle cases where punctuation might be attached without space
+        text = re.sub(r'([,.!?;])(\w)', r'\1 \2', text)
+        # Ensure proper spacing around punctuation marks
+        text = re.sub(r'\s+', ' ', text)  # Remove extra spaces in general
+        text = re.sub(r'(\s)([.,!?;])', r'\2', text)  # Remove spaces before punctuation
         return text
+
 
 
     def post_process_sentences(self, sentences, entity_diversity_threshold=None, noun_phrase_diversity_threshold=None):
@@ -364,14 +357,12 @@ class EnhancedLanguageModel:
             tuple: A tuple containing the adjusted sentences and a detailed report on coherence.
         """
         # Default thresholds if not provided
-        if entity_diversity_threshold is None:
-            entity_diversity_threshold = 5  # Example default
-        if noun_phrase_diversity_threshold is None:
-            noun_phrase_diversity_threshold = 5  # Example default
+        entity_diversity_threshold = entity_diversity_threshold or 5  # Default threshold
+        noun_phrase_diversity_threshold = noun_phrase_diversity_threshold or 5  # Default threshold
 
         # Combine sentences for holistic analysis
         full_text = ' '.join(sentences)
-        doc = nlp(full_text)  # Use SpaCy to analyze the text
+        doc = nlp(full_text)  # Use SpaCy to analyze the full text
 
         # Extract unique named entities and noun phrases
         entities = {ent.text for ent in doc.ents}
@@ -389,7 +380,7 @@ class EnhancedLanguageModel:
             "word_frequency_analysis": {},
         }
 
-        # Check diversity thresholds and provide detailed feedback
+        # Check diversity thresholds and provide feedback
         if len(entities) < entity_diversity_threshold:
             report["suggestions"].append(
                 f"Low named entity diversity detected ({len(entities)} entities). "
@@ -403,7 +394,7 @@ class EnhancedLanguageModel:
 
         # Additional checks and suggestions can be added here...
 
-        # Distribution analysis
+        # Distribution analysis: Track entity and noun phrase occurrences per sentence
         for i, sent in enumerate(doc.sents):
             sent_entities = {ent.text for ent in sent.ents}
             sent_noun_phrases = {chunk.text for chunk in sent.noun_chunks}
@@ -431,7 +422,6 @@ class EnhancedLanguageModel:
                     )
 
         # Word frequency analysis to avoid overuse of common words or phrases
-        from collections import Counter
         word_freq = Counter(token.text.lower() for token in doc if not token.is_stop and not token.is_punct)
         frequent_words = {word: count for word, count in word_freq.items() if count > 1}
 
@@ -447,9 +437,6 @@ class EnhancedLanguageModel:
         adjusted_sentences = [self.clean_text(sentence) for sentence in sentences]
 
         return adjusted_sentences, report
-
-
-
 
 
     def advanced_length_adjustment(self, last_sentence, base_length):
@@ -475,7 +462,7 @@ class EnhancedLanguageModel:
         length_variability = ((last_length - base_length) + complexity_factor) // 3  # Adjust for finer control
 
         # Set adjusted length with enhanced variability and ensure it’s within limits
-        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 30))
+        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 16))
 
         return adjusted_length
 
@@ -742,10 +729,10 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 7  # Üretilecek cümle sayısı
-input_words = "I decided to employ a different tactic.".split()
+input_words = "This was it. The final push.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
 print("Generated Text:\n", generated_text)
 
 
