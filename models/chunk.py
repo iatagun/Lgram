@@ -728,11 +728,11 @@ except (FileNotFoundError, EOFError):
     print("Created and saved new model.")
 
 # Belirtilen sayıda cümle üret
-num_sentences = 7  # Üretilecek cümle sayısı
-input_words = "This was it. The final push.".split()
+num_sentences = 5  # Üretilecek cümle sayısı
+input_words = "I made the attempt in vain.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=5)
 print("Generated Text:\n", generated_text)
 
 
