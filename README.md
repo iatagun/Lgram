@@ -1,126 +1,114 @@
-# TransitionAnalyzer Sınıfı
 
-TransitionAnalyzer, bir metindeki cümleler arasındaki geçişleri analiz etmek için tasarlanmış bir sınıftır. Bu sınıf, metni cümlelere ayırarak cümle çiftleri oluşturur ve ardından her cümle çifti arasındaki isim tamlamalarını ve geçiş türlerini belirler.
+# 🧠 Centering-Based Coherence & N-Gram Language Generation Framework
 
-### Özellikler:
-* Önişleme: Metni cümlelere ayırarak cümle çiftleri oluşturur.
-* İsim Tamlamaları Çıkarma: Her cümledeki isim tamlamalarını çıkarır.
-* Geçiş Sınıflandırma: Cümleler arasındaki geçişleri sınıflandırarak daha iyi anlamayı sağlar (örneğin, merkez kurma, devam etme, yeni konu geçişi).
-* Anaforik İlişkileri Etiketleme: Cümlelerdeki anaforik ilişkileri tanımlayarak bağlamı güçlendirir.
+This project is a comprehensive framework that combines **Centering Theory**, **Transition Analysis**, **Contextual N-gram Generation**, and **Grammatical Correction** to produce **contextually coherent sentences** and linguistically analyze the output.
 
-### Kullanım:
-Sınıfın analyze metodu, metni analiz eder ve her cümle çifti için geçiş bilgilerini içeren bir liste döndürür. Her bir sonuç, cümlelerin içeriği, geçiş türü, isim tamlamaları ve anaforik ilişkileri hakkında detaylı bilgi sunar.
+## 🔍 Main Components
 
-# TransitionScorer Sınıfı
-TransitionScorer, geçiş türlerinin belirli ağırlıklarına dayanarak bir metindeki geçişleri puanlamak için kullanılan bir sınıftır. Sınıf, varsayılan ağırlıkları veya kullanıcıdan alınan özel ağırlıkları kullanarak geçiş türlerine puan atar.
+### 1. `CenteringModel`
+Defines transition types between sentence pairs based on **Centering Theory** (`CON`, `RET`, `SSH`, `RSH`, `EST`, `NTT`) and calculates a **total coherence score** by assigning weights to each transition.
 
-### Özellikler:
-* Ağırlıklar: Geçiş türlerine göre belirlenen puan ağırlıklarıyla çalışır. Varsayılan olarak belirli değerler ile başlar.
-* Geçiş Puanlama: Her geçiş türü için bir puan döndürerek geçişlerin kalitesini ölçer.
+- Input: Free-form text (str)
+- Output: Transition scores, types, and detailed pairwise information
 
-### Kullanım:
-score_transition metodu, verilen geçiş türü için puanı döndürür. Eğer geçiş türü tanınmıyorsa, varsayılan olarak 0 döner.
+### 2. `TransitionAnalyzer`
+Analyzes sentence pairs to extract:
+- **Noun phrases** (`noun_chunks`)
+- **Anaphoric relations**
+- **Transition types**
 
-# CenteringModel Sınıfı
-CenteringModel, bir metindeki geçişleri analiz edip puanlamak için TransitionAnalyzer ve TransitionScorer sınıflarını kullanan bir yapıdadır. Bu model, metnin genel geçiş kalitesini değerlendirmeyi amaçlar.
+This analysis supports both statistical and linguistic evaluation.
 
-### Özellikler:
-* Analiz ve Puanlama: Metni analiz eder ve her bir cümle çifti arasındaki geçişleri puanlar.
-* Toplam Skor: Analiz sonuçları üzerinden toplam geçiş puanını hesaplar.
+### 3. `EnhancedLanguageModel`
+Generates context-aware, fluent sentences using a **Kneser-Ney smoothed n-gram model** enhanced with POS tagging.
 
-### Kullanım:
-score_transitions metodu, metni analiz eder ve her cümle çifti için geçiş türü ile puanını içeren bir liste döndürür. Ayrıca, toplam puanı da sağlar. calculate_transition_score metodu, geçiş türünü haritalayarak doğru puanı alır ve böylece geçişlerin kalitesini daha iyi değerlendirir.
+#### Key Features:
+- Generation using 2- to 6-gram models
+- Syntactic analysis and centering using `SpaCy`
+- Linguistic center tracking via `get_center_from_sentence`
+- Contextual word selection via `choose_word_with_context`
+- Completeness check via `is_complete_thought`
+- Theme consistency via `post_process_sentences`
 
-# Metin Verilerini Yükleme ve Geçiş Analizi
+### 4. `dynamicngramparaphraser.py`
+Performs **contextual paraphrasing** based on n-grams. Selects the **best alternative match** for each word depending on its position and syntactic role.
 
-Bu kod, metin dosyalarını parça parça yükleyerek geçiş analizleri yapar.
+- Supports **dependency-based reordering** (`reorder_sentence`)
+- Combines vector similarity and frequency with `select_best_match`
 
-## Fonksiyon: `load_text_data_in_chunks`
-- Belirtilen boyutta metin dosyasını okur ve parça parça döner.
+### 5. `analyze_transitions.py`
+Invokes the `CenteringModel` to analyze all sentence transitions in a text and returns the results as a `DataFrame`, including:
+- `current_sentence`
+- `next_sentence`
+- `transition_type`
+- `score`
+- `total_score`
 
-## Geçiş Analizi
-- Her parça için `analyze_transitions` fonksiyonu ile geçiş türleri ve özellikler çıkartılır. Sonuçlar `full_transition_df` adında bir DataFrame'de birleştirilir.
+## 🗂 File Structure
 
-## Verilerin Hazırlanması
-- Cümleler, tokenizer ile sayısal dizilere dönüştürülüp sıfırlarla doldurulur (`X_padded`).
+.
+├── analyze_transitions.py
+├── centering_model.py
+├── chunk.py
+├── dynamicngramparaphraser.py
+├── simple_language_model.py
+├── get_gender.py
+├── transition_analyzer.py
+├── corrections.json
+├── ngrams/
+│   ├── bigram_model.pkl
+│   ├── trigram_model.pkl
+│   ├── fourgram_model.pkl
+│   ├── fivegram_model.pkl
+│   ├── sixgram_model.pkl
+│   └── text_data.txt
 
-## Modelin Oluşturulması
-- Derin öğrenme modeli, iki yönlü LSTM katmanları ve dropout kullanarak inşa edilir. Model, 'sparse_categorical_crossentropy' kaybı ile derlenir.
+## 🚀 Usage Example
 
-## Eğitim ve Değerlendirme
-- Model, eğitim verileriyle eğitilir. Erken durdurma ve kontrol noktası ile en iyi hali kaydedilir. Eğitim ve test verilerinin şekilleri yazdırılır.
+### Transition Analysis
+```python
+from analyze_transitions import analyze_transitions
 
-# Gelişmiş Dil Modeli
-
-Bu Python kodu, metin verilerini kullanarak gelişmiş bir dil modeli oluşturur. Model, n-gram temelli kelime tahminleri yaparak cümleler üretir.
-
-## Gerekli Kütüphaneler
-- `random`, `pickle`: Rastgele seçim ve model kaydetme işlemleri için.
-- `collections.defaultdict`: Varsayılan bir değer ile sözlük oluşturmak için.
-- `spacy`: Doğal dil işleme için.
-- `numpy`: Sayısal işlemler için.
-- `tqdm`: İlerleme çubuğu için.
-
-## Sınıf: `EnhancedLanguageModel`
-### Yapıcı: `__init__`
-- **Parametreler**: `text` (kullanılacak metin), `n` (n-gram boyutu).
-- **İşlev**: Model ve toplam sayıları oluşturur.
-
-### Metodlar
-1. **`build_model(text)`**: 
-   - Metin verisinden n-gram modeli oluşturur.
-   - Kneser-Ney düzeltmesi ile olasılıkları normalleştirir.
-
-2. **`generate_sentence(start_words=None, length=10)`**:
-   - Belirtilen başlangıç kelimleri ile belirtilen uzunlukta cümle üretir.
-
-3. **`choose_word_with_context(next_words)`**:
-   - Verilen olasılıklara göre bağlama uygun bir kelime seçer.
-
-4. **`clean_text(text)`**:
-   - Cümleleri temizler ve biçimlendirir (gereksiz boşlukları ve yazım hatalarını düzeltir).
-
-5. **`post_process_sentences(sentences)`**:
-   - Oluşturulan cümleleri birleştirir ve tematik tutarlılık için kontrol eder.
-
-6. **`generate_and_post_process(num_sentences=10, input_words=None, length=20)`**:
-   - Belirtilen sayıda cümle üretir ve bunları işlemden geçirir.
-
-7. **`save_model(filename)`**:
-   - Modeli belirtilen dosyaya kaydeder.
-
-8. **`load_model(cls, filename)`**:
-   - Kaydedilmiş bir modeli yükler.
-
-## Metin Yükleme Fonksiyonu: `load_text_from_file`
-- Belirtilen dosyadan metni okur.
-
-## Kullanım
-1. Metni belirtilen dosyadan yükler.
-2. Mevcut model dosyasını kontrol eder. Dosya mevcutsa, modeli yükler; değilse, yeni bir model oluşturur ve kaydeder.
-3. Belirtilen sayıda cümle üretir ve sonucu ekrana yazdırır.
-
-## Örnek Kullanım
-- 5 cümle üretmek için başlangıç kelimeleri olarak `The next morning, Mia sent the entire ledger to the press, a digital bomb waiting to explode.` kullanılır.
-
-## Üretilen Metin
-
+text = "Least of all do they thus dispose of the murdered. Guardsman take small farmer well who loathe every precaution the officer."
+df = analyze_transitions(text)
+print(df)
 ```
-Generated Text:
-   The next morning, Mia sent the entire ledger to the press, a digital bomb waiting to explode. 
-   Duncan to feel my gaze, he exclaim try a butcher 's terror, Inspector he alive there, we urge Most certainly which communicate with reluctance, the ubiquitous reporter anonymously share. 
-   Be fix upon the receipt in that day we’ll regret the email it shine through Carlyle Beauvais prevail that is cause we number and restless pick an exciting mystery attend he. 
-   Difficulty and I seek Holmes unfold the cry Jones put the impertinence of expose he write she still to trap I pant somewhere near troop of Overland here you arelieve they. 
-   Morstan say cheerily look his pocket the quinine bottle would prevent any problem and peril let loose method have one evening sunshine Wiggins be preconcerted management here the facilis descensus.
+
+### Sentence Generation
+```python
+from simple_language_model import EnhancedLanguageModel
+
+model = EnhancedLanguageModel("Some training text.")
+sentence = model.generate_sentence(start_words=["The", "man"], length=12)
+print("Generated:", sentence)
 ```
-### Değerlendirme
 
-Üretilen metin, dilbilimsel ve yazılımsal bir çerçevede incelendiğinde, geçiş analizi açısından ilginç veriler sunmaktadır. Cümle yapılarının karmaşıklığı, metin içindeki referansların ve geçişlerin belirsizliğini artırırken, aynı zamanda metnin zenginliğini de vurgular. Örneğin, soyut ifadeler ve imgesel dil, sözdizimsel yapıların incelenmesine olanak tanır ve dilin işleyişine dair önemli ipuçları sunar.
+### Coherence Report
+```python
+sentences = ["The man left.", "She stayed at home."]
+cleaned_sentences, report = model.post_process_sentences(sentences)
+print(report)
+```
 
-Yazılım geliştirme bağlamında, bu tür metinlerin analizi, doğal dil işleme (NLP) uygulamalarında geçişlerin ve bağlamın modellemesi açısından kritik bir rol oynar. Geçişlerin belirlenmesi ve analiz edilmesi, metinler arası ilişkilerin ortaya konmasına yardımcı olur, böylece metnin anlamı daha net bir şekilde anlaşılabilir. Sonuç olarak, bu metin, hem dilbilimsel inceleme hem de yazılımsal modelleme açısından zengin bir kaynak oluşturarak, geçiş analizi çalışmalarına değerli katkılarda bulunabilir.
+## 🛠 Requirements
 
-#### 07.11.2024 Değerlendirme
+- Python 3.8+
+- `spacy`
+- `numpy`
+- `scikit-learn`
+- `tqdm`
+- `pandas`
 
-Metin, dil çeşitliliği ve atmosferik, gerilimli ton açısından güçlü bir potansiyele sahip. Dil bilgisi yapısı, tutarlılık ve mantıksal akışta iyileştirmelerle daha okunabilir ve etkileyici hale gelebilir.
+### SpaCy Model
+```bash
+python -m spacy download en_core_web_lg
+```
 
+## 🎯 Purpose
 
+This project provides a powerful infrastructure for researchers, developers, and linguistics enthusiasts working in **textual coherence**, **discourse transition**, and **automated sentence generation**. Whether you're generating text, analyzing transitions, or evaluating textual consistency — this is your **linguistic lab**.
+
+## 📫 Contact
+
+Suggestions, contributions, or even coffee invites are welcome:  
+**Linguistic Alchemist** | [lgram.site](https://lgram.site)
