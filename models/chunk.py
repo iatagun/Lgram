@@ -85,49 +85,43 @@ class EnhancedLanguageModel:
 
         current_words = list(start_words)
         sentence = current_words.copy()
-        transition_analyzer = TransitionAnalyzer("")  # Initialize with dummy sentence
+        transition_analyzer = TransitionAnalyzer("")  # Dummy init
 
-        for _ in tqdm(range(length), desc="Generating words"):
-            prefix = tuple(current_words[-(self.n-1):])  # Last n-1 words
+        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False):
+            prefix = tuple(current_words[-(self.n-1):])
 
-            # Get next words from the appropriate model, dynamically adjusting for n-grams
+            # Collect next words from n-gram models
             next_words = {}
-            if self.n >= 2 and prefix in self.bigram_model:
-                next_words.update(self.bigram_model[prefix])
-            if self.n >= 3 and prefix in self.trigram_model:
-                next_words.update(self.trigram_model[prefix])
-            if hasattr(self, 'fourgram_model') and self.n >= 4 and prefix in self.fourgram_model:
-                next_words.update(self.fourgram_model[prefix])
-            if hasattr(self, 'fivegram_model') and self.n >= 5 and prefix in self.fivegram_model:
-                next_words.update(self.fivegram_model[prefix])
-            if hasattr(self, 'sixgram_model') and self.n >= 6 and prefix in self.sixgram_model:
-                next_words.update(self.sixgram_model[prefix])
+            for model_attr in ['bigram_model', 'trigram_model', 'fourgram_model', 'fivegram_model', 'sixgram_model']:
+                model = getattr(self, model_attr, None)
+                if model and prefix in model:
+                    next_words.update(model[prefix])
 
-            # Stop if no viable next words
             if not next_words:
                 break
 
-            # Process current sentence for transition analysis and grammar correction
+            # Transition analysis and contextual word choice
             last_sentence = ' '.join(current_words)
             corrected_sentence = self.correct_grammar(last_sentence)
             transition_analyzer = TransitionAnalyzer(corrected_sentence)
             context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
-            
-            # Choose the next word based on context and avoid repeating the last word
+
             next_word = self.choose_word_with_context(next_words, context_word)
 
-            # Ensure next word is not the same as the last word and is contextually appropriate
             if next_word != current_words[-1]:
                 sentence.append(next_word)
                 current_words.append(next_word)
 
-            # Check for complete thought after generating a reasonable length
-            if len(sentence) > length // 2 and self.is_complete_thought(sentence):
-                break
+            # Optional early stopping if sentence becomes complete and well-formed
+            if len(sentence) >= length // 2:
+                partial_sentence = ' '.join(sentence)
+                if self.is_complete_thought(partial_sentence):
+                    break
 
         sentence_text = ' '.join(sentence).strip()
-        sentence_text = self.correct_grammar(sentence_text)  # Final grammar check
+        sentence_text = self.correct_grammar(sentence_text)
         return self.clean_text(sentence_text)
+
 
 
     def correct_grammar(self, sentence):
@@ -148,49 +142,62 @@ class EnhancedLanguageModel:
         return sentence
 
     def is_complete_thought(self, sentence):
-        """Check if the current sentence forms a complete thought with refined criteria."""
+        """Check if the current sentence forms a complete thought with refined linguistic and structural criteria."""
         if not sentence:
             return False
 
-        # Ensure the input is a string
+        # Join if input is a list
         if isinstance(sentence, list):
-            sentence = ' '.join(sentence)  # Join list elements into a single string
+            sentence = ' '.join(sentence)
 
-        # Correct grammar mistakes before analyzing the structure
+        # Correct grammar before processing
         sentence = self.correct_grammar(sentence)
 
-        # Process the sentence with SpaCy to analyze its structure
+        # Parse sentence with SpaCy
         doc = nlp(sentence)
 
-        # Check if the last word is punctuation indicating a complete thought
-        if doc[-1].text not in ['.', '!', '?', '...']:
+        # Basic checks
+        if len(doc) < 3 or doc[-1].text not in ['.', '!', '?', '...']:
             return False
 
-        # Check if there are at least three words in the sentence
-        if len(doc) < 3:
+        # Structural checks
+        has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in doc)
+        has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in doc)
+        subject_count = sum(1 for tok in doc if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'))
+
+        # Problematic conjunction usage
+        if doc[0].pos_ == 'CCONJ' or doc[-2].pos_ == 'CCONJ':
+            return False
+        if any(tok.pos_ == 'CCONJ' and tok.i == len(doc) - 2 for tok in doc):
+            return False
+        if any(tok.text.lower() in ['and', 'but', 'or'] and tok.i == 0 for tok in doc):
             return False
 
-        # Ensure the sentence contains at least one subject and one verb
-        has_subject = any(token.dep_ in ('nsubj', 'nsubjpass', 'expl') for token in doc)  # Includes implicit subjects
-        has_verb = any(token.pos_ in ('VERB', 'AUX') for token in doc)  # Includes modal auxiliaries
-
-        # Check if the sentence starts or ends with conjunctions, or has conjunctions before punctuation
-        if doc[0].pos_ == 'CCONJ' or doc[-2].pos_ == 'CCONJ' or any(token.pos_ == 'CCONJ' and token.i == len(doc) - 2 for token in doc):
-            return False
-
-        # Check for the presence of dependent clauses indicating incomplete thoughts
-        has_dependent_clause = any(token.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass', 'xcomp') for token in doc)
-
-        # Adjust conditions to allow for some flexibility in structure
-        subject_count = sum(1 for token in doc if token.dep_ in ('nsubj', 'nsubjpass', 'expl'))
-        verb_conflict = any(token.dep_ == 'conj' and token.head.pos_ == 'VERB' for token in doc)
-
-        # Handle incomplete thoughts caused by ellipses or unfinished clauses
+        # Ellipses without verb
         if doc[-1].text == '...' and not has_verb:
             return False
 
-        # Return True only if the structure is coherent
-        return has_subject and has_verb and not has_dependent_clause and subject_count >= 1 and not verb_conflict
+        # Incomplete clause types
+        has_dependent_clause = any(tok.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass', 'xcomp') for tok in doc)
+        if has_dependent_clause and not has_subject:
+            return False
+
+        # Conjunctive verbs without main clause
+        only_conjunct_verbs = all(tok.dep_ in ('conj', 'xcomp') for tok in doc if tok.pos_ == 'VERB')
+        if only_conjunct_verbs and not has_subject:
+            return False
+
+        # Negative without supportive clause
+        has_negation = any(tok.dep_ == 'neg' for tok in doc)
+        if has_negation and not has_dependent_clause:
+            return False
+
+        # Final check
+        if not (has_subject and has_verb and subject_count >= 1):
+            return False
+
+        return True
+
 
     def get_center_from_sentence(self, sentence, transition_analyzer):
         """
@@ -254,7 +261,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.4, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.2, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -483,46 +490,40 @@ class EnhancedLanguageModel:
         generated_sentences = []
         max_attempts = 5  # Max attempts to generate a coherent sentence
 
-        for i in tqdm(range(num_sentences), desc="Generating sentences"):
+        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=True):
             attempts = 0
             coherent_sentence = False
 
             while attempts < max_attempts and not coherent_sentence:
-                # Allow variability in sentence length based on previous sentences
                 if i == 0:
                     generated_sentence = self.generate_sentence(start_words=input_words, length=length)
                 else:
                     last_sentence = generated_sentences[-1]
-                    # Generate a new sentence with adjusted length
                     adjusted_length = self.advanced_length_adjustment(last_sentence, length)
-
-                    # Generate a new sentence
                     generated_sentence = self.generate_sentence(length=adjusted_length)
 
-                # Check the quality of the generated sentence
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
+                    if not self.is_complete_thought(generated_sentence):
+                        print(f"[SKIP] Not a complete thought: {generated_sentence}")
+                        attempts += 1
+                        continue
+
                     generated_sentences.append(generated_sentence)
-                    coherent_sentence = True  # Mark as coherent
+                    coherent_sentence = True
                 else:
                     attempts += 1
                     print(f"Attempt {attempts}: Generated incoherent sentence: {generated_sentence}")
 
             if not coherent_sentence:
                 print(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
-                # Grammar correction before appending
                 generated_sentence = self.correct_grammar(generated_sentence)
-                generated_sentences.append(generated_sentence)  # Add the incoherent sentence instead of a placeholder
+                generated_sentences.append(generated_sentence)
 
         final_text = ' '.join(generated_sentences)
-        
-        # Perform grammar correction for the entire generated text
-        final_text = self.correct_grammar(final_text)  # Final grammar check
-        
-        # Post-process the text (ensure punctuation and proper spacing)
-        final_text = self.post_process_text(final_text)  # Call the new post-processing method
-
-        # Return the final processed text
+        final_text = self.correct_grammar(final_text)
+        final_text = self.post_process_text(final_text)
         return final_text
+
 
     def get_proper_nouns(self, text):
         """Identify proper nouns in the text using SpaCy."""
@@ -583,65 +584,58 @@ class EnhancedLanguageModel:
 
     def is_sentence_coherent(self, sentence, previous_sentences=None):
         """Evaluate the coherence of a generated sentence using semantic similarity and syntactic features."""
-        # Check for basic sentence validity
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
             return False
 
-        # Process the current sentence with SpaCy
         current_doc = nlp(sentence)
         current_embedding = current_doc.vector
 
-        # If there are no previous sentences, we consider it coherent
         if previous_sentences is None or len(previous_sentences) == 0:
             return True
 
-        # Calculate semantic similarity with previous sentences
-        previous_embeddings = [nlp(prev_sentence).vector for prev_sentence in previous_sentences]
-        
-        # Handle case where previous embeddings could be empty (safety)
+        previous_embeddings = [nlp(prev).vector for prev in previous_sentences]
+
         if not previous_embeddings:
             return True
 
-        # Calculate cosine similarity
         similarities = [
-            np.dot(current_embedding, prev_embedding) / 
-            (np.linalg.norm(current_embedding) * np.linalg.norm(prev_embedding) + 1e-8)  # Avoid division by zero
-            for prev_embedding in previous_embeddings
+            np.dot(current_embedding, emb) / 
+            (np.linalg.norm(current_embedding) * np.linalg.norm(emb) + 1e-8)
+            for emb in previous_embeddings
         ]
-
-        # Calculate average similarity
         avg_similarity = np.mean(similarities)
 
-        # Determine a dynamic threshold based on previous sentences
-        threshold = 0.6  # Default threshold
-        avg_length = np.mean([len(prev_sentence.split()) for prev_sentence in previous_sentences])
-        length_variance = np.var([len(prev_sentence.split()) for prev_sentence in previous_sentences])
+        # === Dinamik eşik belirleme ===
+        avg_len = np.mean([len(prev.split()) for prev in previous_sentences])
+        var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
-        # Adjust threshold based on sentence complexity
         noun_count = sum(1 for token in current_doc if token.pos_ == "NOUN")
         verb_count = sum(1 for token in current_doc if token.pos_ == "VERB")
         adj_count = sum(1 for token in current_doc if token.pos_ == "ADJ")
         adv_count = sum(1 for token in current_doc if token.pos_ == "ADV")
+        clause_count = sum(1 for token in current_doc if token.dep_ in ("advcl", "relcl", "ccomp", "xcomp"))
 
-        # Calculate complexity factor
-        complexity_factor = (noun_count + verb_count + adj_count + adv_count) / 3.0
+        complexity_factor = (noun_count + verb_count + adj_count + adv_count + clause_count) / 4.0
 
-        # Adjust threshold based on average sentence length and complexity
-        if avg_length > 15:
+        threshold = 0.6
+        if avg_len > 15:
             threshold += 0.1
-        elif avg_length < 8:
+        elif avg_len < 8:
             threshold -= 0.1
+        if var_len > 5:
+            threshold += 0.05
+        if complexity_factor > 2.5:
+            threshold += 0.05
+        elif complexity_factor < 1.5:
+            threshold -= 0.05
 
-        # Adjust for length variance in previous sentences
-        if length_variance > 5:
+        # Ek olarak anlamsal çeşitlilik için ceza uygula
+        unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
+        if len(unique_lemmas) < 3:
             threshold += 0.05
 
-        # Adjust threshold based on complexity factor
-        if complexity_factor > 2:
-            threshold += 0.05
-
-        # Final coherence decision based on similarity and threshold
         return avg_similarity > threshold
+
 
 
     def save_model(self, filename, compress=False):
@@ -742,7 +736,7 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = "I had heard the reasons for his deductions.".split()
+input_words = "Least of all do they thus dispose of the murdered.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=5)
