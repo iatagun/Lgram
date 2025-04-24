@@ -261,7 +261,7 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.2, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.6, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
