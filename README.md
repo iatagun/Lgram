@@ -108,7 +108,6 @@ python -m spacy download en_core_web_lg
 
 This project provides a powerful infrastructure for researchers, developers, and linguistics enthusiasts working in **textual coherence**, **discourse transition**, and **automated sentence generation**. Whether you're generating text, analyzing transitions, or evaluating textual consistency — this is your **linguistic lab**.
 
-## 📫 Contact
+## Outputs
 
-Suggestions, contributions, or even coffee invites are welcome:  
-**Linguistic Alchemist** | [lgram.site](https://lgram.site)
+ Least of all do they thus dispose of the murdered. Guardsman take small farmer well who loathe every precaution the officer. The lost sense of L'Etoile in against that should desire of impatience you desire publicity. Express his seat all the man hunt be hunt for sympathy in chief behind our. Clear to discourage and his next few week ago by the supposition that which it.
