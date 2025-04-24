@@ -254,68 +254,81 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.99):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.4, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
-            return None  # No next words available
+            return None
 
         word_choices = list(next_words.keys())
-        probabilities = np.array(list(next_words.values()), dtype=float)  # Ensure float type
-
-        # Ensure probabilities are non-negative
+        probabilities = np.array(list(next_words.values()), dtype=float)
         probabilities = np.maximum(probabilities, 0)
-
-        # Normalize probabilities
         total = probabilities.sum()
-        if total > 0:
-            probabilities /= total  # Normalize to sum to 1
-        else:
-            probabilities = np.ones_like(probabilities) / len(probabilities)  # Equal distribution if all probabilities are zero
+        probabilities = probabilities / total if total > 0 else np.ones_like(probabilities) / len(probabilities)
 
+        # POS filtreleme (structure_template varsa)
+        if structure_template:
+            target_pos = structure_template[position_index % len(structure_template)]
+            valid_words, valid_vectors, valid_probs, valid_pos = [], [], [], []
+
+            for word, prob in zip(word_choices, probabilities):
+                doc = nlp(word)
+                if doc and doc[0].pos_ == target_pos:
+                    valid_words.append(word)
+                    valid_vectors.append(doc[0].vector)
+                    valid_probs.append(prob)
+                    valid_pos.append(doc[0].pos_)
+
+            if not valid_words:
+                print(f"[WARN] No words matched POS '{target_pos}'. Fallback to all.")
+                valid_words = word_choices
+                valid_vectors = [nlp(word).vector for word in word_choices]
+                valid_probs = probabilities
+                valid_pos = [nlp(word)[0].pos_ for word in word_choices]
+
+            else:
+                word_choices = valid_words
+                probabilities = np.array(valid_probs)
+                word_vectors = np.array(valid_vectors)
+        else:
+            word_vectors = np.array([nlp(word).vector for word in word_choices])
+            valid_pos = [nlp(word)[0].pos_ for word in word_choices]
+
+
+        # Bağlam varsa similarity hesapla
         if context_word:
-            # Check if the context word has a valid vector representation
             context_vector = nlp(context_word).vector
             if context_vector is None or np.all(context_vector == 0):
-                return np.random.choice(word_choices, p=probabilities)  # Fallback to probabilities if context vector is invalid
-            
-            context_vector = context_vector.reshape(1, -1)  # Reshape for cosine_similarity
-            
-            # Compute similarity scores with the context word using cosine similarity
-            word_vectors = np.array([nlp(word).vector for word in word_choices])
-            
-            # Use cosine similarity to compute the relationship between the context and candidate words
-            similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
-
-            # Apply semantic threshold: zero out scores below the threshold
-            similarity_scores = np.maximum(similarity_scores, 0)  # Ensure no negative values
-            similarity_scores[similarity_scores < semantic_threshold] = 0  # Apply threshold
-
-            # If all similarity scores are below the threshold, fallback to probabilities
-            if np.sum(similarity_scores) == 0:
+                print("[ERROR] Context vector is empty. Fallback.")
                 return np.random.choice(word_choices, p=probabilities)
 
-            # Scale similarity scores using softmax to ensure better distribution
-            exp_similarities = np.exp(similarity_scores)  # Exponentiate the similarity scores
-            adjusted_probabilities = exp_similarities * probabilities  # Combine with original probabilities
-            
-            # Normalize adjusted probabilities
-            adjusted_probabilities = np.exp(adjusted_probabilities) / np.sum(np.exp(adjusted_probabilities))
-
-            # Increase the influence of similarity scores dynamically based on their range
-            if len(similarity_scores) > 0:
-                mean_similarity = np.mean(similarity_scores)
-                std_similarity = np.std(similarity_scores)
-                influence_factor = 1 + (similarity_scores - mean_similarity) / (std_similarity + 1e-5)  # Avoid division by zero
-                
-                # Apply influence factor to adjusted probabilities
-                adjusted_probabilities *= influence_factor
-                adjusted_probabilities /= adjusted_probabilities.sum()  # Normalize again
-
-            # Make selection based on the final probabilities
-            chosen_word = np.random.choice(word_choices, p=adjusted_probabilities)
+            context_vector = context_vector.reshape(1, -1)
+            similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
+            similarity_scores = np.maximum(similarity_scores, 0)
+            similarity_scores[similarity_scores < semantic_threshold] = 0
         else:
-            chosen_word = np.random.choice(word_choices, p=probabilities)
+            similarity_scores = np.ones_like(probabilities)
 
+        # POS bigram geçiş puanlarını uygula
+        if pos_bigrams and prev_pos:
+            transition_scores = np.array([
+                pos_bigrams.get((prev_pos, curr_pos), 0.01) for curr_pos in valid_pos
+            ])
+        else:
+            transition_scores = np.ones_like(probabilities)
+
+        # Tümünü birleştir: final score = sim * prob * trans
+        final_scores = similarity_scores * probabilities * transition_scores
+        if final_scores.sum() == 0:
+            print("[LOG] All scores 0, fallback to uniform.")
+            final_scores = np.ones_like(probabilities) / len(probabilities)
+        else:
+            final_scores /= final_scores.sum()
+
+        chosen_word = np.random.choice(word_choices, p=final_scores)
+        print(f"[LOG] ➡️ Chosen Word: {str(chosen_word)} | POS: {nlp(str(chosen_word))[0].pos_}")
         return chosen_word
+
+
+
 
     def clean_text(self, text):
         # Check if the input is empty or None
@@ -729,7 +742,7 @@ except (FileNotFoundError, EOFError):
 
 # Belirtilen sayıda cümle üret
 num_sentences = 5  # Üretilecek cümle sayısı
-input_words = "I made the attempt in vain.".split()
+input_words = "I had heard the reasons for his deductions.".split()
 
 # Entegre edilmiş yöntemle başlangıç metni üret
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=5)
