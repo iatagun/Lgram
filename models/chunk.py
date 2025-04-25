@@ -316,6 +316,64 @@ class EnhancedLanguageModel:
         text = re.sub(r'(\s)([.,!?;])', r'\2', text)
         return text
 
+    def reorder_sentence(sentence):
+        """Reorder the sentence structure based on dependency parsing."""
+        doc = nlp(sentence)
+        reordered_tokens = []
+
+        # Create a list of tokens based on their dependency types
+        subjects = []
+        verbs = []
+        objects = []
+        modifiers = []
+
+        for token in doc:
+            if token.dep_ in ('nsubj', 'nsubjpass'):  # Subjects
+                subjects.append(token)
+            elif token.dep_ in ('ROOT', 'VERB'):  # Verbs
+                verbs.append(token)
+            elif token.dep_ in ('dobj', 'pobj'):  # Direct objects
+                objects.append(token)
+            else:  # Modifiers (adjectives, adverbs, etc.)
+                modifiers.append(token)
+
+        # Enhanced reordering strategy: Subject-Verb-Object with checks
+        if subjects and verbs:
+            # Select a subject, ensuring it's unique to avoid ambiguity
+            selected_subject = random.choice(subjects)
+            reordered_tokens.append(selected_subject)
+
+            # Select a verb, ensuring it agrees with the subject (singular/plural)
+            selected_verb = None
+            for verb in verbs:
+                if (selected_subject.tag_ == 'NNS' and verb.tag_ == 'VBZ') or \
+                (selected_subject.tag_ == 'NN' and verb.tag_ == 'VBP'):
+                    continue  # Skip if there's a disagreement
+                selected_verb = verb
+                break
+            if selected_verb:
+                reordered_tokens.append(selected_verb)
+
+            # Select objects, ensuring there's no conflict
+            if objects:
+                # Ensure at least one object is present
+                selected_objects = [obj for obj in objects if obj.head == selected_verb]  # Ensure they relate to the selected verb
+                if selected_objects:
+                    reordered_tokens.extend(selected_objects)
+
+            # Add modifiers based on their relationship with the subject/verb
+            if selected_verb:
+                for mod in modifiers:
+                    if mod.head == selected_verb or mod.head == selected_subject:
+                        reordered_tokens.append(mod)
+
+        # Ensure at least one subject, verb, and object to form a complete thought
+        if not reordered_tokens or len(reordered_tokens) < 3:
+            return "Sentence could not be reordered meaningfully."
+
+        return " ".join([token.text for token in reordered_tokens])
+
+
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
         generated_sentences = []
         max_attempts = 5
@@ -346,7 +404,7 @@ class EnhancedLanguageModel:
 
             if not coherent_sentence:
                 self.log(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
-                generated_sentence = self.correct_grammar(generated_sentence)
+                generated_sentence = self.correct_grammar(self.reorder_sentence(generated_sentence))
                 generated_sentences.append(generated_sentence)
 
         final_text = ' '.join(generated_sentences)
@@ -505,7 +563,7 @@ except (FileNotFoundError, EOFError):
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = "We took down one of his operations tonight.".split()
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=5)
+input_words = "I’m just trying to stay alive.".split()
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
