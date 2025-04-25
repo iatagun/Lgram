@@ -12,8 +12,8 @@ from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_lg")
-nlp.max_length = 1030000
+nlp = spacy.load("en_core_web_md")
+nlp.max_length = 2000000
 
 # N-gram modelleri yolları
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -87,7 +87,7 @@ class EnhancedLanguageModel:
         current_words = list(start_words)
         sentence = current_words.copy()
 
-        for _ in range(length):
+        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             prefix = tuple(current_words[-(self.n-1):])
             next_words = {}
 
@@ -130,31 +130,62 @@ class EnhancedLanguageModel:
     def is_complete_thought(self, sentence):
         if not sentence:
             return False
+
         if isinstance(sentence, list):
             sentence = ' '.join(sentence)
+
         sentence = self.correct_grammar(sentence)
         doc = nlp(sentence)
-        if len(doc) < 3 or doc[-1].text not in ['.', '!', '?', '...']:
+
+        if len(doc) < 3:
             return False
+
+        if doc[-1].text not in ['.', '!', '?']:
+            return False
+
         has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in doc)
         has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in doc)
+
+        if not (has_subject and has_verb):
+            return False
+
         subject_count = sum(1 for tok in doc if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'))
-        if doc[0].pos_ == 'CCONJ' or doc[-2].pos_ == 'CCONJ':
+        verb_count = sum(1 for tok in doc if tok.pos_ in ('VERB', 'AUX'))
+
+        # ✨ Subj-Verb dengesi kontrolü
+        if subject_count > 2 and verb_count == 0:
             return False
-        if any(tok.text.lower() in ['and', 'but', 'or'] and tok.i == 0 for tok in doc):
+
+        # ✨ Bağlaçlarla başlama kontrolü
+        if doc[0].pos_ == 'CCONJ' or (len(doc) > 1 and doc[1].pos_ == 'CCONJ'):
             return False
-        if doc[-1].text == '...' and not has_verb:
+
+        # ✨ Çok düşük içerik (sadece pronoun veya adverb) kontrolü
+        content_tokens = [tok for tok in doc if tok.pos_ in ('NOUN', 'VERB', 'ADJ', 'ADV')]
+        if len(content_tokens) < 2:
             return False
-        has_dependent_clause = any(tok.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass', 'xcomp') for tok in doc)
-        if has_dependent_clause and not has_subject:
+
+        # ✨ Bağımlı cümleler kontrolü
+        dependent_clauses = any(tok.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass', 'xcomp') for tok in doc)
+        if dependent_clauses and not has_subject:
             return False
-        only_conjunct_verbs = all(tok.dep_ in ('conj', 'xcomp') for tok in doc if tok.pos_ == 'VERB')
-        if only_conjunct_verbs and not has_subject:
+
+        # ✨ Çoklu bağlaç yapısı ve kopukluk kontrolü
+        conj_tokens = [tok for tok in doc if tok.dep_ == 'conj']
+        if len(conj_tokens) > 2 and not has_subject:
             return False
+
+        # ✨ Negation handling
         has_negation = any(tok.dep_ == 'neg' for tok in doc)
-        if has_negation and not has_dependent_clause:
+        if has_negation and not has_verb:
             return False
-        return has_subject and has_verb and subject_count >= 1
+
+        # ✨ Quote veya Parenthesis düzgün kapanmış mı
+        if sentence.count('"') % 2 != 0 or sentence.count('(') != sentence.count(')'):
+            return False
+
+        return True
+
 
     def get_center_from_sentence(self, sentence, transition_analyzer):
         transition_analyzer = TransitionAnalyzer(sentence)
@@ -289,7 +320,8 @@ class EnhancedLanguageModel:
         generated_sentences = []
         max_attempts = 5
 
-        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=True):
+        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=True, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+
             attempts = 0
             coherent_sentence = False
 
@@ -365,41 +397,57 @@ class EnhancedLanguageModel:
     def is_sentence_coherent(self, sentence, previous_sentences=None):
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
             return False
+
         current_doc = nlp(sentence)
         current_embedding = current_doc.vector
+
         if previous_sentences is None or len(previous_sentences) == 0:
             return True
-        previous_embeddings = [nlp(prev).vector for prev in previous_sentences]
+
+        previous_embeddings = [nlp(prev).vector for prev in previous_sentences if prev.strip()]
         if not previous_embeddings:
             return True
-        similarities = [
-            np.dot(current_embedding, emb) / (np.linalg.norm(current_embedding) * np.linalg.norm(emb) + 1e-8)
-            for emb in previous_embeddings
-        ]
+
+        # ✨ Son 2 cümleye daha fazla ağırlık ver
+        weights = np.linspace(1.5, 1.0, num=len(previous_embeddings))  # Yakın cümleler daha etkili
+        similarities = []
+        for emb, weight in zip(previous_embeddings, weights):
+            sim = np.dot(current_embedding, emb) / (np.linalg.norm(current_embedding) * np.linalg.norm(emb) + 1e-8)
+            similarities.append(sim * weight)
+
         avg_similarity = np.mean(similarities)
-        avg_len = np.mean([len(prev.split()) for prev in previous_sentences])
-        var_len = np.var([len(prev.split()) for prev in previous_sentences])
+
+        # ✨ Sentence complexity
         noun_count = sum(1 for token in current_doc if token.pos_ == "NOUN")
         verb_count = sum(1 for token in current_doc if token.pos_ == "VERB")
         adj_count = sum(1 for token in current_doc if token.pos_ == "ADJ")
         adv_count = sum(1 for token in current_doc if token.pos_ == "ADV")
         clause_count = sum(1 for token in current_doc if token.dep_ in ("advcl", "relcl", "ccomp", "xcomp"))
         complexity_factor = (noun_count + verb_count + adj_count + adv_count + clause_count) / 4.0
-        threshold = 0.6
+
+        avg_len = np.mean([len(prev.split()) for prev in previous_sentences])
+        var_len = np.var([len(prev.split()) for prev in previous_sentences])
+
+        # ✨ Dinamik threshold
+        threshold = 0.55  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
-            threshold += 0.1
+            threshold += 0.05
         elif avg_len < 8:
-            threshold -= 0.1
-        if var_len > 5:
-            threshold += 0.05
-        if complexity_factor > 2.5:
-            threshold += 0.05
-        elif complexity_factor < 1.5:
             threshold -= 0.05
+        if var_len > 5:
+            threshold += 0.03
+        if complexity_factor > 2.5:
+            threshold += 0.03
+        elif complexity_factor < 1.5:
+            threshold -= 0.03
+
+        # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
         unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
         if len(unique_lemmas) < 3:
-            threshold += 0.05
+            threshold += 0.02
+
         return avg_similarity > threshold
+
 
     def save_model(self, filename, compress=False):
         try:
@@ -457,7 +505,7 @@ except (FileNotFoundError, EOFError):
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = "I looked at my friends, exhaustion and fear etched into their faces.".split()
+input_words = "We took down one of his operations tonight.".split()
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=5)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)

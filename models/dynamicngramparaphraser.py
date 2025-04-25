@@ -10,7 +10,7 @@ from numpy.linalg import norm
 import json
 
 # SpaCy modelini yükle
-nlp = spacy.load("en_core_web_lg")  # veya "en_core_web_lg"
+nlp = spacy.load("en_core_web_md")  # veya "en_core_web_lg"
 nlp.max_length = 1030000 # or even higher
 corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\corrections.json"
 
@@ -18,7 +18,7 @@ def generate_ngrams(tokens, n):
     """n-gram oluşturmak için yardımcı fonksiyon."""
     return zip(*[islice(tokens, i, None) for i in range(n)])
 
-def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path, frequency_threshold=1):
+def build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path, frequency_threshold=2):
     """Metin dosyasından n-gram modelini oluşturup kaydeder, düşük frekanslı n-gramları filtreler."""
     bigram_model = defaultdict(Counter)
     trigram_model = defaultdict(Counter)
