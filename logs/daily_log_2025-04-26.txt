@@ -764,3 +764,72 @@ Loaded existing model.
 [LOG] ➡️ Chosen Word: 'so' | Target POS: N/A | Chosen POS: ADV
 Generated Text:
 I looked at my friends, exhaustion and fear etched into their faces. As clean breast of a light he I glance back into a mistake he suddenly. Profit by an object be easy to government fours. Be indeed it we just about this is close we creep close to the. I scan the true I sir I could be sure that you I say I think so.
+Loaded existing model.
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'make' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'not' | Target POS: N/A | Chosen POS: PART
+[LOG] ➡️ Chosen Word: 'desire' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'floor' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'strategize' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'our' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'great' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'yellow' | Target POS: N/A | Chosen POS: ADJ
+[SKIP] Not a complete thought: See only to the floor and strategize our great yellow.
+[LOG] ➡️ Chosen Word: 'at' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'line' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'good' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'marry' | Target POS: N/A | Chosen POS: VERB
+[SKIP] Not a complete thought: Cry out at the line of the good to marry.
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'turning' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'point' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'this' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'world' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'feel' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'small' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'few' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'block' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'without' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[SKIP] Not a complete thought: Not over this world feel a small a few block without the.
+[LOG] ➡️ Chosen Word: 'token' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'mind' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'need' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[SKIP] Not a complete thought: Distinguish some token of mind that you need to I.
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'never' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'man' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'who' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'for' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'they' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'recently' | Target POS: N/A | Chosen POS: ADV
+Generated Text:
+We took down one of his operations tonight. Be whisper to make it is not desire. A steal a turning point it is it. He turn it I never have be to the man who is that. The fight for them are recently.
