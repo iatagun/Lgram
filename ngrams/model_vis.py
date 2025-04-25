@@ -1,125 +1,150 @@
 import pickle
-import random
 import numpy as np
 import plotly.graph_objects as go
-import networkx as nx
+from sklearn.decomposition import PCA
+from sklearn.metrics.pairwise import cosine_similarity
+import gensim.downloader as api
+import os
+import plotly.io as pio
 
 # === 1. Modeli Yükle ===
-with open('language_model.pkl', 'rb') as f:
+with open('C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\bigram_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-# === 2. Graph Kur ===
-G = nx.Graph()
-
-for key in model.keys():
-    if isinstance(key, tuple):
-        words = key
+# === 2. Bigramlardan Tek Kelimeleri Ayır
+words = set()
+for ngram in model.keys():
+    if isinstance(ngram, tuple):
+        words.update(ngram)
     else:
-        words = (key,)
-    
-    for word in words:
-        G.add_node(word)
-    
-    for i in range(len(words) - 1):
-        weight = model.get(key, 1)
-        G.add_edge(words[i], words[i + 1], weight=weight)
+        words.add(ngram)
 
-# === 3. 3D Pozisyonlar ===
-pos = nx.spring_layout(G, dim=3, seed=42)
+words = list(words)
 
-x_nodes = [pos[k][0] for k in G.nodes()]
-y_nodes = [pos[k][1] for k in G.nodes()]
-z_nodes = [pos[k][2] for k in G.nodes()]
+# === 3. En sık geçen ilk 200 kelimeyi al
+words = sorted(words, key=lambda w: model.get(w, 0), reverse=True)[:500]
 
-# === 4. Düğüm Frekansları (ısı için) ===
-node_weights = {}
-for node in G.nodes():
-    node_weights[node] = 0
+# === 4. Word2Vec Modelini Yükle
+print("Önceden eğitilmiş Word2Vec modeli yükleniyor...")
+w2v_model = api.load('glove-wiki-gigaword-100')
 
-for edge in G.edges(data=True):
-    node_weights[edge[0]] += edge[2]['weight']
-    node_weights[edge[1]] += edge[2]['weight']
+# === 5. Küçük harfe çevirerek Word2Vec eşleşmesi
+filtered_words = []
+vectors = []
 
-# Normalize et
-max_weight = max(node_weights.values()) if node_weights else 1
-node_colors = [node_weights[node] / max_weight for node in G.nodes()]
-node_sizes = [5 + 15 * c for c in node_colors]  # frekansa göre boyut da değişiyor
+for word in words:
+    lw = word.lower()
+    if lw in w2v_model:
+        filtered_words.append(word)
+        vectors.append(w2v_model[lw])
 
-# === 5. Kenarları Ayarla ===
+print(f"{len(filtered_words)} kelime eşleşti.")
+
+if not filtered_words:
+    raise ValueError("Hiç kelime eşleşmedi!")
+
+# === 6. PCA ile 3 Boyuta İndir
+vectors = np.array(vectors)
+pca = PCA(n_components=3)
+reduced_vectors = pca.fit_transform(vectors)
+
+# === 7. Anlamsal Benzerlik ile Çizgileri Belirle
+similarities = cosine_similarity(vectors)
+
+threshold = 0.5  # Benzerlik eşik değeri
+edges = []
+
+for i in range(len(filtered_words)):
+    for j in range(i + 1, len(filtered_words)):
+        if similarities[i, j] >= threshold:
+            edges.append((i, j))
+
+# === 8. Çizgi Koordinatlarını Hazırla
 edge_x = []
 edge_y = []
 edge_z = []
 
-for edge in G.edges():
-    x0, y0, z0 = pos[edge[0]]
-    x1, y1, z1 = pos[edge[1]]
+for i, j in edges:
+    x0, y0, z0 = reduced_vectors[i]
+    x1, y1, z1 = reduced_vectors[j]
     edge_x += [x0, x1, None]
     edge_y += [y0, y1, None]
     edge_z += [z0, z1, None]
 
-# === 6. Ana Düğümler ve Kenarlar ===
+edge_trace = go.Scatter3d(
+    x=edge_x,
+    y=edge_y,
+    z=edge_z,
+    mode='lines',
+    line=dict(color='lightblue', width=1),
+    hoverinfo='none'
+)
+
+# === 9. Kelime Noktalarını Hazırla
 node_trace = go.Scatter3d(
-    x=x_nodes, y=y_nodes, z=z_nodes,
+    x=reduced_vectors[:,0],
+    y=reduced_vectors[:,1],
+    z=reduced_vectors[:,2],
     mode='markers+text',
     marker=dict(
-        size=node_sizes,
-        color=node_colors,
-        colorscale='Hot',  # İşte burası ısı haritası
-        cmin=0,
-        cmax=1,
-        colorbar=dict(title='Frekans Sıcaklığı'),
-        line=dict(width=0.5, color='black'),
-        opacity=0.9
+        size=6,
+        color='gold',
+        opacity=0.9,
+        line=dict(width=0.5, color='black')
     ),
-    text=[str(node) for node in G.nodes()],
+    text=filtered_words,
     textposition="top center",
     hoverinfo='text'
 )
 
-edge_trace = go.Scatter3d(
-    x=edge_x, y=edge_y, z=edge_z,
-    mode='lines',
-    line=dict(
-        width=0.5,
-        color='lightblue',
-    ),
-    hoverinfo='none'
-)
-
-# === 7. Kamera Animasyonu ===
+# === 10. Slayt Gösterisi (Kamera Dönüşü)
 frames = []
-angles = np.linspace(0, 360, 120)
+angles = np.linspace(0, 360, 300)
 
 for angle in angles:
     camera = dict(
-        eye=dict(x=2*np.cos(np.radians(angle)),
-                 y=2*np.sin(np.radians(angle)),
-                 z=0.5 + 0.3*np.sin(np.radians(2*angle)))
+        eye=dict(
+            x=2*np.cos(np.radians(angle)),
+            y=2*np.sin(np.radians(angle)),
+            z=0.5 + 0.3*np.sin(np.radians(2*angle))
+        )
     )
     frames.append(go.Frame(layout=dict(scene_camera=camera)))
 
+# === 11. Layout
 layout = go.Layout(
-    title="🔥 Kelime Sıcaklığı Galaksisi 🔥",
-    showlegend=False,
+    title="🌌 3D Anlamsal Kelime Haritası - Çizgili + Slaytlı 🌌",
     margin=dict(l=0, r=0, b=0, t=50),
     paper_bgcolor='black',
     scene=dict(
-        xaxis=dict(showbackground=False, showticklabels=False, title=''),
-        yaxis=dict(showbackground=False, showticklabels=False, title=''),
-        zaxis=dict(showbackground=False, showticklabels=False, title=''),
+        xaxis=dict(showbackground=False),
+        yaxis=dict(showbackground=False),
+        zaxis=dict(showbackground=False),
         bgcolor='black'
     ),
     updatemenus=[dict(
         type='buttons',
         showactive=False,
-        buttons=[dict(label='Başlat 🔥', method='animate', args=[None, {
-            "frame": {"duration":50, "redraw":True},
-            "fromcurrent":True,
-            "mode":"immediate"
-        }])]
+        buttons=[dict(
+            label='Slaytı Başlat 🚀',
+            method='animate',
+            args=[None, {
+                "frame": {"duration":20, "redraw":True},
+                "fromcurrent":True,
+                "mode":"immediate"
+            }]
+        )]
     )]
 )
 
-fig = go.Figure(data=[edge_trace, node_trace], layout=layout, frames=frames)
+# === 12. Figürü Oluştur (frames DOĞRU yerde!)
+fig = go.Figure(
+    data=[edge_trace, node_trace],
+    layout=layout,
+    frames=frames
+)
 
-fig.show()
+# === 13. HTML'e Kaydet ve Aç
+html_file = "semantic_word_network_slideshow.html"
+pio.write_html(fig, file=html_file, auto_open=False)
+os.startfile(os.path.abspath(html_file))
