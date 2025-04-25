@@ -15,13 +15,13 @@ from collections import Counter
 nlp = spacy.load("en_core_web_lg")  # Use medium model for better embeddings
 nlp.max_length = 1030000 # or even higher
 # N-gram modellerini kontrol et ve yükle
-text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
-bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\bigram_model.pkl"
-trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\trigram_model.pkl"
-fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fourgram_model.pkl"
-fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
-sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
-corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\corrections.json"
+text_path = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\text_data.txt"
+bigram_path = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\bigram_model.pkl"
+trigram_path = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\trigram_model.pkl"
+fourgram_path = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\fourgram_model.pkl"
+fivegram_path = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
+sixgram_path = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
+corrections_file = "C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\corrections.json"
 
 class EnhancedLanguageModel:
     def __init__(self, text, n=2):
@@ -261,78 +261,88 @@ class EnhancedLanguageModel:
         return None  # Return None if no valid noun phrases exist
 
 
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.1, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.05,position_index=0,structure_template=None,prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
         word_choices = list(next_words.keys())
         probabilities = np.array(list(next_words.values()), dtype=float)
         probabilities = np.maximum(probabilities, 0)
-        total = probabilities.sum()
-        probabilities = probabilities / total if total > 0 else np.ones_like(probabilities) / len(probabilities)
 
-        # POS filtreleme (structure_template varsa)
+        total = probabilities.sum()
+        if total > 0:
+            probabilities /= total
+        else:
+            probabilities = np.ones_like(probabilities) / len(probabilities)
+
+        # POS filtreleme (structure_template kullanılıyorsa)
+        valid_words, valid_vectors, valid_probs, valid_pos = [], [], [], []
+
         if structure_template:
             target_pos = structure_template[position_index % len(structure_template)]
-            valid_words, valid_vectors, valid_probs, valid_pos = [], [], [], []
 
             for word, prob in zip(word_choices, probabilities):
                 doc = nlp(word)
-                if doc and doc[0].pos_ == target_pos:
+                if doc and len(doc) > 0 and doc[0].pos_ == target_pos:
                     valid_words.append(word)
                     valid_vectors.append(doc[0].vector)
                     valid_probs.append(prob)
                     valid_pos.append(doc[0].pos_)
 
             if not valid_words:
-                print(f"[WARN] No words matched POS '{target_pos}'. Fallback to all.")
+                print(f"[WARN] No matching POS '{target_pos}'. Fallback to all words.")
                 valid_words = word_choices
                 valid_vectors = [nlp(word).vector for word in word_choices]
                 valid_probs = probabilities
                 valid_pos = [nlp(word)[0].pos_ for word in word_choices]
-
-            else:
-                word_choices = valid_words
-                probabilities = np.array(valid_probs)
-                word_vectors = np.array(valid_vectors)
         else:
-            word_vectors = np.array([nlp(word).vector for word in word_choices])
+            valid_words = word_choices
+            valid_vectors = [nlp(word).vector for word in word_choices]
+            valid_probs = probabilities
             valid_pos = [nlp(word)[0].pos_ for word in word_choices]
 
+        word_vectors = np.array(valid_vectors)
+        probabilities = np.array(valid_probs)
 
-        # Bağlam varsa similarity hesapla
+        # Bağlam vektörüne göre similarity skoru
         if context_word:
             context_vector = nlp(context_word).vector
             if context_vector is None or np.all(context_vector == 0):
-                print("[ERROR] Context vector is empty. Fallback.")
-                return np.random.choice(word_choices, p=probabilities)
-
-            context_vector = context_vector.reshape(1, -1)
-            similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
-            similarity_scores = np.maximum(similarity_scores, 0)
-            similarity_scores[similarity_scores < semantic_threshold] = 0
+                print("[ERROR] Context vector is empty. Fallback to uniform sampling.")
+                similarity_scores = np.ones_like(probabilities)
+            else:
+                context_vector = context_vector.reshape(1, -1)
+                similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
+                similarity_scores = np.maximum(similarity_scores, 0)
+                similarity_scores[similarity_scores < semantic_threshold] = 0
         else:
             similarity_scores = np.ones_like(probabilities)
 
-        # POS bigram geçiş puanlarını uygula
+        # POS Bigram geçişlerini uygula
         if pos_bigrams and prev_pos:
             transition_scores = np.array([
-                pos_bigrams.get((prev_pos, curr_pos), 0.01) for curr_pos in valid_pos
+                pos_bigrams.get((prev_pos, curr_pos), 0.01)  # Eğer geçiş yoksa küçük ceza veriyoruz
+                for curr_pos in valid_pos
             ])
         else:
             transition_scores = np.ones_like(probabilities)
 
-        # Tümünü birleştir: final score = sim * prob * trans
-        final_scores = similarity_scores * probabilities * transition_scores
-        if final_scores.sum() == 0:
-            print("[LOG] All scores 0, fallback to uniform.")
-            final_scores = np.ones_like(probabilities) / len(probabilities)
-        else:
-            final_scores /= final_scores.sum()
+        # Tüm skorları birleştir
+        combined_scores = similarity_scores * probabilities * transition_scores
 
-        chosen_word = np.random.choice(word_choices, p=final_scores)
-        print(f"[LOG] ➡️ Chosen Word: {str(chosen_word)} | POS: {nlp(str(chosen_word))[0].pos_}")
+        if combined_scores.sum() == 0:
+            print("[WARN] Combined scores zero. Fallback to uniform distribution.")
+            combined_scores = np.ones_like(probabilities) / len(probabilities)
+        else:
+            combined_scores /= combined_scores.sum()
+
+        chosen_word = np.random.choice(valid_words, p=combined_scores)
+
+        # Daha net log
+        print(f"[LOG] ➡️ Chosen Word: '{str(chosen_word)}' | Target POS: {structure_template[position_index % len(structure_template)] if structure_template else 'N/A'} | Chosen POS: {nlp(str(chosen_word))[0].pos_}")
+
         return chosen_word
+
 
 
 
@@ -718,11 +728,11 @@ def load_text_from_file(file_path):
 
 
 # Metni dosyadan yükle
-file_path = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt'
+file_path = 'C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\text_data.txt'
 text = load_text_from_file(file_path)
 
 # Model dosyasının varlığını kontrol et
-model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\language_model.pkl'
+model_file = 'C:\\Users\\ilker\\Documents\\GitHub\\Lgram\\ngrams\\language_model.pkl'
 
 try:
     # Mevcut modeli yüklemeye çalış
