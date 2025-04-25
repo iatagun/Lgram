@@ -1,7 +1,7 @@
 import spacy
 
 # İngilizce NLP modelini yükleyin
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_lg")
 
 class TransitionAnalyzer:
     def __init__(self, text):
