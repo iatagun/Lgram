@@ -438,10 +438,17 @@ class EnhancedLanguageModel:
     def post_process_text(self, text):
         sentences = re.split(r'(?<=[.!?]) +', text.strip())
         cleaned_sentences = []
+        buffer_sentence = ""
+        min_words_for_sentence = 4  # Bir cümlede minimum 4 kelime olsun
+
         for sentence in sentences:
             cleaned_sentence = sentence.strip()
+
             if cleaned_sentence:
+                # İlk harfi büyük yap
                 cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
+
+                # Bozuk boşlukları ve noktalama işaretlerini düzelt
                 cleaned_sentence = re.sub(r'\s+([,.!?])', r'\1', cleaned_sentence)
                 cleaned_sentence = re.sub(r'([,.!?])\s+', r'\1 ', cleaned_sentence)
                 cleaned_sentence = re.sub(r'\s{2,}', ' ', cleaned_sentence)
@@ -449,16 +456,49 @@ class EnhancedLanguageModel:
                 cleaned_sentence = re.sub(r'([.!?])\1+', r'\1', cleaned_sentence)
                 cleaned_sentence = re.sub(r'^(And|But|Or)\b,?\s+', '', cleaned_sentence, flags=re.IGNORECASE)
                 cleaned_sentence = re.sub(r'"(.*?)"', r'“\1”', cleaned_sentence)
+
+                # Named Entity düzeltmesi
                 doc = nlp(cleaned_sentence)
                 for entity in doc.ents:
                     if entity.label_ in ["PERSON", "ORG", "GPE"]:
                         cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b', entity.text, cleaned_sentence)
-                cleaned_sentences.append(cleaned_sentence)
+
+                # === Duplicate sözcük temizleme ===
+                words = cleaned_sentence.split()
+                deduplicated_words = []
+                previous_word = None
+                for word in words:
+                    if word.lower() != previous_word:
+                        deduplicated_words.append(word)
+                    previous_word = word.lower()
+                cleaned_sentence = ' '.join(deduplicated_words)
+
+                # === Kısa cümleleri birleştirme ===
+                word_count = len(cleaned_sentence.split())
+                if word_count < min_words_for_sentence:
+                    # Eğer kısa cümleyse, buffer'a ekle
+                    buffer_sentence += " " + cleaned_sentence.lower()
+                else:
+                    # Önce buffer'ı var mı kontrol et
+                    if buffer_sentence.strip():
+                        full_sentence = buffer_sentence.strip().capitalize() + " " + cleaned_sentence
+                        cleaned_sentences.append(full_sentence.strip())
+                        buffer_sentence = ""  # buffer'ı temizle
+                    else:
+                        cleaned_sentences.append(cleaned_sentence)
+
+        # Eğer döngü sonunda hala buffer'da bir şey kaldıysa
+        if buffer_sentence.strip():
+            cleaned_sentences.append(buffer_sentence.strip().capitalize())
+
+        # Son toparlama
         final_output = ' '.join(cleaned_sentences).strip()
         if final_output and not final_output.endswith('.'):
             final_output += '.'
+
         final_output = self.correct_grammar(final_output)
         return final_output
+
 
     def is_sentence_coherent(self, sentence, previous_sentences=None):
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:

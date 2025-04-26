@@ -150,7 +150,7 @@ def calculate_weighted_similarity(word_token, choice_token, freq, normalization=
     similarity = dot(word_vector, choice_vector)
 
     # Ağırlıklı benzerliği döndür
-    return similarity * (freq ** 0.6)  # Sıklığı kök alma ile hafifçe ağırlıklandır
+    return similarity * (freq ** 0.7)  # Sıklığı kök alma ile hafifçe ağırlıklandır
 
 def select_best_match(word, choices):
     """Orijinal kelimeye en yakın eşleşmeyi seçer."""

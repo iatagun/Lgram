@@ -3275,3 +3275,212 @@ Max attempts reached for generating sentence 1. Adding the incoherent sentence.
 [LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
 Generated Text:
 It’s not safe. Reply Mr. Hasbrouck 's day you think if you to this is. Harbord the detective have turn again with the floor and then at home in. Upon reach the Frenchman be on the inhabitant of situation be not be the direction to say as. With grief and with horror of the blood I amgin to listen to I hope this is.
+Loaded existing model.
+Attempt 1: Generated incoherent sentence: It’s not safe.
+Attempt 2: Generated incoherent sentence: It’s not safe.
+Attempt 3: Generated incoherent sentence: It’s not safe.
+Attempt 4: Generated incoherent sentence: It’s not safe.
+Attempt 5: Generated incoherent sentence: It’s not safe.
+Max attempts reached for generating sentence 1. Adding the incoherent sentence.
+[LOG] ➡️ Chosen Word: 'beyond' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'air' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'perpetrate' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'nature' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'then' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'suggest' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'hear' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'about' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'do' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'not' | Target POS: N/A | Chosen POS: PART
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'this' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'accomplish' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'slide' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'panel' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'in' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'those' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'bond' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'so' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'instantly' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'her' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'father' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'anything' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'appear' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+Generated Text:
+It’s not safe. He step beyond the air be perpetrate. Scream at the nature and then I suggest that I have hear about it. You have do not be this is accomplish it is a slide panel in those bond be so. Come round he is instantly I to her father be anything but it appear that he is he.
+Loaded existing model.
+Attempt 1: Generated incoherent sentence: It’s not safe.
+Attempt 2: Generated incoherent sentence: It’s not safe.
+Attempt 3: Generated incoherent sentence: It’s not safe.
+Attempt 4: Generated incoherent sentence: It’s not safe.
+Attempt 5: Generated incoherent sentence: It’s not safe.
+Max attempts reached for generating sentence 1. Adding the incoherent sentence.
+[LOG] ➡️ Chosen Word: 'hint' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'at' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'all' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'question' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'good' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'idea' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'some' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'one' | Target POS: N/A | Chosen POS: NUM
+[LOG] ➡️ Chosen Word: 'else' | Target POS: N/A | Chosen POS: ADV
+[SKIP] Not a complete thought: Belong to hint at all question be good idea that some one else.
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'as' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'time' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'man' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'still' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'long' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'breath' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'when' | Target POS: N/A | Chosen POS: SCONJ
+[LOG] ➡️ Chosen Word: 'we' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'still' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'keep' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'your' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'soul' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'we' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'dissatisfied' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'with' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'your' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'hand' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'might' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'other' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'just' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'some' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'fifteen' | Target POS: N/A | Chosen POS: NUM
+[LOG] ➡️ Chosen Word: 'minute' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'as' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'Mr.' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'Pendragon' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'who' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'from' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: '
+' | Target POS: N/A | Chosen POS: SPACE
+[LOG] ➡️ Chosen Word: 'see' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'really' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'go' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'down' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'wait' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'like' | Target POS: N/A | Chosen POS: INTJ
+[LOG] ➡️ Chosen Word: 'this' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'moment' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'we' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'just' | Target POS: N/A | Chosen POS: ADV
+Generated Text:
+It’s not safe. Find Jackson and as he is is is I to time to man he still a long breath. You happen when we still keep your soul and we are dissatisfied with your hand be it might. Descend the other just some fifteen minute it as I have to Mr. Pendragon who is you have. Jaw drop from see I really go down but I wait, you like this moment we just.
+Loaded existing model.
+Attempt 1: Generated incoherent sentence: It’s not safe.
+Attempt 2: Generated incoherent sentence: It’s not safe.
+Attempt 3: Generated incoherent sentence: It’s not safe.
+Attempt 4: Generated incoherent sentence: It’s not safe.
+Attempt 5: Generated incoherent sentence: It’s not safe.
+Max attempts reached for generating sentence 1. Adding the incoherent sentence.
+[LOG] ➡️ Chosen Word: 'course' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'say' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'party' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'unexpected' | Target POS: N/A | Chosen POS: ADJ
+[SKIP] Not a complete thought: Steady despite the unexpected.
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'their' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'companion' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'this' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'may' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'no' | Target POS: N/A | Chosen POS: INTJ
+[LOG] ➡️ Chosen Word: 'more' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'room' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'astonish' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'small' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'upper' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'branch' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'Jungle' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'People' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'Dictator' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'will' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'show' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'feel' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'alive' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'my' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'own' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'pack' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'make' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'no' | Target POS: N/A | Chosen POS: INTJ
+[LOG] ➡️ Chosen Word: 'one' | Target POS: N/A | Chosen POS: NUM
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+Generated Text:
+It’s not safe. Fleet of course he is he says be the party that. Be dark and their companion and be that this may be no more room. Nepal be astonish to a small have the upper branch and the Jungle People to the Dictator of. Reply my will show you feel alive but my own pack and make it is no one it.
