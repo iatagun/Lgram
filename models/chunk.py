@@ -90,19 +90,26 @@ class EnhancedLanguageModel:
         for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             prefix = tuple(current_words[-(self.n-1):])
             next_words = {}
+            found = False
 
-            for model_attr in ['bigram_model', 'trigram_model', 'fourgram_model', 'fivegram_model', 'sixgram_model']:
+            # Önce en büyük n-gramlardan başlayarak prefix arıyoruz
+            for model_attr in ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']:
                 model = getattr(self, model_attr, None)
                 if model and prefix in model:
-                    next_words.update(model[prefix])
+                    next_words = model[prefix]
+                    found = True
+                    break  # bulunca çıkıyoruz
 
-            if not next_words:
-                break
+            if not found or not next_words:
+                break  # hiçbir modelde bulunamadıysa döngü bitiyor
 
+            # Devam ediyoruz: artık next_words var
             last_sentence = ' '.join(current_words)
             corrected_sentence = self.correct_grammar(last_sentence)
             transition_analyzer = TransitionAnalyzer(corrected_sentence)
             context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
+            
+            # Burada bağlama göre kelime seçimi yapıyoruz
             next_word = self.choose_word_with_context(next_words, context_word)
 
             if next_word != current_words[-1]:
@@ -117,6 +124,7 @@ class EnhancedLanguageModel:
         sentence_text = ' '.join(sentence).strip()
         sentence_text = self.correct_grammar(sentence_text)
         return self.clean_text(sentence_text)
+
 
     def correct_grammar(self, sentence):
         with open(corrections_file, 'r', encoding='utf-8') as f:
@@ -227,7 +235,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.2, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.005, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -558,12 +566,12 @@ try:
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=3)
+    language_model = EnhancedLanguageModel(text, n=4)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = "I didn't see you there.".split()
+input_words = "It’s not safe.".split()
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
