@@ -11,7 +11,7 @@ import json
 
 # SpaCy modelini yükle
 nlp = spacy.load("en_core_web_md")  # veya "en_core_web_lg"
-nlp.max_length = 1030000 # or even higher
+nlp.max_length = 2000000 # or even higher
 corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\corrections.json"
 
 def generate_ngrams(tokens, n):
@@ -150,7 +150,7 @@ def calculate_weighted_similarity(word_token, choice_token, freq, normalization=
     similarity = dot(word_vector, choice_vector)
 
     # Ağırlıklı benzerliği döndür
-    return similarity * (freq ** 0.7)  # Sıklığı kök alma ile hafifçe ağırlıklandır
+    return similarity * (freq ** 0.6)  # Sıklığı kök alma ile hafifçe ağırlıklandır
 
 def select_best_match(word, choices):
     """Orijinal kelimeye en yakın eşleşmeyi seçer."""

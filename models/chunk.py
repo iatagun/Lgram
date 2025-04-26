@@ -227,7 +227,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.05, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.2, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -404,7 +404,7 @@ class EnhancedLanguageModel:
 
             if not coherent_sentence:
                 self.log(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
-                generated_sentence = self.correct_grammar(self.reorder_sentence(generated_sentence))
+                generated_sentence = self.correct_grammar(generated_sentence)
                 generated_sentences.append(generated_sentence)
 
         final_text = ' '.join(generated_sentences)
@@ -558,12 +558,12 @@ try:
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=2)
+    language_model = EnhancedLanguageModel(text, n=3)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = "I’m just trying to stay alive.".split()
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+input_words = "I didn't see you there.".split()
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
