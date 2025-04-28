@@ -10,6 +10,9 @@ import json
 import datetime
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
+from scipy.spatial.distance import cosine
+from functools import cache
+
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_md")
@@ -76,7 +79,63 @@ class EnhancedLanguageModel:
         with open(sixgram_path, 'rb') as f:
             self.sixgram_model = pickle.load(f)
 
-    def generate_sentence(self, start_words=None, length=10):
+    def choose_next_word_dynamically(self, prefix):
+        model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']
+        candidates = []
+
+        for model_attr in model_priority:
+            model = getattr(self, model_attr, None)
+            if model:
+                next_words = model.get(prefix)
+                if next_words:
+                    candidates.append((model_attr, next_words))
+
+        if not candidates:
+            return None
+
+        weighted_candidates = []
+        for model_attr, words_dict in candidates:
+            weight = model_priority.index(model_attr) + 1
+            for word, prob in words_dict.items():
+                adjusted_prob = prob / weight
+
+                # 🔥 Semantic relation kontrolü
+                if self.is_semantically_related(prefix, word):
+                    adjusted_prob *= 1.3  # %30 ekstra ağırlık verelim
+
+                weighted_candidates.append((word, adjusted_prob))
+
+        if not weighted_candidates:
+            return None
+
+        words, scores = zip(*weighted_candidates)
+        chosen_word = random.choices(words, weights=scores, k=1)[0]
+
+        return chosen_word
+
+    def is_semantically_related(self, prefix, word):
+        """
+        Prefix'in son kelimesi ile candidate word arasında semantic similarity ölçer.
+        """
+        if not prefix:
+            return False
+
+        try:
+            last_word = prefix[-1]
+            token1 = nlp(last_word)[0]
+            token2 = nlp(word)[0]
+
+            if token1.has_vector and token2.has_vector:
+                similarity = 1 - cosine(token1.vector, token2.vector)
+                if similarity > 0.5:  # Threshold seçiyoruz
+                    return True
+        except:
+            pass
+
+        return False
+
+
+    def generate_sentence(self, start_words=None, length=15):
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
@@ -89,30 +148,22 @@ class EnhancedLanguageModel:
 
         for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             prefix = tuple(current_words[-(self.n-1):])
-            next_words = {}
-            found = False
 
-            # Önce en büyük n-gramlardan başlayarak prefix arıyoruz
-            for model_attr in ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']:
-                model = getattr(self, model_attr, None)
-                if model and prefix in model:
-                    next_words = model[prefix]
-                    found = True
-                    break  # bulunca çıkıyoruz
+            # 🔥 Yeni sistem: Dinamik n-gram seçimi
+            raw_next_word = self.choose_next_word_dynamically(prefix)
 
-            if not found or not next_words:
-                break  # hiçbir modelde bulunamadıysa döngü bitiyor
+            if not raw_next_word:
+                break  # Uygun bir kelime bulunamadıysa döngü bitiyor
 
-            # Devam ediyoruz: artık next_words var
             last_sentence = ' '.join(current_words)
             corrected_sentence = self.correct_grammar(last_sentence)
             transition_analyzer = TransitionAnalyzer(corrected_sentence)
             context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
-            
-            # Burada bağlama göre kelime seçimi yapıyoruz
-            next_word = self.choose_word_with_context(next_words, context_word)
 
-            if next_word != current_words[-1]:
+            # 🔥 Burada bağlama göre kelime seçimi yapıyoruz (daha rafine)
+            next_word = self.choose_word_with_context({raw_next_word: 1.0}, context_word)
+
+            if next_word != current_words[-1]:  # kendisini tekrar etmesin
                 sentence.append(next_word)
                 current_words.append(next_word)
 
@@ -124,6 +175,7 @@ class EnhancedLanguageModel:
         sentence_text = ' '.join(sentence).strip()
         sentence_text = self.correct_grammar(sentence_text)
         return self.clean_text(sentence_text)
+
 
 
     def correct_grammar(self, sentence):
@@ -235,7 +287,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.05, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -322,6 +374,7 @@ class EnhancedLanguageModel:
         text = re.sub(r'([,.!?;])(\w)', r'\1 \2', text)
         text = re.sub(r'\s+', ' ', text)
         text = re.sub(r'(\s)([.,!?;])', r'\2', text)
+        text = re.sub(r'([.,!?;])(\s)', r'\1', text)
         return text
 
     def reorder_sentence(sentence):
@@ -381,29 +434,33 @@ class EnhancedLanguageModel:
 
         return " ".join([token.text for token in reordered_tokens])
 
-
-    def generate_and_post_process(self, num_sentences=10, input_words=None, length=20):
+    @cache
+    def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
         generated_sentences = []
         max_attempts = 5
 
         for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=True, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
-
             attempts = 0
             coherent_sentence = False
 
             while attempts < max_attempts and not coherent_sentence:
-                if i == 0:
+                if i == 0 and input_words:
                     generated_sentence = self.generate_sentence(start_words=input_words, length=length)
                 else:
-                    last_sentence = generated_sentences[-1]
+                    last_sentence = generated_sentences[-1] if generated_sentences else ""
                     adjusted_length = self.advanced_length_adjustment(last_sentence, length)
                     generated_sentence = self.generate_sentence(length=adjusted_length)
+
+                # ✨ İlk düzeltmeyi burada uygula (daha iyi uyum için)
+                generated_sentence = self.correct_grammar(generated_sentence)
+                generated_sentence = self.rewrite_ill_formed_sentence(generated_sentence)
 
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
                     if not self.is_complete_thought(generated_sentence):
                         self.log(f"[SKIP] Not a complete thought: {generated_sentence}")
                         attempts += 1
                         continue
+
                     generated_sentences.append(generated_sentence)
                     coherent_sentence = True
                 else:
@@ -420,6 +477,7 @@ class EnhancedLanguageModel:
         final_text = self.post_process_text(final_text)
         return final_text
 
+
     def advanced_length_adjustment(self, last_sentence, base_length):
         last_words = last_sentence.split()
         last_length = len(last_words)
@@ -432,7 +490,7 @@ class EnhancedLanguageModel:
         complexity_factor = ((noun_count + verb_count + adjective_count + adverb_count) +
                             sum(1 for token in doc if token.dep_ in {"conj", "advcl", "relcl"})) // 2
         length_variability = ((last_length - base_length) + complexity_factor) // 3
-        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 16))
+        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 20))
         return adjusted_length
 
     def rewrite_ill_formed_sentence(self, sentence):
@@ -447,17 +505,36 @@ class EnhancedLanguageModel:
             sentence += " is."
 
         # Eğer hem özne hem yüklem yoksa, ya da çok fazla bağlaç varsa:
-        num_conj = sum(1 for tok in tokens if tok.dep_ == 'cc')
+        has_subject = any(tok.dep_ in ("nsubj", "nsubjpass", "expl") for tok in tokens)
+        has_verb = any(tok.pos_ in ("VERB", "AUX") for tok in tokens)
+        num_conj = sum(1 for tok in tokens if tok.dep_ == "cc")
+        
+        # Eğer hem özne hem yüklem yoksa veya çok fazla bağlaç varsa
         if not has_subject or num_conj > 2:
-            # Fazla bağlaç varsa: cümleyi parçalayıp ilk anlamlı kısmı tut
-            chunks = re.split(r'\band\b|\bor\b|\bif\b|\bbecause\b|\bbut\b', sentence)
+            # Daha fazla bağlaç tipi ekledim
+            split_pattern = r'\\b(?:and|or|if|because|but|so|although|though|since|when|while)\\b'
+            chunks = re.split(split_pattern, sentence, flags=re.IGNORECASE)
             chunks = [chunk.strip() for chunk in chunks if len(chunk.strip().split()) >= 3]
-            if chunks:
-                sentence = chunks[0].capitalize() + '.'
 
-        # Çok kısa cümlelerde yapısal destek
+            if chunks:
+                first_chunk = chunks[0]
+                first_chunk = first_chunk[0].upper() + first_chunk[1:]  # sadece ilk harfi büyük yap
+                if not first_chunk.endswith('.'):
+                    first_chunk += '.'
+                sentence = first_chunk
+            else:
+                # Hiç düzgün chunk bulunamadıysa fallback
+                if tokens:
+                    sentence = tokens[0].text.capitalize() + " exists."
+                else:
+                    sentence = "Something exists."
+        
+        # Çok kısa ve yüklemsiz cümlelerde destek ekle
         if len(tokens) <= 3 and not has_verb:
-            sentence += " exists."
+            if not sentence.endswith("."):
+                sentence += " exists."
+            else:
+                sentence = sentence[:-1] + " exists."
 
         return sentence
 
@@ -641,12 +718,12 @@ try:
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=4)
+    language_model = EnhancedLanguageModel(text, n=3)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = "I remember those days.".split()
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
+input_words = ("the", "crime")
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
