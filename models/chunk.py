@@ -101,7 +101,7 @@ class EnhancedLanguageModel:
 
                 # 🔥 Semantic relation kontrolü
                 if self.is_semantically_related(prefix, word):
-                    adjusted_prob *= 1.3  # %30 ekstra ağırlık verelim
+                    adjusted_prob *= 1.7  # %30 ekstra ağırlık verelim
 
                 weighted_candidates.append((word, adjusted_prob))
 
