@@ -13,7 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_md")
-nlp.max_length = 2000000
+nlp.max_length = 300000000 # or even higher
 
 # N-gram modelleri yolları
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -235,7 +235,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.005, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.05, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -435,20 +435,51 @@ class EnhancedLanguageModel:
         adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 16))
         return adjusted_length
 
+    def rewrite_ill_formed_sentence(self, sentence):
+        doc = nlp(sentence)
+        tokens = list(doc)
+
+        has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
+        has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
+
+        # Eğer yüklem yoksa basit bir yüklem ekle
+        if has_subject and not has_verb:
+            sentence += " is."
+
+        # Eğer hem özne hem yüklem yoksa, ya da çok fazla bağlaç varsa:
+        num_conj = sum(1 for tok in tokens if tok.dep_ == 'cc')
+        if not has_subject or num_conj > 2:
+            # Fazla bağlaç varsa: cümleyi parçalayıp ilk anlamlı kısmı tut
+            chunks = re.split(r'\band\b|\bor\b|\bif\b|\bbecause\b|\bbut\b', sentence)
+            chunks = [chunk.strip() for chunk in chunks if len(chunk.strip().split()) >= 3]
+            if chunks:
+                sentence = chunks[0].capitalize() + '.'
+
+        # Çok kısa cümlelerde yapısal destek
+        if len(tokens) <= 3 and not has_verb:
+            sentence += " exists."
+
+        return sentence
+
+
     def post_process_text(self, text):
+        # === ENCODING düzeltmesi ===
+        text = text.replace('â€ ™', "'").replace('â€"', '"').replace('â€™', "'").replace('â€œ', '"').replace('â€', '"')
+        text = re.sub(r'[^\x00-\x7F]+', '', text)  # Non-ASCII karakterleri sil
+
         sentences = re.split(r'(?<=[.!?]) +', text.strip())
         cleaned_sentences = []
         buffer_sentence = ""
-        min_words_for_sentence = 4  # Bir cümlede minimum 4 kelime olsun
+        min_words_for_sentence = 4
 
         for sentence in sentences:
             cleaned_sentence = sentence.strip()
 
             if cleaned_sentence:
-                # İlk harfi büyük yap
+                # Baş harf düzeltmesi
                 cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
 
-                # Bozuk boşlukları ve noktalama işaretlerini düzelt
+                # Bozuk boşluk ve noktalama düzeltmesi
                 cleaned_sentence = re.sub(r'\s+([,.!?])', r'\1', cleaned_sentence)
                 cleaned_sentence = re.sub(r'([,.!?])\s+', r'\1 ', cleaned_sentence)
                 cleaned_sentence = re.sub(r'\s{2,}', ' ', cleaned_sentence)
@@ -457,13 +488,19 @@ class EnhancedLanguageModel:
                 cleaned_sentence = re.sub(r'^(And|But|Or)\b,?\s+', '', cleaned_sentence, flags=re.IGNORECASE)
                 cleaned_sentence = re.sub(r'"(.*?)"', r'“\1”', cleaned_sentence)
 
+                # === Cümle sonu bağlaç kontrolü ===
+                if re.search(r'\b(and|but|or|if|because)\.$', cleaned_sentence, flags=re.IGNORECASE):
+                    cleaned_sentence = re.sub(r'\b(and|but|or|if|because)\.$', '', cleaned_sentence, flags=re.IGNORECASE).strip()
+                    if not cleaned_sentence.endswith('.'):
+                        cleaned_sentence += '.'
+
                 # Named Entity düzeltmesi
                 doc = nlp(cleaned_sentence)
                 for entity in doc.ents:
                     if entity.label_ in ["PERSON", "ORG", "GPE"]:
                         cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b', entity.text, cleaned_sentence)
 
-                # === Duplicate sözcük temizleme ===
+                # === Duplicate sözcükleri kaldırma ===
                 words = cleaned_sentence.split()
                 deduplicated_words = []
                 previous_word = None
@@ -476,28 +513,26 @@ class EnhancedLanguageModel:
                 # === Kısa cümleleri birleştirme ===
                 word_count = len(cleaned_sentence.split())
                 if word_count < min_words_for_sentence:
-                    # Eğer kısa cümleyse, buffer'a ekle
                     buffer_sentence += " " + cleaned_sentence.lower()
                 else:
-                    # Önce buffer'ı var mı kontrol et
                     if buffer_sentence.strip():
                         full_sentence = buffer_sentence.strip().capitalize() + " " + cleaned_sentence
                         cleaned_sentences.append(full_sentence.strip())
-                        buffer_sentence = ""  # buffer'ı temizle
+                        buffer_sentence = ""
                     else:
                         cleaned_sentences.append(cleaned_sentence)
 
-        # Eğer döngü sonunda hala buffer'da bir şey kaldıysa
         if buffer_sentence.strip():
             cleaned_sentences.append(buffer_sentence.strip().capitalize())
 
-        # Son toparlama
+        # Final düzeltmeler
         final_output = ' '.join(cleaned_sentences).strip()
         if final_output and not final_output.endswith('.'):
             final_output += '.'
 
         final_output = self.correct_grammar(final_output)
         return final_output
+
 
 
     def is_sentence_coherent(self, sentence, previous_sentences=None):
@@ -611,7 +646,7 @@ except (FileNotFoundError, EOFError):
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = "It’s not safe.".split()
+input_words = "I remember those days.".split()
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
