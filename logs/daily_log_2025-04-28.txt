@@ -1,0 +1,224 @@
+Loaded existing model.
+[LOG] ➡️ Chosen Word: 'own' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'account' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'for' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'specific' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'gravity' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[SKIP] Not a complete thought: Need your own account for the specific gravity of.
+[LOG] ➡️ Chosen Word: 'this' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'think' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'shall' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'know' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'there' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'hermetically' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'modest' | Target POS: N/A | Chosen POS: ADJ
+Attempt 1: Generated incoherent sentence: Up with a modest.
+[LOG] ➡️ Chosen Word: 'when' | Target POS: N/A | Chosen POS: SCONJ
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'should' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'like' | Target POS: N/A | Chosen POS: INTJ
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'strange' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'do' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'surface' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[SKIP] Not a complete thought: Another and when you should like a strange to that do and it the surface but.
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'feel' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'link' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'get' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'leave' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'her' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'friend' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'know' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'suppose' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'wish' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'return' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'call' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'she' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'his' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'employ' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'sense' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'procedure' | Target POS: N/A | Chosen POS: NOUN
+Attempt 1: Generated incoherent sentence: The aroma of the sense of procedure.
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'man' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'corpse' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'already' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'mention' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'seem' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'say' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'something' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'useful' | Target POS: N/A | Chosen POS: ADJ
+Generated Text:
+I remember those days. Turn all this is think I shall know but there is hermetically. Place where I feel a link to get leave her friend I know I suppose you wish you. Who else to return to be call to be she to be that he has his employ the. Stand with men. The corpse have already mention it seem to I say something useful.
+Loaded existing model.
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'at' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'which' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'do' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'see' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'recommend' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'faint' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'depart' | Target POS: N/A | Chosen POS: PROPN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: '
+
+' | Target POS: N/A | Chosen POS: SPACE
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'not' | Target POS: N/A | Chosen POS: PART
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'night' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'his' | Target POS: N/A | Chosen POS: PRON
+[SKIP] Not a complete thought: Have cross of the faint and depart have not that night and of his.
+[LOG] ➡️ Chosen Word: 'place' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'come' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'too' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'narrow' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'we' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'do' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'know' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'canâ€' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: '™' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 's' | Target POS: N/A | Chosen POS: VERB
+[SKIP] Not a complete thought: Heart be place I come too narrow but we do you know that you canâ€ ™ s.
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'young' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'man' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'silent' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'back' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'work' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'very' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'soul' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'in' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'council' | Target POS: N/A | Chosen POS: NOUN
+Attempt 1: Generated incoherent sentence: He bow council.
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'small' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'its' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'full' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'force' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'his' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'father' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: ''s' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'brink' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'Police' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: '
+
+' | Target POS: N/A | Chosen POS: SPACE
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+Attempt 2: Generated incoherent sentence: Stop in a small of its full force to be his father 's brink of Police he.
+[LOG] ➡️ Chosen Word: 'man' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'some' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'important' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'appreciate' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'meantime' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'road' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'which' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'not' | Target POS: N/A | Chosen POS: PART
+[LOG] ➡️ Chosen Word: 'exactly' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'like' | Target POS: N/A | Chosen POS: INTJ
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'anticipate' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'conclusion' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'street' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'with' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'its' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'influence' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'by' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'fact' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'all' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+Attempt 1: Generated incoherent sentence: In respect to anticipate the conclusion be the street with its influence by the fact of all of.
+[LOG] ➡️ Chosen Word: 'Duncan' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'Oliver' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: '’s' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'seat' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'himself' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'by' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'Marie' | Target POS: N/A | Chosen POS: PROPN
+[LOG] ➡️ Chosen Word: ''s' | Target POS: N/A | Chosen POS: AUX
+[LOG] ➡️ Chosen Word: 'boy' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'who' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'he' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'speak' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+Generated Text:
+I remember those days. Of snake at which I do you see I recommend. He after a young man I am silent and the back to be work be very soul in. It a man have some important to appreciate the meantime the road which it is not exactly like. Say mr. Duncan he Oliver s seat himself he by Marie 's boy he who he speak to.
