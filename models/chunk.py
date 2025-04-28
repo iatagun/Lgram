@@ -127,7 +127,7 @@ class EnhancedLanguageModel:
 
             if token1.has_vector and token2.has_vector:
                 similarity = 1 - cosine(token1.vector, token2.vector)
-                if similarity > 0.5:  # Threshold seçiyoruz
+                if similarity > 0.8:  # Threshold seçiyoruz
                     return True
         except:
             pass
@@ -287,7 +287,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.7, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.4, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -723,7 +723,7 @@ except (FileNotFoundError, EOFError):
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = ("the", "crime")
+input_words = ("the", "witness", "testimony")
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
