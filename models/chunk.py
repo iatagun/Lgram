@@ -127,7 +127,7 @@ class EnhancedLanguageModel:
 
             if token1.has_vector and token2.has_vector:
                 similarity = 1 - cosine(token1.vector, token2.vector)
-                if similarity > 0.8:  # Threshold seçiyoruz
+                if similarity > 0.3:  # Threshold seçiyoruz
                     return True
         except:
             pass
