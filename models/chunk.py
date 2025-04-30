@@ -179,12 +179,17 @@ class EnhancedLanguageModel:
 
 
     def correct_grammar(self, sentence):
-        with open(corrections_file, 'r', encoding='utf-8') as f:
-            corrections = json.load(f)
+        import re
         if not isinstance(sentence, str):
             raise ValueError("Input must be a string.")
-        for wrong, right in corrections.items():
-            sentence = sentence.replace(wrong, right)
+
+        with open(corrections_file, 'r', encoding='utf-8') as f:
+            corrections = json.load(f)
+
+        for wrong_phrase, right_phrase in corrections.items():
+            pattern = re.compile(rf'\b{re.escape(wrong_phrase)}\b', re.IGNORECASE)
+            sentence = pattern.sub(right_phrase, sentence)
+
         return sentence
 
     def is_complete_thought(self, sentence):
@@ -287,7 +292,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.4, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.99, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
         if not next_words:
             return None
 
@@ -647,21 +652,21 @@ class EnhancedLanguageModel:
         var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
         # ✨ Dinamik threshold
-        threshold = 0.55  # biraz daha insaflı başlıyoruz
+        threshold = 0.6  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
-            threshold += 0.05
+            threshold += 0.06
         elif avg_len < 8:
-            threshold -= 0.05
+            threshold -= 0.06
         if var_len > 5:
-            threshold += 0.03
+            threshold += 0.04
         if complexity_factor > 2.5:
-            threshold += 0.03
+            threshold += 0.04
         elif complexity_factor < 1.5:
-            threshold -= 0.03
+            threshold -= 0.04
 
         # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
         unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
-        if len(unique_lemmas) < 3:
+        if len(unique_lemmas) < 5:
             threshold += 0.02
 
         return avg_similarity > threshold
@@ -718,12 +723,12 @@ try:
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=3)
+    language_model = EnhancedLanguageModel(text, n=4)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = ("the", "witness", "testimony")
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
+input_words = ("i", "know")
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
