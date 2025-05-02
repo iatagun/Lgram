@@ -8,6 +8,17 @@ from tqdm import tqdm
 from numpy import dot
 from numpy.linalg import norm
 import json
+import os
+import spacy
+import random
+import pickle
+import math
+from collections import defaultdict, Counter
+from itertools import islice
+from tqdm import tqdm
+from numpy import dot
+from numpy.linalg import norm
+import json
 
 # SpaCy modelini yükle
 nlp = spacy.load("en_core_web_md")  # veya "en_core_web_lg"
@@ -300,6 +311,47 @@ def generate_paraphrase(text, bigram_model, trigram_model, fourgram_model, fiveg
     paraphrased_sentences = correct_grammar(paraphrased_sentences)
     return paraphrased_sentences
 
+def build_collocation(text_path, colloc_path, window_size=4, pmi_threshold=1.0):
+    """
+    Metin dosyasından sözcüklerin öncesi ve sonrası collocation'larını hesaplar,
+    PMI eşiğine göre filtreler ve pickle dosyasına kaydeder.
+    """
+    # Metni yükle ve token listesi oluştur
+    with open(text_path, 'r', encoding='utf-8') as f:
+        doc = nlp(f.read())
+    tokens = [token.text.lower() for token in doc if not token.is_punct]
+    total_tokens = len(tokens)
+
+    # Unigram sayımları
+    unigram_counts = Counter(tokens)
+
+    # Collocation sayımları
+    coll_counts = defaultdict(Counter)
+    for idx, word in enumerate(tokens):
+        start = max(0, idx - window_size)
+        end = min(len(tokens), idx + window_size + 1)
+        for neighbor in tokens[start:idx] + tokens[idx+1:end]:
+            coll_counts[word][neighbor] += 1
+
+    # PMI hesaplama ve filtreleme
+    colloc_pmi = {}
+    for word, neighbors in coll_counts.items():
+        colloc_pmi[word] = {}
+        p_w = unigram_counts[word] / total_tokens
+        for nbr, co_count in neighbors.items():
+            p_c = unigram_counts[nbr] / total_tokens
+            p_wc = co_count / total_tokens
+            # PMI
+            pmi = math.log(p_wc / (p_w * p_c) + 1e-12)
+            if pmi >= pmi_threshold:
+                colloc_pmi[word][nbr] = pmi
+
+    # Kaydet
+    with open(colloc_path, 'wb') as f:
+        pickle.dump(colloc_pmi, f)
+    print(f"Collocation modeli oluşturuldu ve kaydedildi: {colloc_path}")
+    return colloc_pmi
+
 
 # N-gram modellerini kontrol et ve yükle
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -308,5 +360,27 @@ trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\trig
 fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fourgram_model.pkl"
 fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
 sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
+colloc_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\collocations.pkl"
 
 build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
+
+# Collocation modelini oluştur
+build_collocation(text_path, colloc_path, window_size=5, pmi_threshold=12.45)
+# 1) PKL dosyasını yükle
+with open(colloc_path, "rb") as f:
+    collocations = pickle.load(f)
+
+# 2) Tüm PMI değerlerini topla
+all_pmis = [
+    pmi
+    for colloc_map in collocations.values()
+    for pmi in colloc_map.values()
+]
+
+# Hata kontrolü
+if not all_pmis:
+    print("⚠️ Collocations sözlüğü boş: PMI değeri bulunamadı.")
+else:
+    # 3) Maksimumu bul
+    max_pmi = max(all_pmis)
+    print(f"📈 Veri setindeki en yüksek PMI: {max_pmi:.4f}")

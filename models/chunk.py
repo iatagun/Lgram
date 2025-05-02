@@ -28,10 +28,20 @@ sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixg
 corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\corrections.json"
 
 class EnhancedLanguageModel:
-    def __init__(self, text, n=2):
+    def __init__(self, text, n=2, colloc_path="collocations.pkl"):
         self.n = n
         self.model, self.total_counts = self.build_model(text)
         self.load_ngram_models()
+        self.collocations = self._load_collocations(colloc_path)
+
+    @cache
+    def _load_collocations(self, path):
+        try:
+            with open(path, 'rb') as f:
+                return pickle.load(f)
+        except FileNotFoundError:
+            # Hata yönetimi: dosya yoksa boş dict dön
+            return {}
 
     def get_log_file(self):
         today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -83,6 +93,7 @@ class EnhancedLanguageModel:
         model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']
         candidates = []
 
+        # Toplu aday listesi oluştur
         for model_attr in model_priority:
             model = getattr(self, model_attr, None)
             if model:
@@ -101,14 +112,23 @@ class EnhancedLanguageModel:
 
                 # 🔥 Semantic relation kontrolü
                 if self.is_semantically_related(prefix, word):
-                    adjusted_prob *= 1.7  # %30 ekstra ağırlık verelim
+                    adjusted_prob *= 1.7  # %70 ekstra ağırlık
+
+                # 🤝 Collocation bonusu (PMI tabanlı)
+                last = prefix[-1] if prefix else None
+                if last and hasattr(self, 'collocations'):
+                    bonus = self.collocations.get(last, {}).get(word, 0)
+                    # PMI genellikle 0–2 arası değerler aldığı için (1+bonus) formülü uygundur
+                    adjusted_prob *= (1 + bonus)
 
                 weighted_candidates.append((word, adjusted_prob))
 
         if not weighted_candidates:
             return None
 
+        # Kelime ve ağırlıkları ayır
         words, scores = zip(*weighted_candidates)
+        # Random seçim
         chosen_word = random.choices(words, weights=scores, k=1)[0]
 
         return chosen_word
@@ -292,78 +312,95 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self, next_words, context_word=None, semantic_threshold=0.99, position_index=0, structure_template=None, prev_pos=None, pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.9,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
         if not next_words:
             return None
 
-        word_choices = list(next_words.keys())
-        probabilities = np.array(list(next_words.values()), dtype=float)
-        probabilities = np.maximum(probabilities, 0)
-
-        total = probabilities.sum()
-        if total > 0:
-            probabilities /= total
+        # Anahtar kelimeler ve olasılıklar
+        words = [str(w) for w in next_words.keys()]
+        probs = np.array(list(next_words.values()), dtype=float)
+        probs = np.maximum(probs, 0)
+        total_prob = probs.sum()
+        if total_prob > 0:
+            probs /= total_prob
         else:
-            probabilities = np.ones_like(probabilities) / len(probabilities)
+            probs = np.ones_like(probs) / len(probs)
 
-        valid_words, valid_vectors, valid_probs, valid_pos = [], [], [], []
-
+        # POS/template filtreleme
+        valid_words, vectors, valid_probs, valid_pos = [], [], [], []
         if structure_template:
             target_pos = structure_template[position_index % len(structure_template)]
-            for word, prob in zip(word_choices, probabilities):
-                doc = nlp(word)
-                if doc and len(doc) > 0 and doc[0].pos_ == target_pos:
-                    valid_words.append(word)
-                    valid_vectors.append(doc[0].vector)
-                    valid_probs.append(prob)
+            for w, p in zip(words, probs):
+                doc = nlp(str(w))
+                if doc and doc[0].pos_ == target_pos:
+                    valid_words.append(w)
+                    vectors.append(doc[0].vector)
+                    valid_probs.append(p)
                     valid_pos.append(doc[0].pos_)
             if not valid_words:
                 self.log(f"[WARN] No matching POS '{target_pos}'. Fallback to all words.")
-                valid_words = word_choices
-                valid_vectors = [nlp(word).vector for word in word_choices]
-                valid_probs = probabilities
-                valid_pos = [nlp(word)[0].pos_ for word in word_choices]
+                valid_words = words
+                vectors = [nlp(w)[0].vector for w in words]
+                valid_probs = list(probs)
+                valid_pos = [nlp(w)[0].pos_ for w in words]
         else:
-            valid_words = word_choices
-            valid_vectors = [nlp(word).vector for word in word_choices]
-            valid_probs = probabilities
-            valid_pos = [nlp(word)[0].pos_ for word in word_choices]
+            valid_words = words
+            vectors = [nlp(w)[0].vector for w in words]
+            valid_probs = list(probs)
+            valid_pos = [nlp(w)[0].pos_ for w in words]
 
-        word_vectors = np.array(valid_vectors)
-        probabilities = np.array(valid_probs)
+        valid_probs = np.array(valid_probs)
+        word_vectors = np.array(vectors)
 
-        if context_word:
-            context_vector = nlp(context_word).vector
-            if context_vector is None or np.all(context_vector == 0):
-                self.log("[ERROR] Context vector is empty. Fallback to uniform sampling.")
-                similarity_scores = np.ones_like(probabilities)
+        # 1) Semantic benzerlik
+        if context_word is not None:
+            ctx = str(context_word)
+            ctx_vec = nlp(ctx).vector.reshape(1, -1)
+            if np.all(ctx_vec == 0):
+                self.log("[ERROR] Empty context vector. Using uniform similarity.")
+                sim_scores = np.ones_like(valid_probs)
             else:
-                context_vector = context_vector.reshape(1, -1)
-                similarity_scores = cosine_similarity(context_vector, word_vectors).flatten()
-                similarity_scores = np.maximum(similarity_scores, 0)
-                similarity_scores[similarity_scores < semantic_threshold] = 0
+                sim_scores = cosine_similarity(ctx_vec, word_vectors).flatten()
+                sim_scores = np.maximum(sim_scores, 0)
+                sim_scores[sim_scores < semantic_threshold] = 0
         else:
-            similarity_scores = np.ones_like(probabilities)
+            sim_scores = np.ones_like(valid_probs)
 
+        # 2) POS-bigram geçiş skoru
         if pos_bigrams and prev_pos:
-            transition_scores = np.array([
-                pos_bigrams.get((prev_pos, curr_pos), 0.01)
-                for curr_pos in valid_pos
+            trans_scores = np.array([
+                pos_bigrams.get((prev_pos, pos), 0.01)
+                for pos in valid_pos
             ])
         else:
-            transition_scores = np.ones_like(probabilities)
+            trans_scores = np.ones_like(valid_probs)
 
-        combined_scores = similarity_scores * probabilities * transition_scores
-
-        if combined_scores.sum() == 0:
-            self.log("[WARN] Combined scores zero. Fallback to uniform distribution.")
-            combined_scores = np.ones_like(probabilities) / len(probabilities)
+        # 3) Collocation bonus
+        if context_word and hasattr(self, 'collocations'):
+            coll_map = self.collocations.get(str(context_word), {})
+            coll_bonus = np.array([coll_map.get(w, 0.0) for w in valid_words])
+            coll_factor = 1 + coll_bonus
         else:
-            combined_scores /= combined_scores.sum()
+            coll_factor = np.ones_like(valid_probs)
 
-        chosen_word = np.random.choice(valid_words, p=combined_scores)
-        self.log(f"[LOG] ➡️ Chosen Word: '{str(chosen_word)}' | Target POS: {structure_template[position_index % len(structure_template)] if structure_template else 'N/A'} | Chosen POS: {nlp(str(chosen_word))[0].pos_}")
-        return chosen_word
+        # 4) Puanları birleştir ve normalize et
+        combined = sim_scores * valid_probs * trans_scores * coll_factor
+        total = combined.sum()
+        if total == 0:
+            self.log("[WARN] Combined scores zero. Using uniform distribution.")
+            combined = np.ones_like(combined) / len(combined)
+        else:
+            combined /= total
+
+        # Seçim ve log
+        choice = str(np.random.choice(valid_words, p=combined))  # numpy.str_ -> str dönüşümü
+        chosen_pos = nlp(choice)[0].pos_
+        self.log(
+            f"[LOG] ➡️ Chosen: '{choice}' | Chosen POS: {chosen_pos}"
+        )
+        return choice
+
+
 
     def clean_text(self, text):
         if not text:
@@ -382,62 +419,75 @@ class EnhancedLanguageModel:
         text = re.sub(r'([.,!?;])(\s)', r'\1', text)
         return text
 
-    def reorder_sentence(sentence):
-        """Reorder the sentence structure based on dependency parsing."""
+    def reorder_sentence(self, sentence):
+        """Reorder the sentence structure based on dependency parsing: Subject-Verb-Object(+Modifiers)."""
         doc = nlp(sentence)
+
+        # Categorize tokens
+        subjects = [tok for tok in doc if tok.dep_ in ('nsubj', 'nsubjpass')]
+        verbs = [tok for tok in doc if tok.pos_ == 'VERB' or tok.dep_ == 'ROOT']
+        objects = [tok for tok in doc if tok.dep_ in ('dobj', 'pobj', 'iobj')]
+        modifiers = [tok for tok in doc if tok.dep_ in ('amod', 'advmod', 'npadvmod', 'acomp')]
+
         reordered_tokens = []
+        selected_subject = None
+        selected_verb = None
 
-        # Create a list of tokens based on their dependency types
-        subjects = []
-        verbs = []
-        objects = []
-        modifiers = []
-
-        for token in doc:
-            if token.dep_ in ('nsubj', 'nsubjpass'):  # Subjects
-                subjects.append(token)
-            elif token.dep_ in ('ROOT', 'VERB'):  # Verbs
-                verbs.append(token)
-            elif token.dep_ in ('dobj', 'pobj'):  # Direct objects
-                objects.append(token)
-            else:  # Modifiers (adjectives, adverbs, etc.)
-                modifiers.append(token)
-
-        # Enhanced reordering strategy: Subject-Verb-Object with checks
+        # Select and add full subject phrase
         if subjects and verbs:
-            # Select a subject, ensuring it's unique to avoid ambiguity
-            selected_subject = random.choice(subjects)
-            reordered_tokens.append(selected_subject)
+            # Choose the subject with the largest subtree (captures compounds)
+            selected_subject = max(subjects, key=lambda x: len(list(x.subtree)))
+            reordered_tokens.extend(sorted(selected_subject.subtree, key=lambda x: x.i))
 
-            # Select a verb, ensuring it agrees with the subject (singular/plural)
-            selected_verb = None
+            # Select a verb that agrees with the subject
             for verb in verbs:
                 if (selected_subject.tag_ == 'NNS' and verb.tag_ == 'VBZ') or \
                 (selected_subject.tag_ == 'NN' and verb.tag_ == 'VBP'):
-                    continue  # Skip if there's a disagreement
+                    continue
                 selected_verb = verb
+                reordered_tokens.append(verb)
                 break
-            if selected_verb:
-                reordered_tokens.append(selected_verb)
 
-            # Select objects, ensuring there's no conflict
-            if objects:
-                # Ensure at least one object is present
-                selected_objects = [obj for obj in objects if obj.head == selected_verb]  # Ensure they relate to the selected verb
-                if selected_objects:
-                    reordered_tokens.extend(selected_objects)
-
-            # Add modifiers based on their relationship with the subject/verb
             if selected_verb:
+                # Add auxiliaries
+                auxs = [tok for tok in doc if tok.dep_ in ('aux', 'auxpass') and tok.head == selected_verb]
+                reordered_tokens.extend(sorted(auxs, key=lambda x: x.i))
+
+                # Add object phrases related to the verb
+                for obj in objects:
+                    if obj.head == selected_verb:
+                        reordered_tokens.extend(sorted(obj.subtree, key=lambda x: x.i))
+
+                # Add modifiers linked to subject or verb
                 for mod in modifiers:
-                    if mod.head == selected_verb or mod.head == selected_subject:
+                    if mod.head in (selected_subject, selected_verb):
                         reordered_tokens.append(mod)
 
-        # Ensure at least one subject, verb, and object to form a complete thought
-        if not reordered_tokens or len(reordered_tokens) < 3:
+        # Validate that we have at least subject, verb, object
+        if len([tok for tok in reordered_tokens if tok in subjects + verbs + objects]) < 3:
             return "Sentence could not be reordered meaningfully."
 
-        return " ".join([token.text for token in reordered_tokens])
+        # Remove duplicates, preserve order by token index
+        seen = set()
+        unique_tokens = []
+        for tok in reordered_tokens:
+            if tok.i not in seen:
+                seen.add(tok.i)
+                unique_tokens.append(tok)
+
+        # Sort by original sentence order for readability
+        unique_tokens = sorted(unique_tokens, key=lambda x: x.i)
+
+        # Reconstruct text
+        output = " ".join(tok.text for tok in unique_tokens)
+        # Ensure ending punctuation
+        if output and output[-1] not in '.!?':
+            last_char = sentence.strip()[-1]
+            if last_char in '.!?':
+                output += last_char
+            else:
+                output += '.'
+        return output
 
     @cache
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
@@ -499,49 +549,52 @@ class EnhancedLanguageModel:
         return adjusted_length
 
     def rewrite_ill_formed_sentence(self, sentence):
+        """
+        Basitçe biçimsiz cümleleri iyileştirir: eksik yüklem ekler,
+        uzun ve karışık cümleleri bölerek ilk anlamlı kısmı döner.
+        """
+        import re
+
+        # 1. İlk analiz
         doc = nlp(sentence)
         tokens = list(doc)
-
         has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
         has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
 
-        # Eğer yüklem yoksa basit bir yüklem ekle
+        # 2. Yüklem eksikse ve özne varsa ekle
         if has_subject and not has_verb:
-            sentence += " is."
+            sentence = sentence.rstrip('.!?') + ' is.'
 
-        # Eğer hem özne hem yüklem yoksa, ya da çok fazla bağlaç varsa:
-        has_subject = any(tok.dep_ in ("nsubj", "nsubjpass", "expl") for tok in tokens)
-        has_verb = any(tok.pos_ in ("VERB", "AUX") for tok in tokens)
-        num_conj = sum(1 for tok in tokens if tok.dep_ == "cc")
-        
-        # Eğer hem özne hem yüklem yoksa veya çok fazla bağlaç varsa
+        # 3. Yeniden analiz (güncellenmiş cümle üzerinde)
+        doc = nlp(sentence)
+        tokens = list(doc)
+        has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
+        has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
+        num_conj = sum(1 for tok in tokens if tok.dep_ == 'cc')
+
+        # 4. Çok fazla bağlaç veya özne-yüklem yoksa ilk anlamlı kısmı al
         if not has_subject or num_conj > 2:
-            # Daha fazla bağlaç tipi ekledim
-            split_pattern = r'\\b(?:and|or|if|because|but|so|although|though|since|when|while)\\b'
-            chunks = re.split(split_pattern, sentence, flags=re.IGNORECASE)
-            chunks = [chunk.strip() for chunk in chunks if len(chunk.strip().split()) >= 3]
+            split_pattern = r"\b(?:and|or|if|because|but|so|although|though|since|when|while)\b"
+            parts = re.split(split_pattern, sentence, flags=re.IGNORECASE)
+            # En az 3 kelime barındıran ilk parçayı seç
+            valid = [p.strip() for p in parts if len(p.strip().split()) >= 3]
+            if valid:
+                first = valid[0].strip()
+                first = first[0].upper() + first[1:].rstrip(' .!?') + '.'
+                return first
+            # Fallback: tek kelime varsa eklemeli bir cümle kur
+            if tokens:
+                return tokens[0].text.capitalize() + ' exists.'
+            return 'Something exists.'
 
-            if chunks:
-                first_chunk = chunks[0]
-                first_chunk = first_chunk[0].upper() + first_chunk[1:]  # sadece ilk harfi büyük yap
-                if not first_chunk.endswith('.'):
-                    first_chunk += '.'
-                sentence = first_chunk
-            else:
-                # Hiç düzgün chunk bulunamadıysa fallback
-                if tokens:
-                    sentence = tokens[0].text.capitalize() + " exists."
-                else:
-                    sentence = "Something exists."
-        
-        # Çok kısa ve yüklemsiz cümlelerde destek ekle
+        # 5. Çok kısa ve yüklemsizse destek ekle
         if len(tokens) <= 3 and not has_verb:
-            if not sentence.endswith("."):
-                sentence += " exists."
-            else:
-                sentence = sentence[:-1] + " exists."
+            core = sentence.rstrip('.!?')
+            return core + ' exists.'
 
+        # 6. Zaten iyi formdaysa olduğu gibi dön
         return sentence
+
 
 
     def post_process_text(self, text):
@@ -652,22 +705,22 @@ class EnhancedLanguageModel:
         var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
         # ✨ Dinamik threshold
-        threshold = 0.6  # biraz daha insaflı başlıyoruz
+        threshold = 0.7  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
-            threshold += 0.06
+            threshold += 0.07
         elif avg_len < 8:
-            threshold -= 0.06
+            threshold -= 0.07
         if var_len > 5:
-            threshold += 0.04
+            threshold += 0.05
         if complexity_factor > 2.5:
-            threshold += 0.04
+            threshold += 0.05
         elif complexity_factor < 1.5:
-            threshold -= 0.04
+            threshold -= 0.05
 
         # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
         unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
-        if len(unique_lemmas) < 5:
-            threshold += 0.02
+        if len(unique_lemmas) < 3:
+            threshold += 0.06
 
         return avg_similarity > threshold
 
@@ -723,12 +776,12 @@ try:
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=4)
+    language_model = EnhancedLanguageModel(text, n=3)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-input_words = ("i", "know")
+input_words = ("i", "saw")
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)

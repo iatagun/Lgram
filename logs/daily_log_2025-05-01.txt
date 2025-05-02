@@ -5169,3 +5169,167 @@ I know now he has not been afraid of the case of this is still. Tomorrow night w
 [LOG] ➡️ Chosen Word: 'mean' | Target POS: N/A | Chosen POS: VERB
 📄 Generated Text:
 The suspect saw a clue behind he spot which his Highness may be still wait to and action of Madame L'Espanaye and tell we make. Crime it I come with his foot the endless. The knowledge of a work is full force to say Sherlock Holmes be difficult to the waiter. Without weight to give tongue and the window of this Ford stand in the inside and two night the word as. The boot boy would have beed very name of all thing is runing down and their silent and return to you mean.
+Loaded existing model.
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'that' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'they' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'only' | Target POS: N/A | Chosen POS: ADV
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'man' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'come' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'to' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'create' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'cold' | Target POS: N/A | Chosen POS: ADJ
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'find' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'himself' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'at' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 's' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'back' | Target POS: N/A | Chosen POS: ADV
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: '
+' | Target POS: N/A | Chosen POS: SPACE
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'nursery' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'at' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'his' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'shoulder' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'and' | Target POS: N/A | Chosen POS: CCONJ
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'people' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'who' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'stand' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'there' | Target POS: N/A | Chosen POS: ADV
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: 'grant' | Target POS: N/A | Chosen POS: VERB
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: 'I' | Target POS: N/A | Chosen POS: PRON
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: 'but' | Target POS: N/A | Chosen POS: CCONJ
+[ERROR] Context vector is empty. Fallback to uniform sampling.
+[LOG] ➡️ Chosen Word: 'there' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'troop' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'horse' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'with' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'rural' | Target POS: N/A | Chosen POS: ADJ
+[SKIP] Not a complete thought: Live in the troop horse with the rural.
+[LOG] ➡️ Chosen Word: 'far' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'as' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'we' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'only' | Target POS: N/A | Chosen POS: ADV
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'occasionally' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'be' | Target POS: N/A | Chosen POS: AUX
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'tiny' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'leave' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'opening' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'in' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'gate' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: '
+
+' | Target POS: N/A | Chosen POS: SPACE
+[LOG] ➡️ Chosen Word: 'so' | Target POS: N/A | Chosen POS: ADV
+[LOG] ➡️ Chosen Word: 'help' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'it' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'other' | Target POS: N/A | Chosen POS: ADJ
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: '
+
+' | Target POS: N/A | Chosen POS: SPACE
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'for' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'must' | Target POS: N/A | Chosen POS: AUX
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'have' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'could' | Target POS: N/A | Chosen POS: AUX
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'not' | Target POS: N/A | Chosen POS: PART
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'an' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'almost' | Target POS: N/A | Chosen POS: ADV
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'as' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'jungle' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'think' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'her' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'absence' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'his' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'chair' | Target POS: N/A | Chosen POS: NOUN
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: '
+
+' | Target POS: N/A | Chosen POS: SPACE
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'you' | Target POS: N/A | Chosen POS: PRON
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'will' | Target POS: N/A | Chosen POS: AUX
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'play' | Target POS: N/A | Chosen POS: VERB
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'with' | Target POS: N/A | Chosen POS: ADP
+[WARN] Combined scores zero. Fallback to uniform distribution.
+[LOG] ➡️ Chosen Word: 'those' | Target POS: N/A | Chosen POS: PRON
+Generated Text:
+I know that of they only the man come to create a cold and find himself at. We' s back nursery and at his shoulder and people who stand there have beed grant I am but there. Have so far as we only occasionally be a tiny. Limit to leave the opening in the gate so help it the other for you must have. Booth I could not an almost as the jungle think of her absence of his chair you will play with those.
