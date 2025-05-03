@@ -112,7 +112,7 @@ class EnhancedLanguageModel:
 
                 # 🔥 Semantic relation kontrolü
                 if self.is_semantically_related(prefix, word):
-                    adjusted_prob *= 1.7  # %70 ekstra ağırlık
+                    adjusted_prob *= 1.8  # %70 ekstra ağırlık
 
                 # 🤝 Collocation bonusu (PMI tabanlı)
                 last = prefix[-1] if prefix else None
@@ -685,7 +685,7 @@ class EnhancedLanguageModel:
             return True
 
         # ✨ Son 2 cümleye daha fazla ağırlık ver
-        weights = np.linspace(1.5, 1.0, num=len(previous_embeddings))  # Yakın cümleler daha etkili
+        weights = np.linspace(1.7, 1.2, num=len(previous_embeddings))  # Yakın cümleler daha etkili
         similarities = []
         for emb, weight in zip(previous_embeddings, weights):
             sim = np.dot(current_embedding, emb) / (np.linalg.norm(current_embedding) * np.linalg.norm(emb) + 1e-8)
@@ -776,12 +776,13 @@ try:
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
 except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=3)
+    language_model = EnhancedLanguageModel(text, n=2)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
-num_sentences = 5
-input_words = ("i", "saw")
+num_sentences = 7
+# I had forgot that.
+input_words = ("the", "talent")
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
