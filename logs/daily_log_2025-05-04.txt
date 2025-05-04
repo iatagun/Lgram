@@ -1132,3 +1132,158 @@ Loaded existing model.
 [LOG] ➡️ Chosen: 'accidental' | Chosen POS: ADJ
 Generated Text:
 The victim of the left hand I should rather to find a to control the. They seem as well the water and catch a man "let we wait for business and most glorious. Lone Wolf too much more this that we move be the inside the sitting room and a white face with. O'clock when they have been that have do not to get hold fast keep your consent to name is then the officer. Draw up for you leave the accidental.
+Loaded existing model.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'at' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'once' | Chosen POS: ADV
+[LOG] ➡️ Chosen: 'we' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'scrutiny' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'Bohemia' | Chosen POS: PROPN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'if' | Chosen POS: SCONJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'floor' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'have' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'tell' | Chosen POS: VERB
+[LOG] ➡️ Chosen: 'that' | Chosen POS: PRON
+[LOG] ➡️ Chosen: 'I' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'like' | Chosen POS: INTJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | Chosen POS: SPACE
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'they' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'majestic' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'he' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'live' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'most' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'valuable' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'small' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'gesture' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'circuit' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'follow' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'that' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | Chosen POS: PRON
+[SKIP] Not a complete thought: Garden of he live in the most valuable a small a gesture to the circuit of the follow that I.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'little' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'while' | Chosen POS: SCONJ
+[LOG] ➡️ Chosen: 'Mowgli' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'feel' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'himself' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'nice' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'this' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'make' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'sure' | Chosen POS: INTJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'we' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | Chosen POS: SPACE
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'come' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'next' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'morning' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'light' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'long' | Chosen POS: ADV
+[LOG] ➡️ Chosen: 'to' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'trace' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'next' | Chosen POS: ADV
+[LOG] ➡️ Chosen: 'few' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'their' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'mother' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'which' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'no' | Chosen POS: INTJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'matter' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'least' | Chosen POS: ADJ
+Generated Text:
+The victim and at once we are a scrutiny of Bohemia and if the floor have telled. Our chance that I like it they are in the majestic. Later on a little while Mowgli feel himself a nice. The chorus of this is makeing to be sure we come next morning light. Navigate through the long to the trace of the next few in their mother and which be no matter of the least.
