@@ -4,6 +4,7 @@ from collections import defaultdict, Counter
 import spacy
 import numpy as np
 from tqdm import tqdm
+import psutil
 import os
 import re
 import json
@@ -112,7 +113,7 @@ class EnhancedLanguageModel:
 
                 # 🔥 Semantic relation kontrolü
                 if self.is_semantically_related(prefix, word):
-                    adjusted_prob *= 1.8  # %70 ekstra ağırlık
+                    adjusted_prob *= 1.7  # %70 ekstra ağırlık
 
                 # 🤝 Collocation bonusu (PMI tabanlı)
                 last = prefix[-1] if prefix else None
@@ -155,7 +156,10 @@ class EnhancedLanguageModel:
         return False
 
 
-    def generate_sentence(self, start_words=None, length=15):
+    def generate_sentence(self, start_words=None, length=17):
+        # —————— EKLENECEK KISIM: process objesini al
+        proc = psutil.Process(os.getpid())
+
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
@@ -166,24 +170,32 @@ class EnhancedLanguageModel:
         current_words = list(start_words)
         sentence = current_words.copy()
 
-        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        # tqdm'yi pbar değişkenine ata
+        pbar = tqdm(
+            range(length),
+            desc="Generating words",
+            position=0,
+            leave=False,
+            dynamic_ncols=True,
+            mininterval=0.05,
+            maxinterval=0.3
+        )
+
+        for _ in pbar:
             prefix = tuple(current_words[-(self.n-1):])
 
-            # 🔥 Yeni sistem: Dinamik n-gram seçimi
+            # 🔥 Dinamik n-gram seçimi
             raw_next_word = self.choose_next_word_dynamically(prefix)
-
             if not raw_next_word:
-                break  # Uygun bir kelime bulunamadıysa döngü bitiyor
+                break
 
             last_sentence = ' '.join(current_words)
             corrected_sentence = self.correct_grammar(last_sentence)
             transition_analyzer = TransitionAnalyzer(corrected_sentence)
             context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
 
-            # 🔥 Burada bağlama göre kelime seçimi yapıyoruz (daha rafine)
             next_word = self.choose_word_with_context({raw_next_word: 1.0}, context_word)
-
-            if next_word != current_words[-1]:  # kendisini tekrar etmesin
+            if next_word != current_words[-1]:
                 sentence.append(next_word)
                 current_words.append(next_word)
 
@@ -191,6 +203,11 @@ class EnhancedLanguageModel:
                 partial_sentence = ' '.join(sentence)
                 if self.is_complete_thought(partial_sentence):
                     break
+
+            # —————— EKLENECEK KISIM: her tur postfix ile cpu/mem göster
+            cpu = proc.cpu_percent(interval=None)
+            mem = proc.memory_percent()
+            pbar.set_postfix(cpu=f"{cpu:.1f}%", mem=f"{mem:.1f}%")
 
         sentence_text = ' '.join(sentence).strip()
         sentence_text = self.correct_grammar(sentence_text)
@@ -312,7 +329,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.9,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.4,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
         if not next_words:
             return None
 

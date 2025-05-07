@@ -22,7 +22,7 @@ import json
 
 # SpaCy modelini yükle
 nlp = spacy.load("en_core_web_md")  # veya "en_core_web_lg"
-nlp.max_length = 2000000 # or even higher
+nlp.max_length = 20000000 # or even higher
 corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\models\\corrections.json"
 
 def generate_ngrams(tokens, n):
@@ -365,7 +365,7 @@ colloc_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\collo
 build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
 
 # Collocation modelini oluştur
-build_collocation(text_path, colloc_path, window_size=5, pmi_threshold=8.07)
+build_collocation(text_path, colloc_path, window_size=5, pmi_threshold=10.23)
 # 1) PKL dosyasını yükle
 with open(colloc_path, "rb") as f:
     collocations = pickle.load(f)
