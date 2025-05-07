@@ -780,7 +780,7 @@ except (FileNotFoundError, EOFError):
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
-num_sentences = 5
+num_sentences = 4
 # I had forgot that.
 input_words = ("the", "victim")
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
