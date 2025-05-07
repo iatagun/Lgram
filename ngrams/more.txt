@@ -1,1263 +1,1040 @@
-The Simulating Social Mind: The Role of the Mirror Neuron System and
-Simulation in the Social and Communicative Deficits of Autism Spectrum
-Disorders
-Lindsay M. Oberman and Vilayanur S. Ramachandran
-University of California, San Diego
-The mechanism by which humans perceive others differs greatly from how humans perceive inanimate
-objects. Unlike inanimate objects, humans have the distinct property of being “like me” in the eyes of the
-observer. This allows us to use the same systems that process knowledge about self-performed actions,
-self-conceived thoughts, and self-experienced emotions to understand actions, thoughts, and emotions in
-others. The authors propose that internal simulation mechanisms, such as the mirror neuron system, are
-necessary for normal development of recognition, imitation, theory of mind, empathy, and language.
-Additionally, the authors suggest that dysfunctional simulation mechanisms may underlie the social and
-communicative deficits seen in individuals with autism spectrum disorders.
-Keywords: mirror neuron system, autism spectrum disorders, simulation, social impairments, communication impairments
-“When we see a stroke aimed, and just ready to fall upon the leg or
-arm of another person, we naturally shrink and draw back on our leg
-or our own arm . . . The mob, when they are gazing at a dancer on the
-slack rope, naturally writhe and twist and balance their own bodies, as
-they see him do.”
-—Adam Smith, The Theory of Moral Sentiments
-Over 200 years ago, Smith (1759) described the perception of
-others not simply in terms of simple observation but rather a result
-of active embodied understanding. Unlike inanimate objects, for
-which actions are processed visually and can be successfully
-predicted based on physical characteristics and physical laws, this
-type of processing—systemizing (Baron-Cohen, 2002)—is not sufficient for understanding human behaviors, because they are motivated by internal states that typically do not follow objectively
-predictable patterns. Thus, many researchers have proposed a
-simulation account of human perception (Barsalou, 1999; Gallagher & Meltzoff, 1996; Gallese, 2001; Gallese & Goldman,
-1998). Though each researcher uses his or her own terminology,
-all generally claim that the understanding of human actions and
-internal states relies on both the capacity of the observer to
-perceive other humans as “like me” (Meltzoff & Moore, 1995) and
-the capacity to simulate the observed actions and internal states of
-other humans within the observer’s own motor, cognitive, and
-emotional representations.
-This simulation account proposes that when typically developing individuals perceive another person in a certain situation, they
-will automatically and unconsciously project that perception back
-onto the observer’s own motor, cognitive, and emotional representations in order to run an offline simulation (Gallese, 2003).
-This offline simulation, in turn, allows the observer to create an
-embodied understanding of the observed person’s behaviors,
-thoughts, and feelings. Thus, according to this view, it follows that
-the mechanisms by which we understand an action, thought, or
-emotion in another individual share an underlying neural circuitry
-with the mechanisms by which we execute such actions, thoughts,
-or emotions ourselves—what Gallese (2001) calls the “shared
-manifold of intersubjectivity” (p. 34) or “Intentional Attunement”
-(Gallese, 2004). Similarly, in the theory of mind literature, the
-simulation theory proposes that the observer performs an internal
-simulation of the perceived actions and then uses knowledge of his
-or her own actions and intentions in such a situation to infer others’
-mental states (Gordon, 1986; Heal, 1986). Finally, from the motor
-control literature, computational models describe cells called emulators. Emulators receive an efferent copy of the motor command
-and produce a simulation of the sensory signals that would be
-produced in the organism as a result of that same command (Ito,
-1984). Emulators would theoretically aid in motor control, prediction of actions, and motor imagery (Grush, 2004).
-Barsalou (1999) united the aforementioned simulation theories
-with his perceptual symbol systems (PSS) framework. The first
-tenet of this theory is that knowledge (or internal representations)
-regarding perceptions, actions, and introspective states are represented in the same systems in which they are experienced. According to PSS, neurons, called conjunctive neurons, receive efferent copies of the input signal from all of the senses (including
-Lindsay M. Oberman, Center for Brain and Cognition and Department
-of Psychology, University of California, San Diego; Vilayanur S. Ramachandran, Center for Brain and Cognition, Department of Psychology, and
-Department of Neurosciences, University of California, San Diego.
-This article is a revised version of a manuscript originally submitted as
-part of Lindsay M. Oberman’s qualifying exam for her dissertation. We
-would like to thank Jaime A. Pineda, Edward M. Hubbard, Lisa E.
-Williams, Leslie Carver, Piotr Winkielman, and Hillary S. Berman for
-constructive comments on an earlier version of this article.
-Correspondence concerning this article should be addressed to Lindsay
-M. Oberman, Department of Psychology, University of California, San
-Diego, 9500 Gilman Drive, Mail Code 0109, La Jolla, CA 92093. E-mail:
-loberman@ucsd.edu
-Psychological Bulletin Copyright 2007 by the American Psychological Association
-2007, Vol. 133, No. 2, 310 –327 0033-2909/07/$12.00 DOI: 10.1037/0033-2909.133.2.310
-310
-vision, audition, olfaction, gestation, haptics, proprioception, and
-introspection) and store it for future cognitive use. Once these
-so-called conjunctive neurons are established, they can be activated by cognitive simulation in the absence of bottom-up input.
-PSS also establishes two central constructs: simulators and simulations. Simulators are distributed networks of conjunctive neurons
-that activate in response to a specific category. They are responsible for integrating the modality-specific information and forming
-a supramodal representation of a concept. Once a simulator is
-established for a certain category it enables the individual to
-reenact its content in the form of simulations. Simulations can be
-used to draw inferences about a given concept or to internally
-represent it through memory, language, and thought.
-The original framework was extended by Barsalou (2003) to
-provide a mechanism by which these simulated concepts are
-incorporated into specific contexts. In this system, situated conceptualizations are proposed to contain simulations of four basic
-components of a context: people and objects, actions and body
-states, introspective states, and settings. According to PSS, each
-component of the conceptualization is simulated in the respective
-brain areas that originally encoded the information. Just as the
-simulators for a concept integrate the activity of the conjunctive
-neurons to formulate supramodal representations of that concept,
-the simulators for each component combine to form a supramodal
-simulation of the situation. Barsalou proposed that this simulation,
-which incorporates multiple core components of a context, allows
-the conceptualizer to have the experience of being in the situation.
-Barsalou’s PSS framework brings together all of the simulation
-literature across the multiple domains and provides a unified
-theory for how humans interpret and interact with their environment.
-Though the simulation account has a long history (dating back
-to at least 1759) and is intuitively appealing, debate continues over
-the theory’s validity in multiple domains. Additionally, it is unclear whether the underlying neural circuitry that mediates the
-simulation processes for perception, social interaction, and communication is centered in the motor system or whether multiple
-brain regions are capable of simulation. Recent research, which
-spans psychology, linguistics, cognitive science, and neuroscience,
-has begun to answer some of these questions. These answers also
-give hope for finding a possible neural basis for many of the
-behavioral deficits seen in autism spectrum disorders (ASD; including autism, Asperger’s syndrome, and pervasive developmental disorder–not otherwise specified).
-In this review, we argue that when simulation processes are
-deficient, one is left with an individual with qualitative impairments in social interaction and communication skills, two of the
-three defining characteristics of ASD. Though rule-based knowledge clearly may influence how people perceive and interpret their
-environment, it cannot be sufficient, as evidenced by the deficits in
-ASD. Individuals with ASD have no difficulty understanding
-rule-based accounts of the environment (Baron-Cohen, 2002). In
-fact, high-functioning individuals with ASD often have superior
-systemizing ability (Baron-Cohen, Richler, Bisarya, Gurunathan,
-& Wheelwright, 2003).
-Although researchers note that individuals with ASD have a
-clear impairment in understanding and interacting with other individuals, the underlying mechanisms that may mediate the spectrum of deficits in the areas of perception, social interaction,
-language, and behavior have remained a mystery. Historically,
-theories have focused on either (a) behavioral accounts (e.g.,
-Baron-Cohen, 1995; Frith, 2001) in which one behavioral deficit is
-explained in terms of other behavioral deficits or (b) neuroanatomical accounts that implicate individual regions in the brain such
-as the amygdala or cerebellum (e.g., Baron-Cohen et al., 2000;
-Courchesne, 1997). These theories have had enormous hueristic
-appeal and must be considered in future theories, but one limitation
-of strictly behavioral and strictly neuroanatomical accounts is that
-neither explains the underlying functional mechanisms that mediate the deficits.
-The most informative theories are those that are able to link
-neuroanatomy and functional mechanisms to the behavioral impairments that are unique to ASD. One theory, which does exactly
-this, suggests that a dysfunction in a specific functional system, the
-mirror neuron system (MNS), underlies the behavioral impairments in ASD (Altschuler et al., 2000; Williams, Whiten, Suddendorf, & Perrett, 2001). Our group has provided preliminary evidence for this theory on the basis of both a case study (Altschuler
-et al., 2000) and a follow-up study including 10 individuals with
-ASD (Oberman et al., 2005). Though we believe this theory is on
-the right track, there is no reason to believe that the MNSs in
-premotor and parietal cortices are the only systems in the human
-brain that have mirror or simulation properties. In this review, we
-propose a more comprehensive explanation implicating a deficit in
-simulation. As this review shows, there are multiple brain regions
-(including those that have been implicated in anatomical accounts
-of ASD) that appear to have simulation properties. Thus, the
-simulation system, similar to the immune system may be functionally modular but localized in multiple brain regions rather than a
-single region—a similar theory to the intentional attunement theory proposed by Gallese (2006).
-This review discusses behavioral, neurophysiological, neuromagnetic, and neuroimaging findings that independently and collectively support the simulation view of perception, theory of
-mind, empathy, and language, all of which are essential skills for
-understanding and interacting with the environment in which we
-live and are core deficits in ASD. Though other views can account
-for some of these findings, our goal is not to provide a complete
-review of each of the alternative accounts but rather to stress that
-in all cases, the simulation view accounts for the data in the most
-parsimonious manner.
-Perception and Imitation of Actions
-Evidence for the Role of Simulation in Typically
-Developing Individuals
-Though anecdotal references to simulation have been recorded
-as early as 1759, this view was made popular by philosophers
-including William James and Rudolph Hermann Lotze in the late
-1800s, as evidenced by the following quotations:
-The spectator accompanies the throwing of a billiard ball, or the thrust
-of a swordsman, with slight movements of his arm; the untaught
-narrator tells his story with many gesticulations; the reader, while
-absorbed in the perusal of a battle scene, feels a slight tension run
-through his muscular system, keeping time as it were with the actions
-he is reading of. (Lotze, 1852; as quoted in James, 1890, p. 525)
-ROLE OF THE MIRROR NEURON SYSTEM IN ASD 311
-An educated man . . . on entering his house one day he received a
-shock from crushing the finger of one of his little children in the door.
-At the moment of his fright he felt a violent pain in the corresponding
-finger of his own body, and this pain abode with him three days.
-(James, 1890, p. 712)
-Behavioral studies as early as those performed by Darwin indicate that when individuals are in the presence of others, the
-observer tends to synchronize his or her movements to match those
-of the others (Condon & Ogston, 1967; Darwin, 1872/1965; Kendon, 1970). More specifically, people tend to mimic others’ gestures and body postures (Chartrand & Bargh, 1999), facial expressions (Dimberg, 1982; Dimberg et al., 2000; Wallbott, 1991), tone
-of voice and pronunciation patterns (Goldinger, 1998; Neumann &
-Strack, 2000), as well as breathing rates (McFarland, 2001; Paccalin & Jeannerod, 2000).
-It has been proposed that the increased likelihood of one performing a certain behavior when observing the same behavior in
-another individual is a result of automatic stimulus–response relationships, similar to priming in which the presence of the stimulus increases the probability of a response. Along these lines,
-James (1890) stated that “every representation of a movement
-awakens in some degree the actual movement which is its object”
-(p. 526). Another view suggests that the tendency toward mimicry
-can be accounted for by contagion similar to contagious yawns or
-laughter (Hatfield, Cacioppo, & Rapson, 1994; Laird et al., 1994).
-Neither of these accounts necessarily suggests that observation and
-execution of actions share a common mechanism, as required by
-strict simulation theories. Other recent behavioral studies, however, have provided evidence that in addition to action observation
-influencing the occurrence of concurrent execution of that same
-action, the performance of an action influences the concurrent
-perception of that action. A simple stimulus–response relationship
-or contagion accounts have less explanatory power in this case.
-The finding that action execution and action observation reciprocally modulate each other is taken as evidence for the simulation
-account of mimicry—that is, behavioral mimicry occurs because
-action observation and action execution are mediated by overlapping neural mechanisms.
-One piece of evidence for a shared action observation–
-execution representation is found in a study conducted by Pietromonaco, Zajonc, and Bargh (1981). In this study, participants
-were asked to remember a set of 78 predominantly neutral faces
-(taken from a yearbook) while the participants either imitated the
-head and facial configuration, made simple judgments about the
-stimuli, squeezed a sponge, or chewed gum—a manipulation designed to prevent imitation. Results indicated that participants
-asked to imitate the faces performed the best at the later memory
-test (73% correct), whereas those who squeezed a sponge were at
-65%, those asked to make judgments were 64% correct, and those
-who chewed gum (and thus were not able to imitate) were 59%
-correct. Unfortunately, this study leaves many questions unclear.
-First, the study dealt with delayed memory of the expressions, so
-it is impossible to determine whether mimicry aided the initial
-perception of the stimuli or the encoding of the stimuli into
-memory, rehearsal, or retrieval. Second, it is possible that differences in task motivation or attention could account for the differences in memory between the three conditions. Still, despite these
-interpretational and empirical ambiguities, this pioneering empirical work continued to inspire research on the role of somatic
-feedback in perception.
-Reed and Farah (1995) also investigated the influence of motor
-action on perception. They, however, used arm and leg actions
-rather than facial expressions. Reed and Farah’s studies showed
-significant improvements in recognition of other’s actions when
-the observer moved the same limb. In other words, if the observer
-was moving his own arm, he was more likely to recognize that the
-confederate moved her arm than her leg. This finding held up even
-when selective attention and conscious mimicry were controlled.
-Reed and Farah concluded that the participants used the same body
-schema to process both their own and others’ movements. The
-same conclusion was also drawn by Ramachandran and RogersRamachandran (1996) when studying patients with anosognosia
-that was due to damage to the right parietal and frontal cortices.
-These patients denied not only their own paralysis but also the
-paralysis of another individual. The authors concluded that damage
-to an individual’s own body schema may lead to deficits in making
-judgments about another individual’s actions, possibly as a result
-of damage to a specific system of neurons, namely the MNS,
-which is discussed later in this review.
-Taken together, these behavioral studies support the conjecture
-that there is considerable overlap between the neural mechanism
-for action observation and action execution. However, behavioral
-studies are not able to speak to how this shared representation aids
-in recognition. This task has been undertaken by researchers in
-computational neuroscience who have developed models of neural
-networks that account for the role of simulation, or what they call
-emulators in the motor system.
-An emulator is defined as “a device that mimics the input/output
-operation of a target system” (such as the motor system; Grush,
-2004, p. 387). Grush (2004) suggested that an emulator is beneficial in many ways. First, it allows an individual to control his or
-her actions online and inhibit inaccurate or inappropriate actions
-prior to their occurrence. More important for this review, however,
-is its role in perception. Grush proposed that perception is a result
-of activation in an emulatory loop that receives input and mimics
-both the input from the senses and feedback from the observer’s
-own outputs, thus creating a mechanism that unites perception of
-the outside world and knowledge of the internal state of the
-observer.
-These so-called emulators have been proposed to exist in the
-dentate of the cerebellum, according to behavioral, lesion, and
-neurophysiological studies (Grush, 2004; Ito, 1984; Wolpert, Zoubin, & Flanagan, 2001; see Decety, 1996, for a review). However,
-the question still remains whether the cerebellum emulators are
-unique or whether they are a part of a larger network of neural
-systems that serve to simulate their content. Neurophysiological
-and imaging studies conducted over the past 50 years appear to
-support the latter—that is, that multiple regions of the brain are
-capable of offline simulation.
-Electroencephalography (EEG) studies from as early as 1954
-demonstrated neural activity in the region of sensorimotor cortex
-when nonmoving subjects watched other individuals performing
-specific actions. While studying the changes in brain activity,
-French researchers Gastaut and Bert (1954) recorded EEG activity
-while subjects performed actions as well as while they were
-presented with visual stimuli. Though recordings were taken
-across the scalp at various frequency ranges, of particular interest
-312 OBERMAN AND RAMACHANDRAN
-to this review are the electrical changes recorded over the rolandic
-(sensorimotor) region. Gastaut (1951) had previously reported that
-oscillations recorded over this region, in a frequency close to the
-alpha frequency (7–11 Hz), were reduced in amplitude when
-subjects performed a directed action or simply shifted their posture.
-Just 3 years later, Gastaut and Bert (1954) found that the
-so-called rolandic arceau rhythm (named for its characteristic arc
-shape) was also reduced when subjects identified themselves with
-an active person represented on a screen, for example, when they
-viewed a film of a boxing match. Gastaut and Bert concluded that
-“the relation between the blocking of the ‘arceau’ rhythm and the
-image of boxers in action is unquestionable.” It is currently
-thought that suppression of this rhythm represents increased activity in the neural networks located in the rolandic region (Andrew & Pfurtscheller, 1997). Thus, as early as 1954, there was
-neurological evidence that the observation of actions in others
-activates neural systems in the observers’ sensorimotor systems,
-evidence for the role of simulation in visual perception.
-Over 40 years later, Altschuler, Vankov, Wang, Ramachandran,
-and Pineda (1997) corroborated Gastaut and Bert’s (1954) finding
-by showing a reduction in power of the arceau rhythm (now
-referred to in the standardized Greek naming system as the mu
-wave) during the execution, imagination, and observation of human action and suggested that the suppression of the mu wave
-could be used as an EEG index of mirror neuron activity. Cochin,
-Barthelemy, Lejeune, Roux, and Martineau (1998) replicated this
-finding, showing mu wave suppression during the observation of
-actions performed by humans. No such modulation was present
-when subjects watched object movements. In a follow-up study,
-Cochin, Barthelemy, and Martineau (1999) reported that the response in the mu wave when subjects observed another performing
-an action was not significantly different from the response when
-subjects performed the action themselves. The authors cited this as
-evidence that action observation and execution share the same
-neural network.
-Subsequently, multiple laboratories have reported similar results, finding a reduction in the power in the mu wave over central
-leads during the observation of others’ actions, and have supported
-the link between mu wave suppression and mirror neuron activity
-(Babiloni et al., 2002; Muthukumaraswamy & Johnson, 2004a,
-2004b; Pineda, Allison, Vankov, 2000). Additionally, over the past
-several years, other techniques have also been successful in identifying activity in the area of the sensorimotor cortex during action
-observation. Hari and colleagues (Avikainen, Forss, & Hari, 2002;
-Hari et al., 1998) have successfully used magnetoencephalography
-to measure the activity of the precentral gyrus following stimulation of the median nerve. Beta frequency rebound over sensorimotor cortex showed a significant reduction during both action
-execution and action observation. The readiness potential, an
-event-related potential (ERP) marker of motor preparation recorded over the central leads prior to movement onset, has also
-been shown to be modulated by observed actions (Kilner, Vargas,
-Duval, Blakemore, & Sirigu, 2004). Furthermore, when the nature
-and onset of action is predictable, the rise of the readiness potential
-precedes the observed movement’s onset. Kilner et al. (2004)
-proposed that this type of timing might allow the observer not only
-to react to others’ actions but also to anticipate actions that will be
-performed in the near future.
-Though electrophysiological recordings from the scalp give us
-broad estimates of neural systems involved in certain behaviors,
-their spatial resolution is less than satisfactory for exact localization of neural mechanisms. The ideal technique for such research
-is to record directly from individual neurons in awake human
-volunteers, but such an opportunity is rarely available to researchers. Alternatively, animal studies on closely related species can be
-incredibly informative for such an investigation. The macaque
-monkey has been the prime subject for investigation of the mechanisms underlying action observation and execution.
-The most relevant finding in macaque single-unit electrophysiology research was made by Giacomo Rizzolatti and his colleagues (Di Pellegrino, Fadiga, Fogassi, Gallese, & Rizzolatti,
-1992; Fogassi, Gallese, Fadiga, & Rizzolatti, 1998; Gallese, Fogassi, Fadiga, & Rizzolatti, 2002). While studying the premotor
-cortex in the macaque, they came across a system of neurons in
-area F5 that responded not only when the monkey performed an
-action but also when the monkey watched the researcher perform
-a similar action (Di Pellegrino et al., 1992). The team named this
-system of neurons the mirror neuron system because it appeared
-that the observed action was mirrored or simulated within the
-monkey’s own motor system. In addition to the original mirror
-neurons found in the macaque’s premotor cortex, neurons in the
-inferior parietal lobule have also been found to have mirror properties (Fogassi et al., 1998; Gallese et al., 2002).
-The discovery of the MNS gained immediate attention and
-raised two questions: Does a similar system exist in humans? And
-could this be the elusive neural mechanism subserving the action
-observation– execution link that enables humans to imitate?
-Though few researchers referred to this system by name prior to
-the late 1990s, there was already a large body of behavioral,
-physiological, and lesion data (discussed earlier in this review)
-supporting the existence of the MNS in humans. However, these
-techniques gave little clue to the spatial location of such a system.
-The first attempt to localize the human MNS was in a study
-conducted by Fadiga, Fogassi, Pavesi, and Rizzolati (1995). Using
-transcranial magnetic stimulation (TMS), Fadiga et al. investigated
-whether the premotor cortex in humans responded when the participants watched others’ actions. It was determined, on the basis
-of anatomical cytoarchitecture, that the homologous region to the
-macaque F5 is human Brodmann’s area 44/45, also known as
-Broca’s area. Fadiga et al. found that TMS applied over Broca’s
-area resulted in greater motor-evoked potentials (MEPs) when the
-subject observed another person moving as compared with a
-baseline rest condition. Furthermore, the pattern of muscle activation evoked by TMS during action observation was very similar to
-the pattern of muscle contractions present during the execution of
-the same action.
-Subsequent to this neuromagnetic study, positron emission tomography (PET) and functional magnetic resonance imaging
-(fMRI) studies (Decety et al., 1997; Iacoboni et al., 1999) showed
-selective activity in the frontal operculum (Brodmann’s area 44/
-45) and the anterior parietal cortex when subjects watched human
-actions. Further, this activity, similar to the macaque correlate, was
-somatotopically distributed in both premotor and parietal regions
-(Buccino et al., 2001).
-Two additional regions of the human cortex that appear to have
-mirror properties have recently been discovered. The first, the
-superior temporal sulcus (STS), was originally identified for its
-ROLE OF THE MIRROR NEURON SYSTEM IN ASD 313
-selective response to the observation of biological motion in monkeys (Oram & Perrett, 1994; Perrett, Harris, Mistlin, & Hietanen,
-1990) and in humans (Bonda, Petrides, Ostry, & Evans, 1996;
-Puce, Allison, Bentin, Gore, & McCarthy, 1998). More recent
-studies have also indicated that this region has a somatotopic
-representation with the observation of hand actions activating
-inferior posterior regions, mouth actions activating mid posterior
-regions, and eye movements activating superior posterior regions
-(Pelphrey, Morris, & McCarthy, 2005). In addition to its visual
-properties, human STS also responds to the imitation of an action
-(Iacoboni et al., 2001). This activation is greater during imitation
-than during control motor tasks and continues to respond even
-when the subject’s view of his or her hand is obscured. The second
-region is the so-called extrastriate body area. The extrastriate body
-area was first classified by Downing, Jiang, Shuman, and Kanwisher (2001) on the basis of its response to the visual perception
-of human bodies and body parts. A recent study conducted by
-Astafiev, Stanley, Shulman, and Corbetta (2004) report fMRI
-activation in this region in response to the subject’s moving his or
-her own arm or leg toward a target in the absence of visual
-feedback. This activation was also present after attention and
-sensory properties of the target were controlled. Thus, it appears
-that multiple regions of the human brain may be capable of motor
-simulation (inferior frontal gyrus, inferior parietal lobule, superior
-temporal sulcus, extrastriate body area, and the dentate of the
-cerebellum).
-The aforementioned findings provide strong evidence that an
-action observation– execution matching system, similar to that
-found in the macaque premotor and parietal cortices, albeit in a
-more extensive system, exists in the human brain. Since the
-original studies, specific properties of the human MNS have been
-investigated. Studies have reported that unlike the macaque system, human mirror neurons respond to goal-directed, non-goaldirected, and pantomimed actions (Buccino et al., 2001; Grezes,
-Armony, Rowe, & Passingham, 2003), whereas the monkey system responds only to goal-directed actions (Gallese, Fadiga, Fogassi, & Rizzolati, 1996).
-Additionally, human mirror neurons are selective to actions
-within the observer’s motor repertoire. In other words, if the
-observer is unable to match the observed action to a motor representation within his or her own system, the mirror neurons will not
-respond (Buccino et al., 2004; Stevens, Fonlupt, Shiffrar, & Decety, 2000). The individual need not be familiar or skilled at the
-action but only physically capable of performing it. For example,
-actions such as grasping and biting, which humans share with other
-primates, will activate the human MNS whether the observed
-action is performed by a human or a macaque. However, observing
-a dog barking, which is not part of the human motor repertoire,
-does not activate this system but rather is processed in lower level
-perceptual systems (Buccino et al., 2004). Furthermore, actions
-that are part of the human motor repertoire but are not familiar will
-not activate the MNS as much as actions that are familiar to the
-observer. This property was demonstrated in a study conducted by
-Calvo-Merino, Glaser, Grezes, Passingham, and Haggard (2005),
-who recorded fMRI data from expert dancers and found increased
-activity to the observation of others performing familiar styles of
-dance movements, as compared with unfamiliar styles matched for
-low-level visuomotor properties.
-Though it is hard to argue against the existence of a human
-MNS, its function has yet to be clearly delineated. In their original
-article, Di Pellegrino et al. (1992) proposed that the MNS may help
-an observer understand the actions of another by mapping them
-onto his or her own motor representations. Additionally, studies
-have demonstrated that when human subjects are instructed to
-observe actions with the intent to imitate (as opposed to remember), the MNS is selectively involved in the imitation condition
-(Decety et al., 1997). This finding has led researchers to add
-imitation to the list of functions of the MNS. Critics, however, are
-quick to point out that macaques and many other primates do not
-typically show imitation behaviors (Visalberghi & Fragaszy, 2001;
-Whiten & Ham, 1992) but do have mirror neurons. Thus, this
-system cannot be sufficient for the ability to imitate, but it may
-have been an evolutionarily necessary step that led to the ability to
-imitate in humans (Arbib, 2005; Ramachandran, 2000).
-In a review article, Iacoboni (2005) outlined his theory of the
-neurological basis of imitation. He suggested that the circuit begins
-in the superior temporal cortex in which the visual properties of the
-observed action are coded. The signal is then sent to the posterior
-parietal cortex that provides somatosensory information regarding
-the observed action by means of the parietal mirror neurons.
-Finally, the signal is sent to the frontal mirror neurons to code the
-goal of the action to be imitated. Before the action is ultimately
-sent to the primary motor cortex, however, an efferent copy of the
-motor command is sent back to the STS in order to match the
-predicted sensory consequences of the planned imitation to the
-visual description of the original observed action. If there is a good
-match, the action is initiated by the primary motor cortex. This
-series of connections has strong anatomical support from nonhuman primate studies (Jeannerod, Arbib, Rizzolatti, & Sakata, 1995;
-Rizzolatti, Luppino, & Matelli, 1998; Seltzer & Pandya, 1994;
-Taira, Mine, Georgopoulos, Murata, & Sakata, 1990).
-A PET study (Grezes, Costes, & Decety, 1998) supported the
-activation of the dorsal visual stream extending up into premotor
-cortex while subjects watched meaningful actions with no instructions, as well as both meaningful and nonmeaningful actions with
-the intent to imitate at a later time point. Additionally, Ruby and
-Decety (2001) reported findings from a PET study finding that
-simulation of both self and other actions activate the inferior
-parietal cortex in the area of inferior parietal lobule where mirror
-neurons have been identified. Thus, although the MNS may not be
-sufficient to mediate imitation in the macaque, it is possible that,
-through evolution, the human MNS with the endowed ability to
-match action observation and action execution utilized this system
-for imitation.
-The aforementioned data in both macaque single-unit physiology and human imaging provide convincing evidence that regions
-of the cerebral cortex primarily designated as part of the motor
-system are activated by the observation of others’ actions. Furthermore, this activity is thought to aid in visual recognition and
-imitation. Thanks to the discovery of the MNS, the simulation
-view of perception has gained new momentum and inspired collaboration between behavioral psychologists, cognitive scientists,
-and neuroscientists. One question that has yet to be answered,
-however, is whether the impairments in perception and imitation as
-seen in individuals with autism spectrum disorders are a result of
-dysfunction in these simulation systems.
-314 OBERMAN AND RAMACHANDRAN
-Role of Simulation in the Perception and Imitation
-Deficits of ASD
-A multitude of studies performed over the past several decades
-(reviewed by Williams, Whiten, & Singh, 2004) have suggested
-that children with autism suffer from impairments in imitation. As
-imitation is thought to be a critical building block for early affective, social, and communicative development, an impairment in
-this domain can have quite deleterious consequences to a developing child (Rogers & Pennington, 1991). The first suggestions of
-an imitation deficit in ASD was made in 1953 (Ritvo & Provence,
-1953) with an anecdotal report of a mother describing the inability
-of her 21-month-old to make pat-a-cake simply from watching her.
-The only way the child could learn the game was to have the
-mother hold his hands and put them through the appropriate
-movements. Since this time, dozens of empirical studies have been
-published detailing the specific characteristics of the imitation
-deficits seen in ASD.
-The first review of this literature was conducted by Rogers and
-Pennington (1991), who found strong evidence for the existence of
-an imitation deficit affecting simple body movements and actions
-with symbolic meaning. What became very apparent as more
-studies were conducted was that the imitation deficits in ASD
-varied on the basis of the specific task the child was asked to
-perform and the child’s age. For example, it has been suggested
-that the development of language might be necessary to derive
-benefit from the symbolic meaning of a gesture in an imitation task
-that includes meaningful gestures (Williams et al., 2004). Thus,
-older children and those with better language skills will perform
-better on imitation of symbolic gestures as compared with younger
-children or those with poor language skills (Green et al., 2002;
-Rogers, Bennetto, McEvoy, & Pennington, 1996). Second, imitation of actions with objects appears to be relatively less impaired
-compared with actions without objects in individuals with ASD
-(Aldridge, Stone, Sweeney, & Bower, 2000; Hammes & Langdell,
-1981; Roeyers, Van Oost, & Bothuyne, 1998; Sigman & Ungerer,
-1984). Finally, a common characteristic of the imitation deficit in
-individuals with ASD is reversal errors (that is, producing the
-movement with a 180° transformation). Reversal errors are also
-commonly seen in typically developing preschoolers (Ohta, 1987),
-suggesting that the imitative deficit in ASD may be characterized
-as a delay of normal development rather than an absolute deficit
-(Whiten & Brown, 1999).
-Though recognized over 50 years ago (Ritvo & Provence, 1953)
-and studied in detail, the cause the imitation impairment has yet to
-be identified, though many theories exist, including Curcio’s
-(1978) symbolic representation hypothesis, Jones and Prior’s
-(1985) dyspraxia hypothesis, Rogers and Pennington’s (1991)
-self-other representation hypothesis, and Trevarthen and Aitken’s
-(2001) motivation hypothesis. The most recent review of the
-literature conducted by Williams et al. (2004) suggested that
-Rogers and Pennington’s hypothesis of a deficit in self-other
-mapping explains the findings from the empirical studies much
-better than the other proposed theories. Williams et al. suggested
-that typically developing individuals automatically and unconsciously use the same mechanism to process both self and other
-actions and use this mechanism for imitation, whereas Rogers and
-Pennington’s review (1991) suggested that infants with autism
-lack the ability to “form and coordinate social representations of
-self and other via amodal or cross-modal representation processes”
-(p. 137). They further suggested that this deficit in self– other
-mapping leads not only to their imitation impairments but also to
-their other social– communicative impairments.
-If Williams et al. (2004) are correct, and the imitation deficits
-are not a result of impaired perception or impaired motor skills, but
-rather self– other mapping impairments underlie the imitation deficits, then it is plausible that the MNS, which appears to be
-involved in imitation in typically developing individuals, may also
-be the neurological basis of the imitation deficits in ASD. Five
-independent research groups have reported findings supporting
-this proposal. The first study to find evidence for MNS impairments in ASD was conducted by Altschuler et al. (2000), who
-recorded mu wave suppression in one child with autism. Preliminary results showed a lack of suppression to the observation of
-actions in others, suggesting a possible impairment in the MNS. In
-a follow-up study from the same laboratory, Oberman et al. (2005)
-corroborated this finding by demonstrating an absence of mu wave
-suppression in a sample of 10 individuals with ASD while they
-watched videos of another person’s actions. Although typically
-developing individuals showed significant mu-wave suppression,
-indicating normal MNS functioning, participants with ASD
-showed no significant change in mu power from a baseline condition.
-Nishitani, Avikainen, and Hari (2004) also found evidence of an
-impairment in the MNS using magnetoencephalography. Subjects
-were presented with still pictures of a woman performing orofacial
-gestures and were instructed to imitate these gestures. Cortical
-activations were recorded from 8 adult subjects with Asperger’s
-syndrome and 10 control subjects. In both groups, activations were
-recorded over occipital cortex, superior temporal sulcus, inferior
-parietal lobe, inferior frontal lobe, and primary motor cortex.
-Though the two group’s activations were similar for occipital
-cortex, superior temporal sulcus, and inferior parietal lobe, activations in inferior frontal lobe and primary motor cortex were weaker
-and had a greater latency in the Asperger’s syndrome group as
-compared with the control group. These findings suggest that the
-deficit is not in low-level visual processing, but rather in higher
-order cognitive processes in the prefrontal regions. Similarly,
-Villalobos, Mizuno, Dahl, Kemmotsu, and Muller (2005) found
-that area 44, the prefrontal mirror neuron area, had reduced functional connectivity with primary visual cortex in individuals with
-autism, as compared with matched controls. Both groups concluded that their findings provided evidence for impairment in the
-prefrontal MNS in individuals with ASD.
-Another group (Theoret et al., 2005) recorded TMS-induced
-MEPs while subjects watched videos of finger movements that
-were directed either toward or away from the observer. In the
-control group, both types of actions resulted in increased MEPs
-recorded from the observer’s right first dorsal interosseus and
-abductor pollicis brevis muscles. The clinical group, consisting of
-individuals diagnosed with ASD, showed increased MEPs only to
-actions directed toward the observer (self-directed or allocentric)
-and no significant change from baseline in the away (other directed
-or egocentric) movement condition. The researchers explain this
-result in terms of a mirror neuron deficit leading to impairment in
-simulating egocentric actions and a general self– other representation deficit.
-ROLE OF THE MIRROR NEURON SYSTEM IN ASD 315
-Most recently, Dapretto et al. (2005) published a study in which
-they used fMRI to investigate activity in the MNS in individuals
-with ASD. Participants were asked to both imitate and observe
-emotional facial expressions while experimenters analyzed the
-blood-oxygen-level dependent (BOLD) signal in regions thought
-to be part of the MNS. Whereas typically developing individuals
-showed activation in visual cortices, primary motor, premotor
-(including the inferior frontal gyrus, MNS region), limbic, and
-cerebellar regions, individuals with ASD did not show this pattern
-and, specifically, showed no significant activation of the inferior
-frontal gyrus. Additionally, the activity that was observed in the
-MNS regions in individuals with ASD was correlated with symptom severity, as indexed by the Autism Diagnostic Observation
-Schedule (Lord et al., 1989) and the Autism Diagnostic Interview
-(Lord, Rutter, & Le Couteur, 1994).
-The aforementioned studies represent the developing body of
-literature supporting the role of an impaired premotor MNS in
-individuals with ASD. One of the first proposed, and most strongly
-supported, functions of the MNS is to support internal simulations
-of actions. Without the ability to internally simulate the visual
-perception of an action, motor imitation would likely be more
-difficult and performance would likely be abnormal. We would
-thus propose that the imitation deficits seen in individuals with
-ASD are best explained by their impairments in simulation caused
-by an impaired MNS.
-Theory of Mind and Empathy
-From Imitation to Theory of Mind and Empathy in
-Typically Developing Individuals
-Arguably more socially relevant than understanding an action’s
-motor properties and being able to reproduce them (imitation) is
-the ability to understand the thoughts, intentions, and emotions that
-guide the observed action. Over the past 25 years, researchers in
-the areas of developmental psychology, cognitive science, and
-philosophy have devoted their careers to understanding how humans learn to attribute thoughts and intentions to others, referred
-to as theory of mind (TOM; Humphrey, 1976; Premack & Woodruff, 1978). Despite the over 25 years of research, there is still
-much debate over the underlying mechanism that leads to this
-ability. Thus, a vast literature has been developed by researchers
-proposing, testing, dissecting, and criticizing various theories. A
-thorough review of this literature, however, would be outside of
-the scope of this article. Thus, an overview of the two main
-competing theories is presented below (the reader is referred to
-Carruthers & Smith, 1996; Davies & Stone, 1995, for a balanced
-review of the debate).
-The two major competing theories of the development of TOM
-are theory–theory and the simulation theory. The theory–theorists
-have suggested that individuals develop TOM over the first few
-years of life by testing given rules regarding the functions of the
-objects and organisms with which they interact as a child and
-eventually come up with a cognitive theory of what others are
-thinking (Gopnik & Meltzoff, 1997). Support for the theory–
-theories comes from behavioral studies finding that children appear to develop a theory of other minds at around age 3. Also,
-behavioral studies have found that 3-year-olds make errors about
-other’s knowledge that they do not make about their own knowledge. Finally, Saxe (2005) argued that when errors in others’
-beliefs are made, the errors reflect knowledge of psychological
-laws governing how minds work.
-Opposing theory–theories are simulation theories that propose
-that TOM is simply an outgrowth of the ability to interpret others’
-actions through simulation. By creating an internal simulation,
-individuals can step into the mental shoes of another person and
-understand the thoughts, emotions, and intentions behind their
-behavior (see Gordon, 1986; Heal, 1986; Goldman, 2000, for
-reviews). In its strongest form, this view implies that understanding others’ minds requires no conceptual thinking or theory formation. Similar to the action simulation processes discussed earlier, the simulation theory simply requires that the observer reflect
-back on his or her own experience and use that knowledge to infer
-the mental state of the other individual. Simulation theories have
-been supported by brain-based studies that have found MNS
-activity in response to the goal or intention of an action and regions
-of the brain that respond both when subjects are asked to reflect on
-their own mental state and when they are asked to infer the mental
-state of another individual, which is discussed later in this section.
-Although not traditionally discussed in reference to the simulation view of TOM, the “Mary” scenario provides an excellent
-example for the necessity of reflection on self-knowledge for the
-understanding of internal states of others. Jackson (1986) proposed
-a theoretical question of whether Mary, a color-blind neuroscientist who knows everything about the physiological processing of
-color but has never experienced it herself, would really know what
-it is to see red. Jackson proposed that the theory– experience gap
-would preclude Mary from understanding the internal qualia, or
-mental content, of the experience of seeing red. This theoretical
-scenario demonstrates the importance of an individual’s own experiences in the understanding of others’ mental states. Further, it
-suggests that simply having the cognitive theory of what others
-may think or feel in a certain scenario is not sufficient for TOM.
-Similar to Mary, oftentimes individuals with autism can be taught
-rules regarding what individuals may think or how they may feel
-in a certain situation; however, they will often still have difficulty
-really knowing the other’s mental state.
-Similar to the simulationist view of TOM, empathy by definition
-incorporates a simulation of an observed person’s internal state.
-The term empathy was originally introduced by Theodore Lipps
-(1903) and used to describe the feeling one gets when watching an
-acrobat walking on a suspended wire. Lipps wrote, “I feel myself
-inside of him” (p. 121). This concept was further elaborated on by
-Edith Stein (1912/1964) in her book On the Problem of Empathy.
-Stein proposed that empathy is not simply the understanding of
-other’s feelings or emotions in a cognitive or theoretical manner.
-Rather, empathy is a function of one individual’s experiencing the
-same feelings as another individual through an appreciation of
-similarity. Most recently, Preston and de Waal (2002) proposed the
-perception–action model of empathy, which states that the attended perception of an individual’s state automatically activates
-the observer’s representations of the state and situation. Further,
-the activation of these representations automatically primes or
-generates the associated autonomic and somatic responses unless
-inhibited.
-Strong empirical evidence exists for the role of simulation in the
-ability to empathize with others’ emotions. When subjects are
-presented with stimuli of others displaying emotional facial ex316 OBERMAN AND RAMACHANDRAN
-pressions, typically developing individuals will automatically
-(without instruction to do so) mimic the facial expression of the
-stimuli (Bush, Barr, McHugo, & Lanzetta, 1989; Dimberg, 1982;
-Dimberg & Lundqvist, 1988). This mimicry occurs even when the
-stimuli are subliminally presented (Dimberg et al., 2000). This
-automatic facial mimicry response has been proposed to facilitate
-recognition and empathy for the observed emotion through a
-process of internal simulation of the corresponding facial expression (Lipps, 1907; Niedenthal, Brauer, Halberstadt, & Innes-Ker,
-2001; Pietromonaco et al., 1981; Wallbott, 1991).
-One study that provided evidence for the simulation account
-was conducted by Wallbott (1991). In this study, participants were
-videotaped while they performed an emotional facial recognition
-task. Each participant was then brought back to the laboratory for
-a subsequent session and asked to guess, on the basis of the
-videotape of his or her own face, what facial expression they were
-watching. The participants’ judgments of their own facial expressions were above chance, suggesting that the participants were
-imitating the facial expressions of the people they were judging.
-Additionally, a correlation was found between the participants’
-judgment of the stimuli and their judgment of their own (videotaped) facial expression. Finally, the recognition rate from the
-original study correlated with individuals’ recognition rate of their
-own (videotaped) facial expressions. Though the first two findings
-in this study do not discriminate between the emotional contagion
-and emotional recognition accounts, the correlation between the
-recognition score from the study and their self recognition score
-(when they were presented with only their own videotaped mimicry responses) is interpreted as evidence that the facial mimicry in
-fact aided in the recognition of the facial expressions in others.
-Most recently, Niedenthal et al. (2001) provided direct evidence
-for the role of mimicry in recognition of facial expressions. Participants were asked to hold a pen sideways in their mouths,
-between their teeth and lips (preventing facial mimicry). Performance of the experimental group was compared against a group of
-participants that was free to move their faces naturally. Both
-groups were asked to identify a point at which a morphed face
-changed from happy to sad and vice versa. Participants who were
-prevented from using facial mimicry detected the change later in
-both directions than those who were able to move their face freely,
-indicating that the disruption of facial mimicry leads to impaired
-recognition of facial expression.
-Although these studies support a relationship between automatic
-mimicry of facial expression and recognition, and theoretically,
-empathy has been conceived as a result of both external and
-internal mirroring (Lipps, 1903), a missing step exists in this
-theoretical account. If empathy is a result of internal and external
-mimicry, it would follow that individuals who are more empathetic
-should produce more facial mimicry than those who are less
-empathetic. In order to investigate this question, SonnbyBorgstrom, Jonsoon, and Svensson (2003) compared automatic
-facial mimicry in individuals who scored high and low on an
-emotional empathy scale (Questionnaire Measure of Emotional
-Empathy). Highly empathetic individuals displayed electromyography (EMG) activity consistent with mimicry of the presented
-facial expressions at both automatic (56 ms) and controlled (2,350
-ms) exposure levels. Low-empathetic individuals did not display
-mimicry at any exposure level. Thus, this study supports the role
-of simulation in emotional empathy.
-If the simulation account of empathy and TOM is accurate and
-there is a link between motor and mental simulation, one would
-expect to see regions of the brain that respond to both the experience of a certain thought or emotion and the perception of that
-thought or emotion in another individual. One may also expect that
-the premotor MNS would not simply code the physical properties
-of actions but also be sensitive to the goals and intentions of those
-actions. Consistent with these claims, preliminary data suggest that
-mirror neurons in the premotor cortex may be sensitive to the goals
-and intentions of actions (Gallese et al., 1996; Iacoboni et al.,
-2005). fMRI studies have identified overlapping regions that respond to both the experience and perception of thoughts and
-emotions (Mitchell, Banaji, & Macrae, 2005; Morrison, Lloyd,
-DiPellegrino, & Roberts, 2004; Singer et al., 2004; Wicker et al.,
-2003). Finally, fMRI and lesion studies have indicated that sensorimotor cortices are not only involved but also necessary for
-normal performance on TOM and empathy tasks (Avenanti, Bueti,
-Galati, & Aglioti, 2005; Adolphs, Damasio, Tranel, Cooper, &
-Damasio, 2000).
-In accordance with the simulation theory, single-unit studies
-with macaques have suggested that a proportion of mirror neurons
-are broadly congruent (Gallese et al., 1996), meaning they respond
-to the performance of an action and the observation of an action
-with a similar goal even if the exact physical properties of the
-action differs. Similarly, a recent fMRI study supported the claim
-that the human premotor MNS is sensitive to the intentions and
-goals of observed actions. In a recently published study, Iacoboni
-et al. (2005) showed participants videos of four different types of
-actions. The first video showed a person grasping objects in the
-absence of any context. The second video depicted scenes containing objects in a context with no actions. The third video
-showed someone grasping a cup with the intention to drink, and
-the fourth video showed the same action but in a different context
-that implied the intention to clean. Results suggested that the
-posterior part of the inferior frontal gyrus and the adjacent portion
-of the ventral premotor hand area (both within regions thought to
-be part of the human premotor MNS) were more active in the two
-intention conditions as compared with the other two nonintention
-videos. Additionally, the drinking intention condition resulted in
-significantly more activation than the cleaning intention videos.
-These findings suggest that, like that of the monkey, the human
-premotor MNS is sensitive to the underlying intention that motivates perceived actions.
-As would be expected from the facial mimicry research, fMRI
-conducted while people observe emotional facial expressions in
-others activates a similar network as imitation of those same
-expressions. Notable areas in this shared network include inferior
-frontal cortex, superior temporal cortex, insula, and amygdala, all
-of which not only showed increased activity in both observe and
-imitate conditions as compared with a rest condition but also
-showed more activity in the imitate condition as compared with the
-observe condition (Carr, Iacoboni, Dubeau, Mazziotta, & Lenzi,
-2003). This study indicates that there is an overlapping region of
-premotor cortex that responds both when subjects are asked to
-interpret emotional facial expressions and when they observe hand
-actions.
-Another brain region that may contain neurons with “mirror-like
-properties” for internal mental states is the medial prefrontal
-cortex, Brodmann’s Area 9. Though not traditionally thought of as
-ROLE OF THE MIRROR NEURON SYSTEM IN ASD 317
-part of the MNS, this area responds both when subjects are asked
-to make judgments regarding their own abilities, personality traits,
-and attitudes (S. C. Johnson et al., 2002; Kelley et al., 2002) and
-when they are asked to attribute intentions to characters in a comic
-strip (Brunet, Sarfati, Hardy-Bayle, & Decety, 2000) or infer
-another person’s knowledge about a familiar or unfamiliar object
-(Goel, Grafman, Sadato, & Hallett, 1995). In a recent study,
-subjects were asked to evaluate their own emotional responses to
-a picture and to infer the mental state of the individual in the
-picture (Ochsner et al., 2004). The medial prefrontal cortex responded during both conditions. Thus, it seems conceivable that
-the same region of the brain that is involved in representing the
-mental state of ourselves is also involved in inferring the mental
-states of others. Similar to the shared representation for the perception and performance of actions mediated by premotor mirror
-neurons, a system of neurons in the medial prefrontal cortex may
-serve to create a mirror-like shared representation for the experience and perception of mental states. In this way, the medial
-prefrontal cortex may be the neural substrate that simulation theorists have been waiting for.
-In three fMRI studies (Morrison et al., 2004; Singer et al., 2004;
-Wicker et al., 2003), empathy for specific emotions activated
-networks of cerebral cortex similar to the actual experience of that
-emotion. Both the experience of disgust (while inhaling foul smelling odorants) and the observation of others performing facial
-expressions of disgust activates the same regions of the insula and
-the anterior cingulate cortex (Wicker et al., 2003). Additionally,
-both the experience of a physically painful stimulus and the
-knowledge that a loved one is experiencing the same painful
-stimulus activates the anterior insula and rostral anterior cingulate
-cortex bilaterally (Singer et al., 2004). These areas were also
-correlated with individual empathy scores, indicating that the more
-an individual was able to use this shared network of cortices, the
-better his or her ability to empathize with others. Similarly, another
-study (Morrison et al., 2004) found that receiving a painful pin
-prick and watching a stranger receive the same pin-prick activated
-dorsal anterior cingulate cortex.
-Though the emotional aspects of pain are surely a large part of
-the pain matrix, the full experience of pain also contains sensory
-input, which has been shown to be important for empathy. In a
-study conducted by Avenanti et al. (2005), subjects watched actors
-being pricked by a sharp needle in either the hand or the foot.
-MEPs were obtained from the same muscles in the observer while
-TMS was applied over the motor cortex. MEPs in the observer
-were reduced in the muscle that corresponded to the muscle that
-was pricked in the actor. The reduction in MEPs was also correlated with the observer’s subjective rating of the sensory aspects of
-the pain attributed to the actor and with sensory but not emotional,
-empathy measures. This finding suggests that modulation in activity in an observer’s motor cortex is related to their perception
-and ability to empathize with another individual’s pain, further
-supporting simulation theories.
-These fMRI results provide evidence for the involvement of
-sensory cortices in emotion recognition but do not answer the
-question of whether this activity is necessary for normal recognition of emotion. One technique that begins to answer the question
-of necessity is lesion studies. These studies have identified paired
-deficits in the production and recognition of specific emotions.
-Damage in the amygdala, for example, appears to impair both the
-expression and recognition of fear (Adolphs et al., 1999; Adolphs,
-Tranel, Damasio, & Damasio, 2002; Sprengelmeyer et al., 1999).
-Similarly, damage in the insula and basal ganglia results in a paired
-impairment in the experience and recognition of disgust (Calder,
-Keane, Cole, Campbell, & Young, 2000). Finally, both the experience and recognition of anger appears to depend on the dopamine
-system, with a dopamine antagonist impairing both processes
-(Lawrence, Calder, McGowan, & Grasby, 2002).
-Though these studies provide excellent support for the shared
-representation of experience and perception of emotions, the sample sizes were extremely low, resulting in limited statistical power
-and generalizability of the findings. This potential limitation was
-not a factor for Adolphs et al. (2000), however, who addressed the
-question of the necessity of sensorimotor cortices for recognition
-of emotions in visually presented facial expressions in 108 focal
-brain lesion patients and 30 healthy control participants. Subjects
-participated in three visual emotion recognition tasks. In the first
-task, participants were asked to rate the intensity of basic emotional facial expressions. In the second task, participants were
-asked to match a facial expression with the name of the emotion it
-is meant to convey. The final task required participants to sort
-facial expressions into emotional categories. Though each task
-identified a slightly different group of regions, damage to primary
-and secondary sensorimotor cortices impaired performance in all
-three tasks, supporting the critical role of sensory and motor
-cortices in the recognition of visually presented facial expressions.
-Role of Simulation in the TOM and Empathy Deficits in
-ASD
-The aforementioned behavioral and neuroimaging studies offer
-strong evidence in support of the role of motor and sensory
-systems in social skills (such as TOM and empathy) in typically
-developing individuals. Additionally, as noted earlier in this review, an impaired motor system may play a critical role in the
-neural pathology of the imitative deficit in ASD. If the same
-system underlying motor simulation is a critical component in
-TOM and empathy (as suggested by Gallese, 2001) and if this
-system is in fact dysfunctional in individuals with ASD, then one
-would expect that these individuals would have both TOM and
-empathy deficits. Consistent with this argument, many researchers
-believe TOM and empathy deficits are central to the clinical
-manifestation of autism (see Baron-Cohen, 1995; Gillberg, 1992).
-Anecdotally, Gillberg (1992) reported that children with autism
-are sensitive to affective change. In other words, individuals with
-autism can feel whether an interaction is full of strong emotion
-even if they do not show appropriate behavioral reactions to
-emotional events. It is possible, then, that these children can also
-feel emotions such as happiness, anger, and fear but that they have
-difficulty making sense of these feelings in others, leading to a
-behavioral impairment of empathy. This anecdotal report was
-subsequently supported with controlled studies showing individuals with ASD to have appropriate autonomic arousal (Blair, 1999;
-Shenk & Ramachandran, 2003) but impaired behavioral responses
-(Bacon, Fein, Morris, Waterhouse, & Allen, 1998; Corona, Dissanayake, Arbelle, Wellington, & Sigman, 1998; Sigman, Kasari,
-Kwon, & Yirmiya, 1992) to the observation of individuals in
-distress.
-318 OBERMAN AND RAMACHANDRAN
-In addition to these behavioral studies, direct evidence for a
-facial mimicry deficit in individuals with ASD was seen in a recent
-study conducted by McIntosh, Reichmann-Decker, Winkielman,
-and Wilbarger (2006). In this study, adults with ASD, as well as
-age-, gender-, and verbal intelligence-matched typically developing individuals viewed pictures of happy and angry facial expressions. In one condition, automatic mimicry was measured by EMG
-when participants were instructed to “watch the pictures as they
-appear on the screen.” In a second condition, voluntary mimicry
-was measured by instructing the participants to “make an expression just like this one.” EMG electrodes placed over the cheek and
-brow recorded muscle activity. Despite displaying a normal pattern
-of voluntary mimicry, results from this study suggested that, unlike
-the participants in the matched control group, participants with
-ASD did not show automatic mimicry.
-Similarly, TOM studies have found severe deficits in individuals
-with autism. In a series of studies conducted by Baron-Cohen,
-Leslie, and Frith (1985, 1986), typically developing children,
-children with Down’s syndrome, and children with autism were
-given the “Sally-Anne” test. Whereas the vast majority of both
-4-year-old typically developing children and mental age-matched
-children with Down’s syndrome passed the test, the majority of
-children, adolescents, and adults with autism failed, even when the
-task was controlled for verbal ability. This study also included a
-control task that asked subjects to order a picture sequence on the
-basis of physical causality, in which children with autism performed at a normal level, indicating that their impairment in
-understanding beliefs as psychological causes of behavior was not
-a result of a general inability to understand causality.
-A similar finding was also reported in another study (Perner,
-Frith, Leslie, & Leekam, 1989) in which subjects were shown a
-Smarties box and asked to guess what was inside. When subjects
-were shown that in fact pencils (rather than the expected Smarties)
-were inside, they were then asked to predict what the next child
-who comes in would guess is in the box. Typically developing
-children answered “Smarties,” their original false belief. In answering this way, typically developing individuals clearly were
-able to inhibit their current belief in order to represent the counterfactual knowledge that the next child would have. The majority
-of children with autism, however, answered “pencils,” reflecting
-an inability to inhibit their own current beliefs and infer false
-beliefs in others. These findings have been interpreted as support
-for a selective deficit in understanding the psychological mechanisms that underlie human behavior.
-It is important to note, however, that a debate exists over whether
-the deficits in these tasks are a result of impaired TOM or simply a
-deficit in executive functioning (see Perner & Lang, 2000, for a
-review of this debate). Though there is much evidence supporting the
-correlation between TOM abilities and executive function abilities in
-both typically developing individuals (see Russell, Mauthner, Sharpe,
-& Tidswell, 1991) and children with autism (see Ozonoff, Pennington, & Rogers, 1991; Russell, 1997), it appears that TOM abilities are
-a prerequisite for executive functioning rather then vice versa (Perner
-& Lang, 2000). Additionally, studies conducted by Charman and
-Baron-Cohen (1995) showed no deficit in individuals with autism on
-tasks that have a similar working memory load as false-belief tasks
-(e.g., false photograph and false model tasks), indicating that though
-a working memory or executive functioning deficit may exist in
-autism, it cannot account for the poor performance on these falsebelief tasks.
-One prominent theory of the social deficits in ASD was put forth
-by Baron-Cohen et al. (2000), who implicated the amygdala as the
-core brain region responsible for this impairment. This theory was
-based on several lines of evidence. The first was primate lesion
-studies, which found that lesions of the amygdala resulted in
-monkeys that failed to initiate social interactions and failed to
-respond appropriately to social gestures (Kling & Brothers, 1992).
-Other evidence comes from post-mortem studies finding increased
-cell density in the amygdala of individuals with autism (Bauman &
-Kemper, 1994). Functional imaging also showed significant reductions in activity of the amygdala during a mentalizing task (BaronCohen et al., 1999). Additionally, there is physiological evidence
-supporting a dysfunction in limbic connections resulting in an
-abnormal pattern of skin conductance response to visual stimuli in
-individuals with ASD (Hirstein, Iversen, & Ramachandran, 2001).
-Though Baron-Cohen et al. stressed the role of the amygdala in
-autism, they were quick to highlight that other neural regions also
-show abnormalities.
-Another brain region thought to play a role in the social deficits of
-autism is the medial prefrontal cortex (paracingulate cortex). This
-region responds during TOM tasks in typically developing individuals
-when subjects are asked to reflect on both their own and another
-individual’s mental state. (Brunet et al., 2000; Castelli, Happe´, Frith,
-& Frith, 2000; Fletcher et al., 1995; Gallagher et al., 2000; Vogeley et
-al., 2001) The same region also has reduced activity during similar
-tasks in individuals with ASD (Baron-Cohen et al., 1999; Castelli,
-Frith, Happe´, & Frith, 2002; Happe´ et al., 1996).
-The third region that has been implicated in the social deficits in
-ASD is the superior temporal sulcus. Nonhuman primate single
-unit studies (Oram & Perrett, 1994) as well as human neuroimaging studies (Bonda et al., 1996; Grossman et al., 2000) have shown
-activity in this region in response to biological actions (see Allison,
-Puce, & McCarthy, 2000, for a review), as well as detection of eye
-gaze in monkeys (Perrett et al., 1985) and humans (Hoffman &
-Haxby, 2000; Puce et al., 1998) and inferred intentional action of
-inanimate shapes on the basis of movement patterns in humans
-(Castelli et al., 2000). This brain region has also shown abnormal
-activity patterns in individuals with ASD during face recognition
-tasks (Critchley et al., 2000; Schultz et al., 2000), a mentalizing
-task (Castelli et al., 2002), and an eye gaze-processing task (Pelphrey et al., 2005). Studies have also found reduced grey matter
-volume in anatomical MRI scans (McAlonan et al., 2004).
-In conclusion, though more research needs to be done, there is
-much evidence that multiple brain regions including the amygdala,
-medial prefrontal cortex, and superior temporal sulcus are involved
-both in the development of normal social cognition and in the
-impairments seen in ASD. Additionally, each of these three regions appears to possess mirror properties. Thus the simulation
-theory of autism not only is supported by these findings but also
-subsumes these findings under a more unified theory.
-Language
-Evidence for Role of Simulation in Language
-Comprehension and Production
-Thus far this review has discussed evidence for the role of
-simulation in three social abilities that are central in the behavioral
-ROLE OF THE MIRROR NEURON SYSTEM IN ASD 319
-pathology of autism: understanding of others’ behaviors, thoughts,
-and feelings. We now move to address a fourth ability that can also
-be explained in terms of a deficit in simulation, language comprehension and production.
-A leading theory of language comprehension may provide a clue
-as to why individuals with autism have both social and communicative deficits. This theory, termed the motor theory of speech
-perception (Liberman & Mattingly, 1985) has two main claims.
-The first claim is that the objects of speech perception are not the
-acoustic signals (as proposed by Ohala, 1996) but rather the
-phonetic gestures. The phonetic gestures of the speaker are represented in the brain of the observer as motor commands that signal
-movements of the mouth, lips, and tongue in specific configurations. The second claim of this theory is that speech perception and
-speech production are intimately linked.
-Supporting evidence for this theory comes from behavioral,
-neuromagnetic, and neuroimaging studies. One paradigm that has
-been used to support the linkage between speech perception and
-speech production is similar to the response interference paradigms used to support the role of simulation in action perception.
-In a series of studies performed by Kerzel and Bekkering (2000),
-participants were asked to speak the syllables /ba/ and /da/ while
-watching silent videos of others articulating the same or different
-syllables. For both the /ba/ and /da/ conditions, a significant
-interference effect was noted with a slower reaction time when the
-response-irrelevant visual stimulus was inconsistent with the target
-response.
-Additional evidence comes from neuromagnetic studies. Fadiga,
-Craighero, Buccino, and Rizzolatti (2002) performed a TMS study
-in which participants listened to auditory speech and nonspeech
-sounds while a magnetic pulse was applied to their left motor
-cortex. The MEP in the tongue was recorded using electrodes
-placed on the surface of the tongue. When tongue movements were
-required to produce the heard speech sounds, there was an increase
-in MEPs as compared with nonspeech sounds or speech sounds
-that did not require the tongue.
-In a similar study, Watkins, Strafella, and Paus (2003) investigated whether hearing or watching speech sounds being produced
-would increase MEPs in the lips. Subjects listened to speech and
-nonverbal sounds and watched speech-related lip movements as
-well as eye and brow movements. In both the auditory and visual
-speech conditions, TMS over primary motor cortex resulted in an
-increase in MEPs in the lip muscles, further supporting the involvement of the motor cortex in the comprehension of speech.
-fMRI studies have also shown specific activation of speech
-production areas during the listening of speech sounds. Wilson,
-Saygin, Sereno, and Iacoboni (2004) scanned 10 subjects while
-they listened to meaningless monosyllable sounds then produced
-the same sounds. Production of the sounds activated areas of
-prefrontal cortex including Brodmann’s areas 4a, 6, and 4p. Similarly, listening to speech sounds activated areas of ventral premotor cortex, which largely overlapped with the posterior speech
-production areas.
-Although not directly related to the motor theory of speech
-perception, further evidence for the involvement of motor actions
-on language is found in the studies of Rauscher, Krauss, and Chen
-(1996) and Glenberg and Kaschak (2002). Rauscher et al. found
-that subjects gesture five times as frequently when describing
-spatial aspects of a visual scene as compared with nonspatial
-aspects (0.5 vs. 0.1 gestures per word). Additionally, when subjects were prevented from gesturing, they spoke more slowly. This
-finding applied only when the content of speech was spatial in
-nature (116 vs. 100 words per minute). With other kinds of
-content, however, the subjects’ rate of speech was somewhat
-increased when they could not gesture. This study provides evidence for a shared representation between verbal and motor aspects of language.
-A series of studies conducted by Glenberg and Kaschak (2002)
-found that gestures may share not only a representation with
-language production but also language comprehension. In these
-studies, participants were asked to judge whether sentences were
-sensible by making a response that required moving either toward
-or away from their bodies. The experimental sentences were specifically created to describe actions that required movements either
-toward or away from the body (e.g., Open the drawer). When the
-response required a movement that was inconsistent with the
-sentence, the latency for response was increased as compared with
-when the response action matched the action described in the
-sentence. This finding was true for imperative (e.g., Open the
-drawer), concrete transfer (e.g., Courtney handed you the book),
-and abstract transfer (e.g., You told Liz the story) sentences.
-Findings from this and the previous behavioral studies indicate that
-speech observation interferes with speech production, physical
-gesturing influences speech production, and language comprehension has a Stroop-like interference effect on action production, all
-of which support the motor theory of speech perception.
-The second claim of the motor theory of speech perception is
-that speech perception and speech production share an underlying
-mechanism. Along these lines, recent evidence suggests that the
-superior temporal sulcus as well as the inferior frontal gyrus
-respond to both the sight and sound of human speech (Calvert &
-Campbell, 2003). Given these findings, researchers are beginning
-to draw connections from the action-related MNS to the utilization
-of this system for communication. If the purpose of simulating the
-action with mirror neurons is to understand the observed action,
-one would theorize that activating the speech production areas
-while listening to language would lead to better understanding of
-the verbalization. Electrophysiological and imaging data support
-this theory.
-Hauk and Pulvermuller (2004) recorded EEG while subjects
-silently read words that related to hand, leg, and head actions. A
-visual-evoked potential was recorded over the frontal-central leads
-at approximately 210 –230 ms after stimulus onset. Source localization discovered that not only did the reading of these sentences
-activate regions of sensorimotor cortex, but the activation was
-somatotopically distinct based on the effector that would be used
-to perform the action. Face-action words resulted in activations in
-left frontal regions, whereas leg-action words showed activations
-in central leads, and arm-action words activated largely right
-central and right frontal regions.
-A follow-up study by the same group (Hauk, Johnsrude, &
-Pulvermuller, 2004) used fMRI to confirm that simple reading of
-action-related words activates somatotopically distinct areas depending on the effector used for that action. Results confirmed that
-reading face-action words specifically activated inferior frontal
-gyrus, arm-action words activated areas of middle frontal and
-precentral gyrus, and leg-action words activated pre- and postcentral gyri, superior frontal gyrus, and the dorsomedial frontal region.
-320 OBERMAN AND RAMACHANDRAN
-For the arm- and leg-movement words, there was a significant
-overlap with performed leg and arm actions. For face-action
-words, the activation pattern was just anterior to the region activated by actual tongue actions. This study further confirmed the
-important relationship between action-related language and the
-areas of cortex responsible for the performance of the same actions.
-A second fMRI study conducted by Tettamanti et al. (2005)
-confirmed that across all body parts, processing of action sentences
-selectively activated the pars opercularis of the left inferior frontal
-gyrus (Broca’s area). Mouth sentences activated the pars opercularis in regions rostral, dorsal, and ventral from the focus activated
-by all body parts. Additionally, the pars triangularis of the inferior
-frontal cortex was activated during listening of mouth sentences.
-Hand sentences resulted in a distinctly different pattern of activation, including left precentral gyrus, the left posterior intraparietal
-sulcus, the left posterior inferior temporal gyrus, the left insula,
-and the right middle temporal gyrus. Finally, leg sentences selectively activated the left dorsal premotor cortex (within the superior
-frontal sulcus) and the left inferior parietal lobule.
-Finally, a TMS study conducted by Buccino et al. (2005) found
-a decrease in MEPs recorded from the hand muscles when participants listened to hand-action sentences and MEPs recorded from
-leg muscles when listening to leg-action sentences. Though modulations in MEPs were an expected result, the direction of the
-modulation was not as predicted. The authors suggested multiple
-explanations for the unexpected decrease in MEPs in the muscle
-consistent with the heard sentence including the modality of presentation and interference. Independent of the direction of the
-effect, this study provides evidence for specific modulation of the
-motor areas involved in action production when listening to sentences related to those actions.
-Taken together, these findings support a shared mechanism for
-speech production and speech perception in both auditory and
-visual domains. Additionally, these findings support a role for
-simulation in speech comprehension, as the motor effectors involved in actions seem to be modulated when one listens to
-action-related sentences. The MNS was specifically implicated in
-the evolution of language in a review article by Rizzolatti and
-Arbib (1998).
-Rizzolatti and Arbib (1998) suggested that the MNS, which
-mediated action comprehension in monkeys and higher primates,
-went through six stages of evolution that led to its eventual role in
-language comprehension in the modern human.
-1. The MNS may originally have been for the purpose of
-recognition of grasping actions through a simulation
-mechanism in early primates.
-2. This primal system evolved in the chimpanzee to support
-simple imitation for object-directed grasping.
-3. In the early homonid, this simple system may have become elaborated to include complex imitation that allowed for learning of novel actions that could be approximated by variants of actions that were already part of the
-observer’s repertoire.
-4. The early hominid then developed a system of protosigns, which was a manual-based communication system.
-This leap from imitation for the sake of instrumental
-goals to imitation for the sake of communication was
-likely when the specificity of MNS for object-directed
-actions was lost.
-5. Once protosign had evolved, this provided the scaffold
-for which protospeech could develop. Once an individual
-learned a conventional gesture, that gesture could be
-paired with a vocalization (protospeech).
-6. The final stage, language, it is argued, was mediated
-more by cultural rather than biological evolution in Homo
-sapiens.
-If, as suggested by Rizzolatti and Arbib’s model and the previously
-cited studies, the MNS and simulation processes are necessary for
-the proper evolution, development, and comprehension of language, then it is not at all surprising that individuals with autism,
-in addition to having social deficits, have language impairments.
-Language Deficits in ASD
-Beyond the basic function of speech, language also serves the
-purpose of communication of thoughts, beliefs, and desires between individuals. Though about half of individuals with autism
-will acquire some level of linguistic knowledge, even these individuals will likely have a specific deficit in the use of language for
-social communication, pragmatic abilities. When compared with
-both typically developing and other developmental disorder populations, multiple behavioral studies have revealed a relative sparing of phonological, lexical–semantic, and grammatical aspects of
-language in verbal individuals with ASD (see Tager-Flusberg,
-2000, for a review). The spared abilities may explain why many
-individuals with autism develop rudimentary aspects of communication, including turn-taking skills, requesting behavior, and
-regulatory speech.
-Some clinical features of the language impairment in autism
-include echolalia, neologisms, and reversal of pronouns. In lower
-functioning individuals, often the only language production that is
-present is echolalic, or the echoing of the words phrases or sentences spoken by others (McEvoy, Loveland, & Landry, 1988).
-Neologisms are idiosyncratic lexical terms that have special or
-unique meanings to the individual but no meaning to the general
-public. This tendency is most common in higher functioning
-individuals with ASD (Volden & Lord, 1991). Finally, verbal
-individuals with autism will commonly reverse pronouns and refer
-to themselves as you and others as I, indicating a difficulty in the
-notion of self and other (Lee, Hobson, & Chiat, 1994). This
-tendency is more common in individuals with autism than in any
-other clinical population (Lee et al., 1994). All of these features
-characterize the basic impairment in pragmatic use of language in
-individuals with ASD.
-Some have suggested that this selective impairment may be tied
-to these same individuals’ TOM deficits (Locke, 1994; Sperber &
-Wilson, 1987; Tager-Flusberg, 1993). In the words of Sperber and
-Wilson (1987), “Communication exploits the well-known ability
-of humans to attribute intentions to each other” (p. 699). However,
-explaining the language deficits in autism in terms of behavioral
-ROLE OF THE MIRROR NEURON SYSTEM IN ASD 321
-TOM deficits without suggesting a candidate mechanism for either
-is explaining one enigma with another and adds little to the
-understanding of either of these phenomena. Additionally, the
-direction of this relationship is unclear. Some suggest that TOM is
-a necessary precursor to developing social communication (Winner, Brownell, Happe´, Blum, & Pincus, 1998;Winner & Leekam,
-1991; Happe´, 1993); others have proposed that experience with
-social communication leads to proficient TOM skills (Peterson &
-Siegal, 2000).
-Other theories for the language impairment in autism include the
-weak central coherence theory (Frith, 1989) and an executive
-dysfunction theory proposed by Liss et al. (2001). The central
-coherence theory states that pragmatic language requires the ability to not simply attend to the specific semantics of language but
-rather focus on the global context of the intercourse to comprehend
-the meaning, whereas the executive dysfunction theory is supported by correlational analyses between executive functioning
-and language skills in autism (Liss et al., 2001).
-Though there is much theory on the underlying mechanisms
-mediating the language impairment in autism, there is little conclusive evidence for a causal relationship between TOM, central
-coherence, or executive functioning and the language impairment
-in ASD. However, the theory presented here, based on the motor
-theory of speech perception and theories suggesting the involvement of simulation mechanisms such as the MNS in language,
-provides a functional mechanism that may explain the communication impairments in ASD from a simulation account. One study,
-conducted in our laboratory, provides preliminary evidence for the
-role of impairment in the MNS in the language deficits of ASD
-(Ramachandran & Oberman, 2006). This study used a linguistic
-multisensory-integration task, the bouba– kiki task, in which participants are asked to name nonsense shapes. For example, if given
-an amoeboid shape and a jagged shape and asked to name one
-bouba and another kiki, 99% of the general population will name
-the amoeboid shape bouba and the jagged shape kiki. This is
-presumably because of mirror neuron-like multisensory systems
-that integrate the visual shape with sounds (sound–form symbolism). Surprisingly, only 20% of individuals with autism showed
-this effect. We suggest that the MNS may be involved in multisensory integration in the linguistic domain including the bouba–
-kiki effect and metaphors, which would explain their deficits in
-both tasks.
-Conclusions
-This article has argued that perceptual recognition, motor mimicry, TOM, empathy, and pragmatic language may all be mediated
-by underlying simulation mechanisms in typically developing individuals. Despite this underlying similarity, historically these
-abilities have been studied in isolation, and consequently, multiple
-simulation theories have been developed to explain one or two of
-these phenomena. However, given that these abilities all seem to
-be impaired in a single clinical syndrome—autism—it is not only
-parsimonious but also clinically necessary to develop a unified
-theory.
-Returning to Barsalou’s (1999) situated conceptualization
-model introduced at the beginning of this review, he proposed that
-simulators exist in multiple brain regions related to the region that
-first encoded that information. Thus, simulations of actions and
-body states may occur in areas of the cerebellum, superior temporal cortex, and the MNSs of inferior parietal lobule and premotor
-cortex (Miall, 2003), whereas the simulator networks for introspective states such as thoughts, beliefs, and emotions are likely to
-be found in the amygdala, medial areas of prefrontal cortex, insular
-cortex, and the anterior cingulate cortex.
-Not coincidently, the brain regions that have most often been
-implicated in ASD— cerebellum, amygdala, medial prefrontal cortex, and premotor cortex—all appear (on the basis of the literature
-cited in this review) to house simulator systems. Thus, we propose
-that a developmental impairment of functional simulators, especially the MNS, may be the unifying mechanism that underlies the
-deficits in imitation, TOM, empathy, and pragmatic language. A
-recent review by Gallese (2006) suggested that a similar mechanism, what he calls intentional attunement, is at the root of ASD.
-As the data currently stand, this theory has yet to account for
-behaviors related to restricted, repetitive, and stereotyped patterns
-of behaviors, interests, and activities. However, it is one of the
-most comprehensive of any of the theories to date and, with more
-research, may too account for this aspect of the disorder. The
-mirror neuron–simulation theory of autism, for which the first
-experimental support came from preliminary studies conducted in
-our lab (Altschuler et al., 2000; Oberman et al., 2005), accounts for
-the wide range of behavioral and neurological deficits that are
-unique to autism and has the added advantage of fitting well within
-the literature regarding these abilities in the normal population.
-One question that still remains is how simulation systems such
-as the MNS develop. There are a variety of ways this unique
-mechanism could be set up, but whatever the mechanism, the
-research reviewed here suggests that a flaw in its initial setup
-might be the fundamental deficit in autism. This flaw could affect
-either the gray matter regions containing the simulator neurons
-themselves or the white matter tracts that link the regions together
-as a functional system or a combination of both.
-As this review highlights, there is a large body of literature
-supporting the role of simulation in the areas of perception, motor
-mimicry, TOM, empathy, and language. Additionally, there is
-much evidence for deficits in these abilities in individuals with
-ASD. Two remaining questions that require further investigation
-include the development of the MNS and how well the behavioral
-deficits in ASD can be explained by impairments in simulation,
-especially in the domain of language in which this theory has yet
-to be applied. The latter is currently being investigated through
-studies using the same paradigms that were used to establish the
-importance of simulation in the general population to investigate
-whether their behavioral deficits are correlated with their performance on simulation tasks.
+Imitation, Empathy,
+and Mirror Neurons
+Marco Iacoboni
+Ahmanson-Lovelace Brain Mapping Center, Department of Psychiatry and Biobehavioral
+Sciences, Semel Institute for Neuroscience and Social Behavior, Brain Research Institute,
+David Geffen School of Medicine at UCLA, Los Angeles, California 90095;
+email: iacoboni@loni.ucla.edu
+Annu. Rev. Psychol. 2009. 60:653–70
+First published online as a Review in Advance on
+September 15, 2008
+The Annual Review of Psychology is online at
+psych.annualreviews.org
+This article’s doi:
+10.1146/annurev.psych.60.110707.163604
+Copyright c 2009 by Annual Reviews.
+All rights reserved
+0066-4308/09/0110-0653$20.00
+Key Words
+social cognition, theory of mind, mirror neuron system, embodiment
+Abstract
+There is a convergence between cognitive models of imitation, constructs derived from social psychology studies on mimicry and empathy, and recent empirical findings from the neurosciences. The ideomotor framework of human actions assumes a common representational
+format for action and perception that facilitates imitation. Furthermore, the associative sequence learning model of imitation proposes
+that experience-based Hebbian learning forms links between sensory
+processing of the actions of others and motor plans. Social psychology studies have demonstrated that imitation and mimicry are pervasive, automatic, and facilitate empathy. Neuroscience investigations
+have demonstrated physiological mechanisms of mirroring at single-cell
+and neural-system levels that support the cognitive and social psychology constructs. Why were these neural mechanisms selected, and what
+is their adaptive advantage? Neural mirroring solves the “problem of
+other minds” (how we can access and understand the minds of others)
+and makes intersubjectivity possible, thus facilitating social behavior.
+653
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+Hebbian learning:
+associative learning is
+implemented by
+simultaneous
+activation of cells that
+would lead to
+increased synaptic
+strength between the
+cells
+Contents
+INTRODUCTION . . . . . . . . . . . . . . . . . . 654
+COGNITIVE MECHANISMS
+OF IMITATION . . . . . . . . . . . . . . . . . . 654
+The Ideomotor Framework
+of Imitation. . . . . . . . . . . . . . . . . . . . . 654
+Associative Sequence Learning . . . . . 656
+IMITATION AND EMPATHY
+IN SOCIAL BEHAVIOR . . . . . . . . . . 657
+Pervasiveness and Automaticity
+of Human Imitation. . . . . . . . . . . . . 657
+NEURAL MECHANISMS
+OF IMITATION . . . . . . . . . . . . . . . . . . 659
+Neural Precursors
+in Nonhuman Primates . . . . . . . . . 659
+Macaque Mirror Neurons
+and Imitation in Monkeys . . . . . . . 662
+Human Brain Mechanisms
+of Mirroring . . . . . . . . . . . . . . . . . . . . 663
+Neural Mirroring and Psychological
+Theories of Imitation . . . . . . . . . . . 665
+WHY NEURAL MIRRORING
+AND IMITATION? . . . . . . . . . . . . . . . 666
+INTRODUCTION
+Although mimicry is a pervasive phenomenon
+in the animal kingdom, imitation certainly
+achieves its highest form in humans. Past
+authors—for instance, de Montaigne (1575),
+Adam Smith (1759), Poe (1982), Nietzsche
+(1881), and Wittgenstein (1980)—have often
+associated imitation with the ability to empathize and understand other minds. The evolutionary, functional, and neural mechanisms
+linking imitation to empathy, however, have
+been unclear for many years. Recently, there has
+been a convergence between cognitive models of imitation, social psychology accounts of
+its pervasiveness and its functional links with
+empathy and liking, and the neuroscience discoveries of neural mechanisms of imitation
+and empathy. This convergence creates a solid
+framework in which theory and empirical data
+reinforce each other.
+Among cognitive models of imitation, the
+ideomotor model and the associative sequence
+learning model seem to map well onto neurophysiological mechanisms of imitation. The
+ideomotor model assumes a common representational format for action and perception, whereas the associative sequence learning
+model puts at center stage Hebbian learning as
+a fundamental mechanism linking sensory representations of the actions of others to motor
+plans. Furthermore, social psychology studies
+have documented the automaticity of imitation
+and mimicry in humans, a feature that also maps
+well onto some recently disclosed neurophysiological bases of imitation.
+This review discusses cognitive models, social psychology constructs, and neural mechanisms of imitation under the hypothesis that
+these mechanisms were selected because they
+offer the adaptive advantage of enabling the understanding of the feelings and mental states of
+others, a cornerstone of social behavior.
+COGNITIVE MECHANISMS
+OF IMITATION
+The Ideomotor Framework
+of Imitation
+Theories of action can be divided into two
+main frameworks. The most dominant framework may be called the sensory-motor framework of action. It assumes that actions are initiated in response to external stimuli. In this
+framework, perception and action have independent representational formats. Stimuli must
+be translated into motor responses by stimulusresponse mapping mechanisms. This framework has generated a large literature and elegant experimental paradigms, as for instance
+the work on stimulus-response compatibility
+(Hommel & Prinz 1997, Proctor & Reeve
+1990). Stimulus-response translational mechanisms, however, do not easily account for the
+similarity between the observed action and the
+action performed by the imitator that is required by imitation. Indeed, one of the main
+problems of imitation often discussed in the
+654 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+literature inspired by sensory-motor models
+is the so-called correspondence problem (Nehaniv & Dautenhahn 2002). This problem
+can be summarized with the question: how is
+the sensory input from somebody else’s action
+transformed into a matching motor output by
+the imitator?
+For the ideomotor framework of action, the
+correspondence problem of imitation is not a
+problem at all. Indeed, the ideomotor framework assumes a common representational format for perception and action, an assumption that makes translational processes between
+stimuli and responses rather unnecessary. The
+roots of the ideomotor framework were established by the work of Hermann Martin Lotze
+(Prinz 2005) and William James (1890). The
+starting point of actions, for Lotze and James,
+is not a response to a sensory stimulation, but
+rather the representation of the goal that the
+agent intends to achieve. When an intention
+is unchallenged by a conflicting one, it activates the representation of the intended goal
+and the motor plan necessary to achieve it. The
+coactivation of the intended goal and the motor plan required to achieve it—according to
+the ideomotor framework—is the result of our
+experience. We have learned the effects of our
+own actions, and we expect certain effects when
+we perform certain acts. This previous learning
+makes it possible that just thinking about the
+intended goal automatically activates the representation of the action necessary to obtain it.
+Thus, when I think about rebooting my computer, I automatically activate the representation of the finger movement necessary to press
+the appropriate key.
+The ideomotor framework naturally accounts for imitation. According to this framework, when I see somebody else’s actions and
+their consequences, I activate the representations of my own actions that would produce
+those consequences. Here, consequences are
+construed in a very broad sense. For instance,
+a simple finger lifting has multiple perceptual
+consequences, among them the sight of the finger lifting. Thus, simply watching somebody
+else lifting a finger should activate my own motor plan to lift the same finger. Brass and colleagues tested this hypothesis in elegantly simple experiments (Brass et al. 2000, 2001). Subjects were shown two movements of the index
+finger from the same starting position. In half
+of the trials the finger would move upward,
+and in the other half it would move downward.
+Subjects were instructed to respond as fast as
+possible using their own index finger. Within
+each block of trials, subjects were instructed to
+use always the same motor response, either an
+upward or a downward movement. Thus, although perceptually subjects were seeing both
+upward and downward movements, motorically
+they were only executing one of the two movements. Given that response selection was not
+required, the identity of the stimulus was completely irrelevant for the initiation of the motor
+response. Here, the sensory-motor framework
+would predict similar reaction times for responses that were identical to the stimulus (e.g.,
+upward motor response for a stimulus showing
+an upward finger movement) and for responses
+that were different from the stimulus (e.g., upward motor response for a stimulus showing a
+downward finger movement). In contrast, the
+ideomotor framework would predict faster reaction times for motor responses identical to
+the stimulus compared to motor responses different from the stimulus. The results demonstrated a large chronometric advantage for responses identical to the stimuli, in line with the
+predictions of the ideomotor framework (Brass
+et al. 2000, 2001).
+The ideomotor framework also predicts that
+goals have higher priority than movements in
+imitation. Imitation experiments in children
+have confirmed this prediction. In one of these
+experiments (Bekkering et al. 2000), children
+and experimenters were sitting on the opposite
+sides of a desk. In half of the trials the experimenter would place her or his left hand on the
+left side of the desk (left ipsilateral movement)
+or on the right side of the desk (left contralateral
+movement); in the remaining half of the trials
+the experimenter would place her or his right
+hand on the right side of the desk (right ipsilateral movement) or on the left side of the desk
+www.annualreviews.org • Imitation, Empathy, and Mirror Neurons 655
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+Associative sequence
+learning: imitation is
+based on associative,
+Hebbian-like learning,
+creating “vertical
+links” between sensory
+and motor
+representations
+(right contralateral movement). Children were
+instructed to “Do what I do,” and in all cases,
+they imitated all these movements well. In a separate session, children and experimenters were
+again sitting on the opposite sides of the desk.
+Now, however, there were two big red dots, one
+on the left and one on the right side of the desk.
+Whenever the experimenter made a movement,
+either ipsilateral or contralateral with either the
+left or the right hand, the hand of the experimenter would end up covering the big red dot.
+Children were again instructed to “Do what I
+do.” In this situation, children imitated well the
+ipsilateral movements but made frequent mistakes when trying to imitate the contralateral
+movements. Note that these movements had
+been imitated well in absence of the big red dot.
+The presence of the big red dot had changed the
+goal of the action to be imitated. Whereas in
+the absence of the dot, the action itself was the
+goal to be imitated, the presence of the dot had
+changed the goal of the action in covering the
+dot. Indeed, children made mistakes when imitating contralateral movements because they
+used ipsilateral movements to cover the same
+dot that had been covered by the experimenter.
+In other words, children would copy the goal
+but used a simpler movement to achieve this
+goal (Bekkering et al. 2000).
+One of the main assumptions of the ideomotor framework is that action and perception
+share a common representational format. This
+assumption fits well recent neuroscience discoveries, as discussed below. Another important assumption of the ideomotor framework
+is that our perceptual and motor experience is
+very important in shaping the functional aspects
+of imitation. This assumption is also shared by
+the associative sequence learning model (Heyes
+2005), as described in the next section.
+Associative Sequence Learning
+The associative sequence learning model of imitation proposes that imitative abilities are based
+on associations between the sensory and motor representation of actions. These associations would be mostly shaped by experience,
+although a small number of these associations
+may be innate. Several environmental situations
+may favor the establishment of these associations between sensory and motor representation of actions, for instance, visually guided
+actions, such as reaching and grasping, during
+which we can observe our own arm and hand
+reach and grasp for objects surrounding us.
+Also, mirrors and other reflecting surfaces allow the observation of one’s own facial and body
+movement as if they were performed by somebody else. Furthermore, early in human development, adults tend to imitate the baby (Nadel
+2002), thus favoring the formation of the associations between sensory and motor representations of actions.
+The basic assumption of the associative
+sequence learning model is that imitation is
+not based on dedicated functional (and neural)
+mechanisms. General sensory and motor systems may implement imitative abilities through
+mechanisms that are strongly reminiscent of
+Hebbian learning. One of the corollaries of this
+assumption is that imitation should not be confined to specific lineages. Indeed, although primates clearly show varying degrees of imitative abilities, birds (Akins et al. 2002) and dolphins (Herman 2002) also seem able to imitate. Thus, imitative behavior appears to be the
+product of convergent evolution. If this is true,
+then the hypothesis that imitation is mostly
+shaped by experience—as assumed by the associative sequence learning model—is obviously
+supported.
+The role of experience and the environment
+in shaping imitative abilities may also account
+for evidence that at first sight seems at odds
+with the basic assumptions of the associative
+sequence learning model. Many animals share
+similar basic sensory and motor functional and
+neural mechanisms. In principle, this should
+lead to similar imitative skills in many animals. Imitation abilities, however, vary substantially between species (Boysen & Himes 1999,
+Hurley & Chater 2005). Is this evidence a fatal blow to the main assumption of the associative sequence learning model? Probably not.
+Indeed, different kinds of environments may
+656 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+account for the differences in imitative abilities observed in different species. As discussed
+above, some elements that are quite specific to
+the human environment should favor the formation of the associations between sensory and
+motor representations posited by the associative sequence learning model. In keeping with
+these ideas, humans are by far the best imitators
+(Hurley & Chater 2005).
+Empirical evidence in well-controlled laboratory experiments seems to support the role
+of experience in shaping imitation, as hypothesized by the associative sequence learning
+model. For instance, hand-opening and handclosing gestures are typically facilitated by the
+observation of the same movement compared to
+the observation of a different movement. However, this facilitation can be abolished by a relatively short period of training during which
+subjects are instructed to open the hand while
+observing hand closing, and to close the hand
+while observing hand opening (Heyes et al.
+2005).
+In another experiment, the effect of training was measured on the speed of imitation
+induced by the observation of human motion
+versus robotic motion. A typical finding is that
+humans imitate more quickly the movements of
+another human compared to the movements of
+a robot. This effect, however, may be simply because humans tend to interact more with other
+humans than with robots. Indeed, subjects who
+were trained to execute hand movement in response to a robotic movement demonstrated no
+difference in speed of imitation while observing human and robotic movements (Press et al.
+2007).
+Although the associative sequence learning
+model and the ideomotor framework of imitation share the main idea that experience is extremely important for imitation, they also seem
+to differ on an important point. The associative
+sequence learning model assumes that separate
+sensory and motor representations are linked by
+experience. In contrast, the ideomotor framework assumes that sensory and motor functional mechanisms share a common representational format. In psychological terms, these
+differences are not negligible. The translation
+of these different concepts into neural activity,
+however, as discussed below, may not differ dramatically (Glimcher 2005). Indeed, the main
+assumptions of both the associative sequence
+learning model and the ideomotor framework
+of imitation fit well with recent neuroscience
+findings on imitation.
+IMITATION AND EMPATHY
+IN SOCIAL BEHAVIOR
+Pervasiveness and Automaticity
+of Human Imitation
+Humans seem to have a strong tendency to align
+their behavior with their fellows during social
+interactions (Lieberman 2007). Some of these
+forms of imitation and mimicry are not only
+pervasive and automatic, but also operate on
+a quite complex level. Ap Dijksterius (2005)—
+following LeDoux’s terminology on processing
+of fearful stimuli (LeDoux 1996)—suggests that
+there are two roads to human imitation. A low
+road leads to imitation in a direct fashion, such
+that the perceiver acts the gestures, postures, facial expressions, and speech perceived in other
+people. A high road leads to complex and rather
+subtle forms of imitation, as shown by a number of experiments with priming manipulations that lead to stereotype activation or trait
+activation.
+An example of stereotype activation on
+motor behavior is provided by the following experiment. Participants performed a
+scrambled-sentence language task. Some subjects were exposed to words such as Florida,
+bingo, gray; that is, words typically associated
+with the elderly. Some other subjects were not.
+After the experiment, participants left the laboratory and walked back to the elevator to leave
+the building. An experimenter timed this walk
+back to the elevator. Subjects who had been
+primed with the elderly stereotype were reliably slower than subjects who had not been
+primed (Bargh et al. 1996). The primed subjects
+www.annualreviews.org • Imitation, Empathy, and Mirror Neurons 657
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+imitated—obviously in an unconscious way—
+the slowness of old people.
+The high road to imitation is also at work
+in memory and general knowledge tasks. In
+one experiment, subjects sat in front of a desk
+full of objects. The stereotype of the elderly
+was primed again in some subjects by asking
+them questions on elderly people. Other subjects, in contrast, were asked questions about
+college students. Subsequently, subjects were
+transferred to another room and were asked to
+remember the objects that were on the desk in
+front of them. The subjects primed with the
+elderly stereotype remembered far fewer objects than did the other participants (Dijksterhuis et al. 2000).
+In a series of experiments, participants were
+either asked to think about college professors
+(a group of people typically associated with intelligence) and to write down everything that
+came to mind about college professors, or they
+were asked to think about soccer hooligans
+(a group of people typically not associated with
+intelligence) and to write down everything that
+came to mind about soccer hooligans. In a
+later task involving general knowledge questions, a task that was ostensibly unrelated to
+the first one, the participants who were asked
+to think about college professors outperformed
+the participants who were asked to think about
+soccer hooligans. Indeed, the participants who
+were asked to think about college professors
+even outperformed participants who were not
+asked anything at all, and the participants who
+were asked to think about soccer hooligans
+were outperformed by participants who were
+not asked anything at all (Dijksterhuis & van
+Knippenberg 1998).
+Many more studies support the concept that
+the high road to imitation is pervasive and automatic (Dijksterhuis 2005). The question is why
+pervasiveness and automaticity have been selected as distinctive properties of the high road
+to imitation. One possibility is that imitation facilitates social interactions, increases connectedness and liking, gets people closer to each
+other, and fosters mutual care. If this account
+is correct, it should follow that good imitators should also be good at recognizing emotions in other people, which in turn may lead
+to greater empathy. Thus, this account would
+predict a correlation between the tendency to
+imitate others and the ability to empathize with
+them. This hypothesis was tested in a series of
+experiments (Chartrand & Bargh 1999). In the
+first experiment, subjects were asked to choose
+pictures in a set of photographs. The cover
+story was that the researchers needed some
+of these pictures for a psychological test and
+wanted to know from the subjects which pictures they considered more stimulating. While
+subjects were choosing the pictures, a confederate was sitting in the same room with the real
+subject. The confederate pretended to be another subject who was also choosing good stimulating pictures. During the experimental sessions, some confederates deliberately rubbed
+their nose while the others shook their foot.
+Subjects were videotaped and their motor behavior was measured. It was found that the real
+subjects unintentionally mimicked the motor
+behavior of the confederate with whom they
+were sharing the room. Subjects who shared
+the room with confederates who rubbed their
+nose, rubbed their nose more than did subjects
+who shared the room with confederates who
+shook their foot. Furthermore, subjects who
+shared the room with confederates who shook
+their foot, shook their foot more than did subjects who shared the room with confederates
+who rubbed their nose. These results are in line
+with the idea that imitation is automatic and
+provide the necessary prelude to the following
+experiments.
+The second experiment tested the hypothesis that one of the functions of this automatic
+tendency to imitate is to increase liking between
+individuals. Participants were again asked to
+choose pictures, and confederates were again
+sitting with them, pretending to be participants
+of the study. In this second experiment, the
+cover task required participants and confederates to take turns in describing what they saw
+in various photos. At the end of the interaction
+658 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+between participants and confederates, the participants were also asked to complete a questionnaire to report how much they liked the
+other participant (that is, the confederate) and
+how smoothly they thought the interaction had
+gone. In this second experiment, the confederates either imitated the spontaneous postures,
+movements, and mannerisms of the subjects or
+kept a neutral posture. The participants who
+were mimicked by confederates during the interaction liked the confederates much more
+than did the participants who were not imitated. Furthermore, mimicked subjects rated
+the smoothness of the interaction higher than
+did the participants who were not imitated.
+This experiment demonstrated that imitation
+and liking tend to go together. When someone is imitating us, we tend to like him or her
+more.
+A third experiment tested the hypothesis
+that the more people tend to imitate others, the
+more they are concerned with the feelings of
+other people. The setting of this third experiment was identical to the first experiment. The
+novel aspect of this last experiment was that the
+participants responded to a questionnaire that
+measured their empathic tendencies. The experiment found a strong correlation between
+the tendency to empathize and the amount of
+imitative behavior displayed by the participants.
+The more a subject imitated the confederate,
+the more that subject was an empathic individual (Chartrand & Bargh 1999). This result suggests that through imitation and mimicry, we
+are able to feel what other people feel. By being
+able to feel what other people feel, we are also
+able to respond compassionately to other people’s emotional states (Eisenberg 2000, Tangney
+et al. 2007).
+Many other empirical results are consistent with these ideas (Braten 2007, Niedenthal
+et al. 2005). What are the neural correlates of
+these complex forms of human behavior? A recent discovery in the monkey premotor cortex
+has sparked a whole series of new studies, in
+monkeys and humans, that are relevant to this
+question.
+Premotor cortex:
+anterior sector of the
+agranular frontal
+cortex containing
+neurons that are
+relevant to the
+planning, preparation,
+and selection of actions
+Mirror neurons:
+neurons with motor
+properties in premotor
+and posterior parietal
+cortex that fire not
+only during action
+execution, but also
+while observing
+somebody else
+performing the same
+or a similar action
+NEURAL MECHANISMS
+OF IMITATION
+Neural Precursors
+in Nonhuman Primates
+The premotor cortex of the macaque brain,
+a cortical region important for the planning, preparation, and selection of movements
+and coordinated actions, is not homogeneous
+(Matelli et al. 1985). It is composed of several
+cito-architectonic fields with different physiological properties. In the lateral wall of the
+macaque brain, the ventral sector of the premotor cortex is composed of two main fields, area
+F4 and area F5 (Matelli et al. 1985). Area F5 has
+physiological properties relevant to the neural
+control of mouth and hand movements, especially grasping (Rizzolatti et al. 1988). Within
+area F5, there are neurons that discharge not
+only when the monkey performs goal-oriented
+actions such as grasping an object, holding it,
+manipulating it, and bringing it to the mouth,
+but also when the monkey, completely still, simply observes somebody else performing these
+actions. Because of these properties, which almost suggest that the monkey is observing its
+own actions reflected by a mirror, these cells
+were called mirror neurons (di Pellegrino et al.
+1992, Gallese et al. 1996).
+The properties of mirror neurons call to
+mind the concepts of the ideomotor framework of actions, according to which perception
+and action share common representational formats. Indeed, mirror neurons embody the overlap between perception and action predicted
+by the ideomotor framework by discharging
+both during action execution and during action
+observation.
+The initial hypothesis about the functional
+role of mirror neurons focused on action recognition. By firing during actions of the self and
+of other individuals, mirror neurons may provide a remarkably simple neural mechanism for
+recognizing the actions of others. Early observations on firing-rate changes in mirror neurons demonstrated that these cells do not fire at
+the sight of a pantomime (Rizzolatti et al. 1996,
+www.annualreviews.org • Imitation, Empathy, and Mirror Neurons 659
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+Strictly congruent
+mirror neurons:
+mirror neurons that
+fire during the
+observation of exactly
+the same action they
+code motorically
+Broadly congruent
+mirror neurons:
+mirror neurons that
+fire during the
+observation of an
+action achieving the
+same goal or logically
+related to the action
+they code motorically
+Rizzolatti & Arbib 1998). For instance, the pantomime of whole-hand grasp (when the whole
+hand is used to grasp a relatively large object,
+as an orange) does not trigger the discharge of
+a mirror neuron that fires during execution and
+observation of whole-hand grasps. This makes
+sense because monkeys typically do not pantomime. These early findings suggested that the
+properties of this neural system were remarkable but relatively simple, some sort of “monkey
+see, monkey do” neural mechanisms. However,
+many other findings contradict this view and
+rather suggest that mirror neurons form a sophisticated, nuanced system for shared coding
+of motor and perceptual aspects of actions of
+self and others (Rizzolatti & Craighero 2004).
+For instance, although the term “mirror”
+implies a strong similarity between the executed
+and the observed actions, only one third of
+mirror neurons—the so-called strictly congruent mirror neurons—fire for the same executed
+and observed action. The remaining two-thirds
+of mirror neurons—the so-called broadly congruent mirror neurons—fire for executed and
+observed actions that are not the same but either achieve the same goal or are logically related (di Pellegrino et al. 1992, Gallese et al.
+1996, Rizzolatti & Craighero 2004), thus forming some sort of sequence of acts, as for instance
+observed placing food on the table and executed
+grasping food and bringing it to the mouth.
+The properties of broadly congruent mirror
+neurons suggest that these cells provide a flexible coding of actions of self and others. This
+flexibility is an important property for successful social interactions because even though imitation is a pervasive phenomenon in humans,
+people do not imitate each other all the time
+but rather often perform coordinated, cooperative, complementary actions. Broadly congruent mirror neurons seem ideal cells to support
+cooperative behavior among people (NewmanNorlund et al. 2007).
+Following the initial observations (di Pellegrino et al. 1992, Gallese et al. 1996), a series
+of more recent experiments have demonstrated
+other complex properties of mirror neurons.
+For instance, we often easily recognize actions
+that are partially occluded. The role of mirror
+neurons in the recognition of hidden actions
+was tested by using a screen that occluded the
+completion of the grasping action (Umilta et al. `
+2001). In two baseline conditions, the firing of
+the cells was measured for observation of grasping and of grasp pantomime. As expected, mirror neurons fired for grasping observation but
+not for observation of the pantomime. In a new
+experimental condition, the subject watched a
+graspable object placed on a desk in front of
+the monkey. Subsequently, a screen occluded
+the sight of the graspable object and a human
+experimenter reached with her or his hand behind the screen. The monkey was able to see the
+experimenter’s hand moving toward the object
+but was not able to see the actual grasping action, which was occluded by the screen. Approximately half of the mirror neurons tested in this
+experiment discharged even though the grasping action was occluded. The firing rate changes
+of these neurons were tested also in an additional control condition. Here, at the beginning
+of the trial, the monkey saw that there was no
+graspable object on the table. As in the previous
+experimental conditions, a screen subsequently
+occluded the sight of the table and a human experimenter reached with her or his hand behind
+the screen. Consider that at this point, this additional control condition is visually identical to
+the previous experimental conditions involving
+the screen occluding the sight of the grasping
+action. The only difference here is the prior
+knowledge of the absence of a graspable object
+behind the screen. Mirror neurons tested under this experimental condition did not change
+their firing rate, suggesting that the unseen action behind the screen was indeed coded as a
+pantomime (or, better, as a nongrasping action)
+(Umilta et al. 2001). `
+The experiment on hidden actions demonstrates another aspect of the properties of
+mirror neurons that suggests that these cells
+code actions in a fairly sophisticated way. The
+same visual information is coded differently,
+on the basis of prior knowledge about the
+presence or absence of a graspable object
+behind the screen. A subsequent experiment
+660 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+demonstrated that mirror neurons also code
+in absence of any visual input (Kohler et al.
+2002). In this study, after the necessary baseline
+conditions were performed and mirror neurons
+were identified, the experimenters measured
+the firing-rate changes of mirror neurons to
+the sound of actions. The sound stimuli used
+in this study were associated with common
+actions such as tearing a piece of paper,
+breaking peanuts, and so on. Control sounds
+not associated with actions, for instance white
+noise, were also used (Keysers et al. 2003,
+Kohler et al. 2002). The single-cell recordings
+demonstrated that mirror neurons can also
+discharge to the sound of an action, even in
+absence of the visual input related to the action.
+These auditory properties of mirror neurons
+have two important theoretical implications.
+One implication is relevant to the evolution of
+language. Area F5 of the macaque brain (where
+mirror neurons were originally discovered) is
+the anatomical homologue of Brodmann area
+44 of the human brain (Rizzolatti & Arbib
+1998), a brain area with important language
+properties. This anatomical correspondence,
+together with other considerations, led to
+the hypothesis that mirror neurons may have
+facilitated the emergence of language in
+the human brain (Rizzolatti & Arbib 1998).
+However, language is not only written and
+read but also (and mostly) spoken and heard.
+Mirror neuron responses to auditory stimuli
+are essential evidence for the hypothesis that
+mirror neurons are important neural elements
+in language evolution. The other implication
+of the auditory properties of mirror neurons
+is that they show that mirror neurons are
+multimodal cells. This functional property is
+theoretically important because it is compatible
+with associative models of how mirror neurons
+may be formed, which is discussed in more detail below. When we break a peanut, the visual
+input of our fingers breaking the peanut and
+the auditory input of the sound of breaking the
+peanut almost always co-occur, especially when
+we are initially learning to perform the action.
+Associative models can easily account for
+multimodal responses that are produced by the
+co-occurrence of sensory stimuli from multiple
+modalities (Fanselow & Poulos 2005, Keysers
+& Perrett 2004, Wasserman & Miller 1997).
+A recent study on mirror neuron responses
+to the sight of actions involving the use of tools
+is also consistent with the hypothesis that the
+properties of mirror neurons are shaped by experience. Early observations on mirror neuron
+responses to observed actions suggested that
+these cells do not fire at the sight of an action involving the use of a tool. For instance,
+a mirror neuron discharging during the execution and observation of precision grips (when
+grasping small objects with two fingers) would
+not fire at the sight of the experimenter using a hand tool such as a pliers to grasp the
+same small object (Rizzolatti & Arbib 1998).
+However, a recent study recording in the inferolateral aspect of area F5 has reported robust
+discharges in approximately 20% of recorded
+mirror neurons when the monkey observed the
+experimenters using tools (Ferrari et al. 2005).
+Indeed, these discharges were even more robust than the discharges of the same cells during the observation of a grasping action without the tool (Ferrari et al. 2005). Although it is
+not possible to demonstrate unequivocally that
+the mirror neuron responses to tool use actions
+were acquired through the daily experience of
+observing human experimenters using tools in
+the lab, this seems a likely explanation. It is unlikely that tool-use mirror neurons were already
+present in area F5 of the macaque brain but
+never recorded for more than ten years. This
+recently discovered functional property of mirror neurons and its likely underlying forming
+mechanisms is also obviously relevant to the
+psychological theories discussed above.
+Furthermore, described above, the ideomotor framework of action puts intentions front
+and center. Is it possible that the discharge of
+mirror neurons may represent the coding of the
+intention associated with the performed and
+observed action rather than the action itself?
+A recent single-cell recording study has addressed this question (Fogassi et al. 2005). The
+depth electrode recordings first demonstrated
+that neurons in area PF/PFG—a cortical
+www.annualreviews.org • Imitation, Empathy, and Mirror Neurons 661
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+area located in the anterior part of the inferior parietal lobule that is anatomically connected with area F5 in the ventral premotor
+cortex (seeFigure 1) and that also contains mirror neurons—had differential discharges for the
+same grasping action that led to, say, eating food
+rather than placing the food in a container (note
+that the monkeys were rewarded after placing
+the food in the container; thus, the amount of
+reward was identical for both actions). Not surprisingly, grasping for eating was preferred by
+the majority of grasping cells in this parietal
+area, although approximately 25% of neurons
+coding differently the same grasping action on
+the basis of its intention preferred grasping for
+placing over grasping for eating (Fogassi et al.
+2005).
+This pattern of firing-rate changes demonstrates that these cells code the same executed
+grasping action rather differently, according to
+the intention (or the goal) associated with the
+grasping action. The same pattern of firingrate changes was also observed during action
+observation. Here, the monkey was simply observing the human experimenter performing
+grasping actions. The intention of the experimenter was cued by the presence of a container.
+When the container was present, the experimenter grasped the food and placed it in the
+container. When the container was absent, the
+experimenter grasped the food and ate it. At the
+time of grasping, the cells that discharged more
+robustly for grasping to eat when the monkey
+performed the actions also discharged more robustly when the monkey simply observed the
+human experimenter grasping the food in order to eat it. Likewise, the cells that discharged
+more robustly for grasping to place when the
+monkey performed the actions also discharged
+more robustly when the monkey simply observed the human experimenter grasping the
+food in order to place it in the container (Fogassi et al. 2005). Thus, rather than coding the
+observed grasping action, these neurons seem
+to be coding the goal associated with the action, the intention to eat or to place.
+The most dramatic demonstration of the
+role of goal coding in these cells has been provided by a very recent study (Umilta et al. 2008). `
+Here, single-cell recordings in area F5 were
+performed after monkeys were trained to use
+pliers to grasp objects. Ventral premotor neurons active during grasping actions were also
+active when the monkey used pliers to grasp
+objects. Monkeys were trained to use reverse
+pliers that required hand opening rather than
+hand closing (as in natural grasps). Remarkably,
+neurons that fired during hand closing in natural grasps and during use of normal pliers did
+fire during hand opening when the monkeys
+used the reverse pliers. The activity of these
+motor neurons is evidently centered on coding the goal of the action rather than the motor detail of hand closing or opening. Among
+these motor neurons, the cells with mirroring
+properties also demonstrated a pattern of firingrate changes centered on goal coding, discharging when the tips of the pliers were closing on
+the objects to be grasped during observation
+of action with both normal and reverse pliers
+(Umilta et al. 2008). `
+Mirror neurons do not mirror only grasping
+actions performed with the hand or with tools
+controlled by the hand. There is evidence of
+mirror neurons coding facial actions, in particular with the mouth. Both ingestive (such as biting and sucking) and communicative actions are
+coded by mirror neurons (Ferrari et al. 2003).
+This is especially important for the hypothesis
+that mirror neurons may facilitate our understanding of the emotions of other people, because the face is the body part that we use most
+often to express our own emotions.
+Macaque Mirror Neurons
+and Imitation in Monkeys
+Do monkeys imitate? This is a contentious issue, and the answer to this question is heavily dependent on the definition of imitation.
+Among scholars, it was widely held at the end
+of the nineteenth century that monkeys not
+only are able to imitate, but they actually do
+it “... at ludicrous length.” (Romanes 1883).
+In those times, imitation was not typically associated with high forms of intelligence. This
+662 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+view of imitation has changed considerably in
+the past 30 years (Hurley & Chater 2005), calling also for a revision of previously held ideas
+on monkeys’ ability to imitate. Indeed, such
+revision had at some point taken the form of
+a true backlash, with many scholars denying
+that monkeys had any imitative ability. This
+position raised the issue of what is the adaptive advantage of mirror neurons for monkeys
+and inspired new and better-controlled studies. There is now well-controlled evidence that
+monkeys are indeed able to imitate (Ferrari et al.
+2006; Subiaul et al. 2004; Voelkl & Huber 2000,
+2007), and it is likely—although there is no direct evidence yet—that this ability is supported
+by mirror neurons. For instance, marmosets observed a demonstrator removing the lids from
+a series of plastic canisters to obtain a mealworm. Subsequently, marmosets that observed
+a demonstrator using its hands to remove the
+lids used only their hands, whereas marmosets
+that observed a demonstrator using its mouth
+used their mouth to remove the lids (Voelkl
+& Huber 2000). In another study, marmosets
+observed another marmoset (the model) that
+was previously trained to open a box in a peculiar way. Detailed motion analyses demonstrated that the highly unusual movement pattern of the model was faithfully replicated by
+the observers (Voelkl & Huber 2007). A recent
+study has also shown that rhesus macaques display neonatal imitation abilities that are similar to the abilities displayed by human neonates
+(Ferrari et al. 2006).
+It is evident, however, that imitative learning
+is not developed in monkeys as it is in humans
+(Hurley & Chater 2005). What then would be
+the main function of mirror neurons in the
+monkey brain? One possibility might be that
+mirror neurons facilitate the ability to recognize the actions of others. A recent behavioral
+study, however, has also revealed that monkeys
+are able to recognize when they are being imitated (Paukner et al. 2005). In this study, monkeys observed two experimenters, each manipulating a wooden cube with a hole in each side.
+Initially, the monkeys did not show any preferential looking between the two experimenters.
+TMS: transcranial
+magnetic stimulation
+BOLD: bloodoxygenation-level
+dependent
+fMRI: functional
+magnetic resonance
+imaging
+Subsequently, a cube was given to the monkey. When the monkey started manipulating
+the cube, one of the two experimenters imitated accurately the monkey’s actions directed
+at the cube. The second experimenter, in contrast, performed different actions. At this point,
+the monkey preferentially looked at the experimenter imitating her own actions. This capacity, which is likely supported by mirror neurons, may have an important social function and
+may be one of the early functional precursors
+of the highly developed imitative behavior of
+humans.
+Human Brain Mechanisms
+of Mirroring
+The exquisite spatial and temporal resolution afforded by depth electrode recordings of
+single-cell activity can be obtained only with
+techniques of brain investigation that are quite
+invasive. These techniques cannot typically be
+used in humans. The neural properties revealed by single-unit recordings in monkeys are
+usually investigated in humans at the system
+level, with lesion studies (behavioral observations on neurological patients), brain imaging,
+and recently transcranial magnetic stimulation
+(TMS). Although the relationships between all
+these markers of brain activity are far from being fully defined, there is evidence that they
+tend to correlate relatively well. Spiking neuronal activity recorded with in-depth electrodes
+correlates well with the blood-oxygenationlevel dependent (BOLD) signal measured by
+functional magnetic resonance imaging (fMRI)
+(Logothetis et al. 2001). In some cases, however, spiking activity and BOLD seem to dissociate (Logothetis & Wandell 2004), for instance
+when spiking responses show adaptation (that
+is, a reduced response to repeated stimuli) while
+BOLD does not (Goense & Logothetis 2008).
+Nevertheless, a recent TMS study has shown
+similar stimulation effects on both neural and
+hemodynamic signals (Allen et al. 2007), supporting the practice of inferring neural activity
+from signals based on hemodynamic changes,
+such as BOLD fMRI.
+www.annualreviews.org • Imitation, Empathy, and Mirror Neurons 663
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+Pars opercularis:
+posterior sector of the
+inferior frontal gyrus
+delimited superiorly
+by the inferior frontal
+sulcus, inferiorly by
+the Sylvian fissure,
+posteriorly by the
+ventral sector of the
+precentral gyrus, and
+anteriorly by the
+ascending branch of
+the Sylvian fissure.
+Pars opercularis in the
+left hemisphere is
+classically considered
+the posterior part of
+Broca’s area, a major
+language area of the
+human brain
+Indeed, this practice is widely used in systems neuroscience. For instance, single-cell
+recordings with depth electrodes have revealed
+in the dorsal premotor cortex of macaques cellular mechanisms of conditional motor learning, the fundamental ability that allows the
+association of motor responses to arbitrary sensory stimuli, as when we brake at a red traffic
+light. In humans, the dorsal premotor cortex
+has also been associated with conditional motor learning by brain imaging and lesion studies (Passingham 1993). Even though single-cell
+recordings of human dorsal premotor neurons
+have not been performed, the obvious assumption is that the human brain must have dorsal premotor cellular mechanisms that enable
+conditional motor learning and that are likely
+similar to—albeit probably more sophisticated
+than—the ones recorded in monkeys.
+This very same logic applies to the investigation of mirror neurons in the human brain.
+Given that the information typically obtained in
+human studies is at system level, the term “mirror neuron system” is often used in these studies. Two positron emission tomography studies
+(Grafton et al. 1996, Rizzolatti et al. 1996) and
+a TMS study (Fadiga et al. 1995) provided early
+evidence compatible with the idea that the human ventral premotor and inferior frontal cortex had mirroring properties. However, these
+studies did not investigate the role of these human brain areas in imitation. In a later fMRI
+study (Iacoboni et al. 1999), subjects were required to imitate simple finger movements and
+to perform motor and visual control tasks. The
+logic of the study was as follows: The neuronal
+discharge measured by depth electrode recordings in macaques during action observation is
+approximately 50% of the discharge measured
+during action execution (Gallese et al. 1996).
+Thus, human brain areas with mirror neurons
+should also have an increased BOLD signal
+(which roughly correlates with brain activity in
+fMRI) during action observation that is approximately 50% of the BOLD increase measured
+during action execution. Furthermore, during
+imitation, subjects were simultaneously watching the finger movement and copying it. Thus,
+mirror neuron areas may have a BOLD signal increase during imitation that is approximately the sum of the BOLD signal increases
+observed during action observation and during action execution. The fMRI study found
+that two cortical areas had this predicted pattern of activity: They were located in the posterior part of the inferior frontal gyrus and in
+the rostral part of the posterior parietal cortex (Iacoboni et al. 1999), in anatomical locations (Figure 2) that were homologous to the
+anatomical locations of the macaque brain areas with mirror neurons, that is, area F5 in
+the ventral premotor cortex and area PF/PFG
+in the rostral sector of the inferior parietal
+lobule.
+The inferior frontal area with mirroring
+properties overlapped with the posterior part
+of Broca’s area, a major language area. On one
+hand, these findings supported the evolutionary hypothesis about the role of mirror neurons in language (Rizzolatti & Arbib 1998).
+On the other hand, an activation in a language
+area during a nonlanguage task may be induced by covert verbalization occurring during
+the activation tasks. It is unclear why imitation
+should induce more covert verbalization than
+motor execution, which in turn should induce
+more covert verbalization than action observation (the pattern predicted for a mirror neuron
+area and observed in the posterior part of the
+inferior frontal gyrus and in the rostral part of
+the posterior parietal cortex), and this issue cannot be conclusively resolved by fMRI, which is a
+technique that provides only correlational data
+between brain areas and human behavior. TMS,
+on the other hand, provides information on the
+causal role of the activity in a brain area and
+human behavior. A high-frequency repetitive
+TMS study indeed demonstrated later that activity in the pars opercularis, the posterior part
+of the inferior frontal gyrus, is essential to imitation (Heiser et al. 2003).
+A series of brain-imaging studies has suggested a core cortical circuitry for imitation
+composed of the posterior part of the superior
+664 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+temporal sulcus, a higher-order visual area that
+responds to watching biological motion and
+intentional actions (Allison et al. 2000, Jellema
+et al. 2000, Perrett et al. 1989, Puce & Perrett
+2003, Puce et al. 1998), and by the parietal
+and frontal mirror neuron areas. Within this
+cortical circuitry, the superior temporal cortex
+would provide a higher-order visual description
+of the actions of other people and would feed
+this information to the fronto-parietal mirror
+neuron areas (Iacoboni et al. 2001). The parietal mirror neuron area would code the motor aspect of the action (Iacoboni et al. 1999),
+whereas the frontal mirror neuron area would
+be more concerned with the goal of the action
+(Iacoboni 2005, Iacoboni et al. 2005, Iacoboni
+& Dapretto 2006, Koski et al. 2002).
+Imitative behavior can take many forms
+(Hurley & Chater 2005). The core circuitry for
+imitation, composed of superior temporal cortex, inferior parietal lobule, and inferior frontal
+cortex, interacts with other neural systems to
+support different forms of imitative behavior.
+For instance, the interactions between the core
+circuitry for imitation and the dorsolateral prefrontal cortex seem critical during imitative
+learning (Buccino et al. 2004). In contrast, social mirroring and the ability to empathize with
+others may be supported by the interactions between the core circuitry for imitation and the
+limbic system (Iacoboni 2005). An fMRI study
+of imitation and observation of facial emotional
+expressions (Carr et al. 2003) tested the hypothesis that empathy is enabled by a large-scale
+neural network composed of the mirror neuron system, the limbic system, and the insula
+connecting these two neural systems. Within
+this network, mirror neurons would support the
+simulation of the facial expressions observed in
+other people, which in turn would trigger activity in limbic areas, thus producing in the observer the emotion that other people are feeling.
+This model predicts activation of mirror neuron areas, insula, and limbic areas during both
+observation and imitation of facial emotional
+expressions. Furthermore, the model predicts
+that the increased activity in mirror neuron areas during imitation should also spread to insula
+and limbic areas, if these brain centers are indeed functionally connected with mirror neuron areas. Both predictions were supported by
+the empirical findings (Carr et al. 2003).
+In functional terms, the large-scale network composed of mirror neuron areas, insula, and the limbic system likely provides a
+simulation-based form of empathy (Goldman
+2006, Goldman & Sripada 2005). Recent data
+also suggest that the activity in this network
+provides a biomarker of sociality and empathy. Indeed, an fMRI study of imitation and
+observation of facial expressions in children
+with autism and in typically developing children demonstrated not only a deficit in mirror neuron areas in the children with autism,
+but also a correlation between the severity of
+the disease and activity in these areas: The
+lower the activity in mirror neuron areas, the
+more severe the autism (Dapretto et al. 2006).
+Furthermore, a separate fMRI study on typically developing preadolescents—in which the
+activation task was again the observation and
+imitation of facial emotional expressions—has
+recently demonstrated that activity in mirror
+neuron areas was positively correlated with interpersonal competence and empathic concern
+(Pfeifer et al. 2008). Two additional fMRI studies on adults also support the findings obtained
+in children. In one study, subjects observed simple grasping actions (Kaplan & Iacoboni 2006).
+In the other study, subjects listened to action
+sounds (Gazzola et al. 2006). Both studies found
+a positive correlation between empathy scores
+and activity in premotor areas activated during action observation and while listening to
+action sounds, thus likely containing mirror
+neurons.
+Neural Mirroring and Psychological
+Theories of Imitation
+The ideomotor model of imitation and the
+associative sequence learning model share
+many concepts but diverge on a fundamental one: The former assumes overlap between
+www.annualreviews.org • Imitation, Empathy, and Mirror Neurons 665
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+perceptual and motor representations, whereas
+the latter assumes that sensory and motor
+representations are separated but functionally
+connected through vertical links formed by associative learning. Both models also map well
+onto the functional properties of mirror neurons and neural systems for mirroring. Do the
+neuroscience findings on mirror neurons better support the assumptions of the ideomotor
+model on perceptual and motor representations
+or those of the associative sequence learning
+model? It is difficult to answer this question
+because the levels of description of psychological theories and those of neuroscience empirical
+work are radically different.
+The discharge of mirror neurons during action execution and action observation seems
+to fulfill the main assumption of the ideomotor model, a common representational format for perception and action. Preliminary results on individual neuronal activity obtained
+with depth electrode recordings in humans (R.
+Mukamel, A. Ekstrom, J. Kaplan, M. Iacoboni
+and I. Fried, unpublished observations) seem
+also to support the ideomotor model. Using a
+rare clinical opportunity, we recently recorded
+single-cell activity in epileptic patients implanted for surgical evaluation. We found human neurons with mirror properties in the
+frontal lobe as well as in the medial temporal
+cortex. Although the discharge of these cells
+during action execution and action observation
+seems to imply a common representational format for perception and action implemented at
+single cell level, it is also true that lesions in
+the frontal lobe are more often associated with
+motor deficits, and lesions in the medial temporal lobe are more often associated with perceptual deficits. Perception and action, which
+are united at the level of single cells, seem to
+be more easily separated at the system level.
+In principle, the discharge during action execution and during action observation of frontal
+and medial temporal neurons may represent in
+neural terms the “vertical links” posited by the
+associative sequence learning model between a
+sensory unit (the medial temporal neuron) and
+a motor unit (the frontal neuron) that fire together as a result of associative learning.
+WHY NEURAL MIRRORING
+AND IMITATION?
+The fundamental Darwinian question is why
+mirror neurons were selected by evolution.
+What is the adaptive advantage of having these
+neurons? The properties of these cells seem to
+solve—or better, dis-solve—what is called the
+“problem of other minds”: if one has access only
+to one’s own mind, how can one possibly understand the minds of other people? How can
+one possibly share one’s own mental states with
+others, making intersubjectivity possible?
+A classical solution to the problem of other
+minds is the so-called argument from analogy.
+The argument from analogy posits that we first
+observe certain relations between our mental
+states and our bodily states and then find an
+analogy between our body and the body of other
+people. If there is an analogy between our body
+and the body of others, there may be also an
+analogy between our mental states/bodily states
+relations and those of other people. This way
+of reasoning about the mental states of other
+people seems too complex for something we
+seem to accomplish so naturally, effortlessly,
+and quickly. Mirror neurons, in contrast, provide a prereflective, automatic mechanism of
+mirroring what is going on in the brain of
+other people that seems more compatible with
+our ability to understand others effortlessly and
+with our tendency to imitate others automatically, as we have discussed in this review.
+A further implication of the recent work on
+the relationships between mirror neurons, imitation, and empathy is the consideration that
+the evolutionary process made us wired for
+empathy. This is a major revision of widely
+held beliefs. Traditionally, our biology is considered the basis of self-serving individualism,
+whereas our ideas and our social codes enable
+us to rise above our neurobiological makeup.
+The research on mirror neurons, imitation,
+and empathy, in contrast, tells us that our
+666 Iacoboni
+Annu. Rev. Psychol. 2009.60:653-670. Downloaded from www.annualreviews.org
+by University of Sydney on 04/04/13. For personal use only.
+ability to empathize, a building block of our sociality (Adolphs 2009) and morality (de Waal
+2008, Tangney et al. 2007), has been built “bottom up” from relatively simple mechanisms
+of action production and perception (Iacoboni
+2008).
