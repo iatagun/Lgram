@@ -1,0 +1,369 @@
+Loaded existing model.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'drop' | Chosen POS: VERB
+[LOG] ➡️ Chosen: 'out' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'Law' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'one' | Chosen POS: NUM
+[LOG] ➡️ Chosen: 'who' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'not' | Chosen POS: PART
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'for' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'Agra' | Chosen POS: PROPN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'treasure' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: '
+' | Chosen POS: SPACE
+[LOG] ➡️ Chosen: 'white' | Chosen POS: PROPN
+[LOG] ➡️ Chosen: 'petticoat' | Chosen POS: PROPN
+[LOG] ➡️ Chosen: 'two' | Chosen POS: NUM
+[LOG] ➡️ Chosen: 'wolf' | Chosen POS: PROPN
+[LOG] ➡️ Chosen: 'would' | Chosen POS: AUX
+[LOG] ➡️ Chosen: 'have' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'say' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'like' | Chosen POS: INTJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'theory' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'ministerial' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'heavy' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'cloud' | Chosen POS: PROPN
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'great' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'deal' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'with' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'whom' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'could' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'obtain' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'for' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'night' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'himself' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'into' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'plan' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'beat' | Chosen POS: VERB
+[LOG] ➡️ Chosen: 'by' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'public' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'house' | Chosen POS: PROPN
+[LOG] ➡️ Chosen: 'to' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'demand' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'city' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[LOG] ➡️ Chosen: 'back' | Chosen POS: ADV
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'ground' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: '
+
+' | Chosen POS: SPACE
+[LOG] ➡️ Chosen: 'alas' | Chosen POS: INTJ
+[LOG] ➡️ Chosen: '
+
+' | Chosen POS: SPACE
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'with' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'she' | Chosen POS: PRON
+[SKIP] Not a complete thought: Beat by the public house to demand the city the back of the ground alas with she.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'having' | Chosen POS: VERB
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'deep' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'we' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'at' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'all' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'Paris' | Chosen POS: PROPN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'as' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'we' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'forget' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'few' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'minute' | Chosen POS: PROPN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'later' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'that' | Chosen POS: PRON
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'afterward' | Chosen POS: ADV
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'he' | Chosen POS: PRON
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'his' | Chosen POS: PRON
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'cigarette' | Chosen POS: NOUN
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'you' | Chosen POS: PRON
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'have' | Chosen POS: VERB
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'almost' | Chosen POS: ADV
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: '
+' | Chosen POS: SPACE
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'his' | Chosen POS: PRON
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'peculiar' | Chosen POS: ADJ
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'voice' | Chosen POS: NOUN
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'very' | Chosen POS: ADV
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'different' | Chosen POS: ADJ
+[ERROR] Empty context vector. Using uniform similarity.
+[LOG] ➡️ Chosen: 'direction' | Chosen POS: NOUN
+Generated Text:
+The victim and drop out the Law of the one who is not for the Agra treasure. Hide to white petticoat two wolf would Have sayed and be like a theory of the ministerial. Be always the heavy cloud of a great deal with whom I could obtain for a night to himself into the plan. The purpose of having be a deep and we at all Paris as we forget I am a few minute later that. Little Toomai be afterward he is his cigarette and you have almost of his peculiar voice is a very different direction.
+Loaded existing model.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'material' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'for' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'such' | Chosen POS: ADJ
+[LOG] ➡️ Chosen: '
+' | Chosen POS: SPACE
+[LOG] ➡️ Chosen: 'meaning' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'pistol' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'you' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'might' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'have' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'stack' | Chosen POS: VERB
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'hang' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'front' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'room' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: '
+' | Chosen POS: SPACE
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | Chosen POS: CCONJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'forest' | Chosen POS: PROPN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'that' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'you' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'would' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'ha' | Chosen POS: INTJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'ha' | Chosen POS: INTJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | Chosen POS: SPACE
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[LOG] ➡️ Chosen: 'he' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'can' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'your' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'notice' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'thing' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'note' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'this' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'decide' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'that' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'can' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'use' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'this' | Chosen POS: PRON
+[LOG] ➡️ Chosen: 'tomorrow' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'night' | Chosen POS: NOUN
+[LOG] ➡️ Chosen: 'before' | Chosen POS: ADP
+[LOG] ➡️ Chosen: 'I' | Chosen POS: PRON
+[LOG] ➡️ Chosen: 'think' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'so' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'very' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'pretty' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'clear' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'enough' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'habit' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'story' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'that' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'set' | Chosen POS: VERB
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'out' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'an' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'old' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'man' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'while' | Chosen POS: SCONJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'beneath' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'character' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'my' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'father' | Chosen POS: NOUN
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'who' | Chosen POS: PRON
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | Chosen POS: AUX
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'too' | Chosen POS: ADV
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'late' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | Chosen POS: ADP
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: 'strange' | Chosen POS: ADJ
+[WARN] Combined scores zero. Using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | Chosen POS: SPACE
+Generated Text:
+The victim and the material for such meaning of the pistol you might have a stack. The affair be hang in front of his room the and the forest that you would ha it is. A gentleman he can be in your notice it is a thing in note this is decide that it can use this. Do here tomorrow night before I think so very pretty clear enough to the habit his story that set out of the. Whether it is an old man a while beneath the character of my father who is too late in strange.

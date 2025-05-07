@@ -705,22 +705,22 @@ class EnhancedLanguageModel:
         var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
         # ✨ Dinamik threshold
-        threshold = 0.7  # biraz daha insaflı başlıyoruz
+        threshold = 0.75  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
-            threshold += 0.07
+            threshold += 0.075
         elif avg_len < 8:
-            threshold -= 0.07
+            threshold -= 0.075
         if var_len > 5:
-            threshold += 0.05
+            threshold += 0.055
         if complexity_factor > 2.5:
-            threshold += 0.05
+            threshold += 0.055
         elif complexity_factor < 1.5:
-            threshold -= 0.05
+            threshold -= 0.055
 
         # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
         unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
         if len(unique_lemmas) < 3:
-            threshold += 0.06
+            threshold += 0.07
 
         return avg_similarity > threshold
 
