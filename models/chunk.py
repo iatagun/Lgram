@@ -13,7 +13,10 @@ from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cosine
 from functools import cache
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
+tokenizer = AutoTokenizer.from_pretrained("vennify/t5-base-grammar-correction")
+model = AutoModelForSeq2SeqLM.from_pretrained("vennify/t5-base-grammar-correction")
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_md")
@@ -210,24 +213,36 @@ class EnhancedLanguageModel:
             pbar.set_postfix(cpu=f"{cpu:.1f}%", mem=f"{mem:.1f}%")
 
         sentence_text = ' '.join(sentence).strip()
-        sentence_text = self.correct_grammar(sentence_text)
+        # sentence_text = self.correct_grammar(sentence_text)
         return self.clean_text(sentence_text)
 
 
 
-    def correct_grammar(self, sentence):
-        import re
-        if not isinstance(sentence, str):
-            raise ValueError("Input must be a string.")
+    def correct_grammar(self, text: str) -> str:
+        # 1. Prompt'u hazırla ve tokenize et (512 token ile kesme)
+        prompt = "grammar: " + text
+        inputs = tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512
+        )
 
-        with open(corrections_file, 'r', encoding='utf-8') as f:
-            corrections = json.load(f)
+        # 2. Beam search ile düzeltme üretimi
+        outputs = model.generate(
+            **inputs,
+            max_length=min(inputs['input_ids'].shape[-1] + 10, 512),  # girdi+10, ama 512'yi aşma
+            num_beams=5,               # beam genişliği
+            no_repeat_ngram_size=2,    # 2-gram tekrarını engelle
+            early_stopping=True        # erken durdurma
+        )
 
-        for wrong_phrase, right_phrase in corrections.items():
-            pattern = re.compile(rf'\b{re.escape(wrong_phrase)}\b', re.IGNORECASE)
-            sentence = pattern.sub(right_phrase, sentence)
+        # 3. Decode et ve fazlalıkları kırp
+        corrected = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
-        return sentence
+        # 4. Boşsa orijinali döndür
+        return corrected if corrected else text
+
 
     def is_complete_thought(self, sentence):
         if not sentence:
@@ -329,7 +344,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.4,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.05,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
         if not next_words:
             return None
 
@@ -524,7 +539,7 @@ class EnhancedLanguageModel:
                     generated_sentence = self.generate_sentence(length=adjusted_length)
 
                 # ✨ İlk düzeltmeyi burada uygula (daha iyi uyum için)
-                generated_sentence = self.correct_grammar(generated_sentence)
+                # generated_sentence = self.correct_grammar(generated_sentence)
                 generated_sentence = self.rewrite_ill_formed_sentence(generated_sentence)
 
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
@@ -545,7 +560,6 @@ class EnhancedLanguageModel:
                 generated_sentences.append(generated_sentence)
 
         final_text = ' '.join(generated_sentences)
-        final_text = self.correct_grammar(final_text)
         final_text = self.post_process_text(final_text)
         return final_text
 
@@ -797,9 +811,9 @@ except (FileNotFoundError, EOFError):
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
-num_sentences = 4
+num_sentences = 5
 # I had forgot that.
-input_words = ("the", "victim")
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+input_words = ("we", "need")
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
