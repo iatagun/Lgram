@@ -15,8 +15,10 @@ from scipy.spatial.distance import cosine
 from functools import cache
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("vennify/t5-base-grammar-correction")
-model = AutoModelForSeq2SeqLM.from_pretrained("vennify/t5-base-grammar-correction")
+# 1. Model ve tokenizer'ı başlat
+tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+model.eval()
 
 # Load the SpaCy English model with word vectors
 nlp = spacy.load("en_core_web_md")
@@ -30,6 +32,10 @@ fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fou
 fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
 sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
 corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\corrections.json"
+with open(corrections_file, encoding="utf-8") as f:
+    CORRECTIONS = json.load(f)
+
+
 
 class EnhancedLanguageModel:
     def __init__(self, text, n=2, colloc_path="collocations.pkl"):
@@ -151,7 +157,7 @@ class EnhancedLanguageModel:
 
             if token1.has_vector and token2.has_vector:
                 similarity = 1 - cosine(token1.vector, token2.vector)
-                if similarity > 0.3:  # Threshold seçiyoruz
+                if similarity > 0.7:  # Threshold seçiyoruz
                     return True
         except:
             pass
@@ -213,35 +219,58 @@ class EnhancedLanguageModel:
             pbar.set_postfix(cpu=f"{cpu:.1f}%", mem=f"{mem:.1f}%")
 
         sentence_text = ' '.join(sentence).strip()
-        # sentence_text = self.correct_grammar(sentence_text)
+        sentence_text = self.correct_grammar(sentence_text)
         return self.clean_text(sentence_text)
 
-
-
     def correct_grammar(self, text: str) -> str:
-        # 1. Prompt'u hazırla ve tokenize et (512 token ile kesme)
-        prompt = "grammar: " + text
+        """
+        corrections.json içindeki yanlış-doğru eşleştirmelerine
+        dayalı basit kural tabanlı gramer düzeltme.
+        """
+        for wrong, right in CORRECTIONS.items():
+            # Kelime bütünlüğünü koruyarak değiştir
+            pattern = re.compile(rf"\b{re.escape(wrong)}\b", flags=re.IGNORECASE)
+            text = pattern.sub(right, text)
+        return text
+
+    def pots_correct_grammar(self, text: str) -> str:
+        """
+        pszemraj/flan-t5-large-grammar-synthesis ile:
+        1) Gramer ve noktalama düzeltmesi,
+        2) Metni tam beş ayrı cümleye bölerek yeniden yazma.
+        """
+        # 1. Prompt’u ayarla
+        prompt = (
+            "Correct the grammar and punctuation of the following text "
+            + text
+        )
+
+        # 2. Tokenize et (prompt + kaynak metin toplamı 512 token’ı aşmasın)
         inputs = tokenizer(
             prompt,
             return_tensors="pt",
             truncation=True,
-            max_length=512
+            max_length=512,
         )
 
-        # 2. Beam search ile düzeltme üretimi
+        # 3. Beam search ile üret, hem min hem max yeni token sınırı koy
         outputs = model.generate(
-            **inputs,
-            max_length=min(inputs['input_ids'].shape[-1] + 10, 512),  # girdi+10, ama 512'yi aşma
-            num_beams=5,               # beam genişliği
-            no_repeat_ngram_size=2,    # 2-gram tekrarını engelle
-            early_stopping=True        # erken durdurma
+            input_ids=inputs["input_ids"],
+            attention_mask=inputs["attention_mask"],
+            min_new_tokens=100,      # en az 100 token (yaklaşık 5 cümle)
+            max_new_tokens=300,      # en fazla 300 token
+            num_beams=5,             # beam genişliği
+            no_repeat_ngram_size=2,   # 2-gram tekrarını engelle
+            early_stopping=False     # EOS geldiğinde hemen durma
         )
 
-        # 3. Decode et ve fazlalıkları kırp
+        # 4. Decode et ve kırp
         corrected = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
-        # 4. Boşsa orijinali döndür
+        # 5. Fallback
         return corrected if corrected else text
+
+
 
 
     def is_complete_thought(self, sentence):
@@ -344,7 +373,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.05,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.7,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
         if not next_words:
             return None
 
@@ -453,73 +482,72 @@ class EnhancedLanguageModel:
 
     def reorder_sentence(self, sentence):
         """Reorder the sentence structure based on dependency parsing: Subject-Verb-Object(+Modifiers)."""
-        doc = nlp(sentence)
+        # 1. Hızlı parse: sadece parser’ı çalıştır, NER’i kapat
+        doc = nlp(sentence, disable=["ner"])
 
-        # Categorize tokens
-        subjects = [tok for tok in doc if tok.dep_ in ('nsubj', 'nsubjpass')]
-        verbs = [tok for tok in doc if tok.pos_ == 'VERB' or tok.dep_ == 'ROOT']
-        objects = [tok for tok in doc if tok.dep_ in ('dobj', 'pobj', 'iobj')]
-        modifiers = [tok for tok in doc if tok.dep_ in ('amod', 'advmod', 'npadvmod', 'acomp')]
+        # 2. Gerçek zamanlı (streaming) kategori toplama
+        subjects, verbs, objects, modifiers = [], [], [], []
+        for tok in doc:
+            if tok.dep_ in ('nsubj', 'nsubjpass'):
+                subjects.append(tok)
+            elif tok.pos_ == 'VERB' or tok.dep_ == 'ROOT':
+                verbs.append(tok)
+            elif tok.dep_ in ('dobj', 'pobj', 'iobj'):
+                objects.append(tok)
+            elif tok.dep_ in ('amod', 'advmod', 'npadvmod', 'acomp'):
+                modifiers.append(tok)
 
+        # 3. Orijinal SVO mantığı
         reordered_tokens = []
-        selected_subject = None
-        selected_verb = None
-
-        # Select and add full subject phrase
         if subjects and verbs:
-            # Choose the subject with the largest subtree (captures compounds)
-            selected_subject = max(subjects, key=lambda x: len(list(x.subtree)))
-            reordered_tokens.extend(sorted(selected_subject.subtree, key=lambda x: x.i))
+            # a) Özne: en büyük subtree’a sahip olanı al
+            subj = max(subjects, key=lambda x: len(list(x.subtree)))
+            reordered_tokens.extend(sorted(subj.subtree, key=lambda x: x.i))
 
-            # Select a verb that agrees with the subject
+            # b) Uyumlu yüklem
+            sel_verb = None
             for verb in verbs:
-                if (selected_subject.tag_ == 'NNS' and verb.tag_ == 'VBZ') or \
-                (selected_subject.tag_ == 'NN' and verb.tag_ == 'VBP'):
+                # basit özne-yüklem uyumsuzluklarını es geç
+                if (subj.tag_ == 'NNS' and verb.tag_ == 'VBZ') or \
+                (subj.tag_ == 'NN' and verb.tag_ == 'VBP'):
                     continue
-                selected_verb = verb
+                sel_verb = verb
                 reordered_tokens.append(verb)
                 break
 
-            if selected_verb:
-                # Add auxiliaries
-                auxs = [tok for tok in doc if tok.dep_ in ('aux', 'auxpass') and tok.head == selected_verb]
+            if sel_verb:
+                # c) Yardımcı fiiller
+                auxs = [t for t in doc if t.dep_ in ('aux', 'auxpass') and t.head == sel_verb]
                 reordered_tokens.extend(sorted(auxs, key=lambda x: x.i))
 
-                # Add object phrases related to the verb
+                # d) Nesne cümlecikleri
                 for obj in objects:
-                    if obj.head == selected_verb:
+                    if obj.head == sel_verb:
                         reordered_tokens.extend(sorted(obj.subtree, key=lambda x: x.i))
 
-                # Add modifiers linked to subject or verb
+                # e) Modifiers (özne veya yükleme bağlı)
                 for mod in modifiers:
-                    if mod.head in (selected_subject, selected_verb):
+                    if mod.head in (subj, sel_verb):
                         reordered_tokens.append(mod)
 
-        # Validate that we have at least subject, verb, object
-        if len([tok for tok in reordered_tokens if tok in subjects + verbs + objects]) < 3:
-            return "Sentence could not be reordered meaningfully."
+        # 4. Yeterli öğe yoksa orijinaline dön
+        key_toks = set(subjects + verbs + objects)
+        if len([t for t in reordered_tokens if t in key_toks]) < 3:
+            return sentence
 
-        # Remove duplicates, preserve order by token index
-        seen = set()
-        unique_tokens = []
-        for tok in reordered_tokens:
-            if tok.i not in seen:
-                seen.add(tok.i)
-                unique_tokens.append(tok)
+        # 5. Tekilleştir ve orijinal sıraya göre sırala
+        seen = set(); unique = []
+        for t in reordered_tokens:
+            if t.i not in seen:
+                seen.add(t.i); unique.append(t)
+        unique = sorted(unique, key=lambda x: x.i)
 
-        # Sort by original sentence order for readability
-        unique_tokens = sorted(unique_tokens, key=lambda x: x.i)
+        # 6. Metni kur ve noktalama ekle
+        out = " ".join(t.text for t in unique)
+        if out and out[-1] not in '.!?':
+            out += sentence.strip()[-1] if sentence.strip()[-1] in '.!?' else '.'
+        return out
 
-        # Reconstruct text
-        output = " ".join(tok.text for tok in unique_tokens)
-        # Ensure ending punctuation
-        if output and output[-1] not in '.!?':
-            last_char = sentence.strip()[-1]
-            if last_char in '.!?':
-                output += last_char
-            else:
-                output += '.'
-        return output
 
     @cache
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
@@ -539,9 +567,9 @@ class EnhancedLanguageModel:
                     generated_sentence = self.generate_sentence(length=adjusted_length)
 
                 # ✨ İlk düzeltmeyi burada uygula (daha iyi uyum için)
-                # generated_sentence = self.correct_grammar(generated_sentence)
+                generated_sentence = self.reorder_sentence(generated_sentence)
                 generated_sentence = self.rewrite_ill_formed_sentence(generated_sentence)
-
+                generated_sentence = self.correct_grammar(generated_sentence)
                 if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
                     if not self.is_complete_thought(generated_sentence):
                         self.log(f"[SKIP] Not a complete thought: {generated_sentence}")
@@ -696,7 +724,7 @@ class EnhancedLanguageModel:
         if final_output and not final_output.endswith('.'):
             final_output += '.'
 
-        final_output = self.correct_grammar(final_output)
+        # final_output = self.correct_grammar(final_output)
         return final_output
 
 
@@ -736,7 +764,7 @@ class EnhancedLanguageModel:
         var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
         # ✨ Dinamik threshold
-        threshold = 0.75  # biraz daha insaflı başlıyoruz
+        threshold = 0.55  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
             threshold += 0.075
         elif avg_len < 8:
@@ -751,7 +779,7 @@ class EnhancedLanguageModel:
         # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
         unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
         if len(unique_lemmas) < 3:
-            threshold += 0.07
+            threshold += 0.05
 
         return avg_similarity > threshold
 
@@ -813,7 +841,53 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I had forgot that.
-input_words = ("we", "need")
+input_words = ("the", "victim",)
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
+def correct_grammar_t5(text: str) -> str:
+    """
+    FLAN-T5 ile gramer ve noktalama düzeltmesi,
+    ardından yalnızca düzeltilmiş metni döndürür.
+    """
+    # 1. Prompt’u ayarla (delimiter ile)
+    prompt = (
+        "Correct the grammar and punctuation of the following text:\n"
+        "=====\n"
+        f"{text}\n"
+        "=====\n"
+        "Corrected version:"
+    )
+
+    # 2. Tokenize et
+    inputs = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=512,
+    )
+
+    # 3. Sadece yeni token’ları üret
+    outputs = model.generate(
+        input_ids=inputs["input_ids"],
+        attention_mask=inputs["attention_mask"],
+        max_new_tokens=200,      # yeterli uzunlukta metin için
+        num_beams=5,
+        no_repeat_ngram_size=2,
+        early_stopping=True
+    )
+
+    # 4. Decode et
+    generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    # 5. Prompt’u kırp: "Corrected version:" sonrası kısmı al
+    if "Corrected version:" in generated:
+        corrected = generated.split("Corrected version:", 1)[1].strip()
+    else:
+        corrected = generated.strip()
+
+    # 6. Fallback
+    return corrected if corrected else text
+
+corrected_text = correct_grammar_t5(generated_text)
+print("\nCorrected Text:\n" + corrected_text)
