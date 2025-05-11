@@ -872,7 +872,7 @@ def correct_grammar_t5(text: str) -> str:
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
         max_new_tokens=500,      # yeterli uzunlukta metin için
-        num_beams=8,
+        num_beams=12,
         no_repeat_ngram_size=2,
         early_stopping=True
     )
