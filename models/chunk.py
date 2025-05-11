@@ -373,7 +373,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.7,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.9,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
         if not next_words:
             return None
 
@@ -764,7 +764,7 @@ class EnhancedLanguageModel:
         var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
         # ✨ Dinamik threshold
-        threshold = 0.55  # biraz daha insaflı başlıyoruz
+        threshold = 0.75  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
             threshold += 0.075
         elif avg_len < 8:
@@ -839,10 +839,10 @@ except (FileNotFoundError, EOFError):
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
-num_sentences = 5
+num_sentences = 8
 # I had forgot that.
-input_words = ("the", "victim",)
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
+input_words = ("the", "murder",)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
 def correct_grammar_t5(text: str) -> str:
@@ -871,8 +871,8 @@ def correct_grammar_t5(text: str) -> str:
     outputs = model.generate(
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
-        max_new_tokens=200,      # yeterli uzunlukta metin için
-        num_beams=5,
+        max_new_tokens=500,      # yeterli uzunlukta metin için
+        num_beams=8,
         no_repeat_ngram_size=2,
         early_stopping=True
     )
@@ -890,4 +890,5 @@ def correct_grammar_t5(text: str) -> str:
     return corrected if corrected else text
 
 corrected_text = correct_grammar_t5(generated_text)
+language_model.log("\nCorrected Text:\n" + corrected_text)
 print("\nCorrected Text:\n" + corrected_text)
