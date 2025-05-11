@@ -373,7 +373,7 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.9,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
+    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.4,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
         if not next_words:
             return None
 
@@ -839,7 +839,7 @@ except (FileNotFoundError, EOFError):
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
 
-num_sentences = 8
+num_sentences = 5
 # I had forgot that.
 input_words = ("the", "murder",)
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
@@ -871,8 +871,8 @@ def correct_grammar_t5(text: str) -> str:
     outputs = model.generate(
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
-        max_new_tokens=500,      # yeterli uzunlukta metin için
-        num_beams=12,
+        max_new_tokens=300,      # yeterli uzunlukta metin için
+        num_beams=8,
         no_repeat_ngram_size=2,
         early_stopping=True
     )
