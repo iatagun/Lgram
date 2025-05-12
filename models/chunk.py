@@ -233,46 +233,6 @@ class EnhancedLanguageModel:
             text = pattern.sub(right, text)
         return text
 
-    def pots_correct_grammar(self, text: str) -> str:
-        """
-        pszemraj/flan-t5-large-grammar-synthesis ile:
-        1) Gramer ve noktalama düzeltmesi,
-        2) Metni tam beş ayrı cümleye bölerek yeniden yazma.
-        """
-        # 1. Prompt’u ayarla
-        prompt = (
-            "Correct the grammar and punctuation of the following text "
-            + text
-        )
-
-        # 2. Tokenize et (prompt + kaynak metin toplamı 512 token’ı aşmasın)
-        inputs = tokenizer(
-            prompt,
-            return_tensors="pt",
-            truncation=True,
-            max_length=512,
-        )
-
-        # 3. Beam search ile üret, hem min hem max yeni token sınırı koy
-        outputs = model.generate(
-            input_ids=inputs["input_ids"],
-            attention_mask=inputs["attention_mask"],
-            min_new_tokens=100,      # en az 100 token (yaklaşık 5 cümle)
-            max_new_tokens=300,      # en fazla 300 token
-            num_beams=5,             # beam genişliği
-            no_repeat_ngram_size=2,   # 2-gram tekrarını engelle
-            early_stopping=False     # EOS geldiğinde hemen durma
-        )
-
-        # 4. Decode et ve kırp
-        corrected = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-
-        # 5. Fallback
-        return corrected if corrected else text
-
-
-
-
     def is_complete_thought(self, sentence):
         if not sentence:
             return False
@@ -373,93 +333,94 @@ class EnhancedLanguageModel:
         if valid_noun_phrases:
             return max(valid_noun_phrases, key=candidates.get, default=None)
         return None
-    def choose_word_with_context(self,next_words,context_word=None,semantic_threshold=0.4,position_index=0,structure_template=None,prev_pos=None,pos_bigrams=None):
+    def choose_word_with_context(
+        self,
+        next_words,
+        context_word=None,
+        semantic_threshold=0.7,
+        position_index=0,
+        structure_template=None,
+        prev_pos=None,
+        pos_bigrams=None
+    ):
         if not next_words:
             return None
 
-        # Anahtar kelimeler ve olasılıklar
-        words = [str(w) for w in next_words.keys()]
+        # 1) Temel olasılıklar
+        words = list(next_words.keys())
         probs = np.array(list(next_words.values()), dtype=float)
-        probs = np.maximum(probs, 0)
-        total_prob = probs.sum()
-        if total_prob > 0:
-            probs /= total_prob
+        probs = np.clip(probs, 0, None)
+        if probs.sum() > 0:
+            probs /= probs.sum()
         else:
             probs = np.ones_like(probs) / len(probs)
 
-        # POS/template filtreleme
-        valid_words, vectors, valid_probs, valid_pos = [], [], [], []
+        # 2) POS ve vektörleri bir kerede çıkar
+        docs = [nlp(w) for w in words]
+        pos_tags = [doc[0].pos_ if doc and doc[0].pos_ else None for doc in docs]
+        vector_dim = nlp.vocab.vectors_length
+        vectors = np.array([
+            doc[0].vector if doc and doc[0].has_vector else np.zeros((vector_dim,))
+            for doc in docs
+        ])
+
+        # 3) Şablon bazlı filtreleme (structure_template)
         if structure_template:
             target_pos = structure_template[position_index % len(structure_template)]
-            for w, p in zip(words, probs):
-                doc = nlp(str(w))
-                if doc and doc[0].pos_ == target_pos:
-                    valid_words.append(w)
-                    vectors.append(doc[0].vector)
-                    valid_probs.append(p)
-                    valid_pos.append(doc[0].pos_)
-            if not valid_words:
-                self.log(f"[WARN] No matching POS '{target_pos}'. Fallback to all words.")
-                valid_words = words
-                vectors = [nlp(w)[0].vector for w in words]
-                valid_probs = list(probs)
-                valid_pos = [nlp(w)[0].pos_ for w in words]
-        else:
-            valid_words = words
-            vectors = [nlp(w)[0].vector for w in words]
-            valid_probs = list(probs)
-            valid_pos = [nlp(w)[0].pos_ for w in words]
-
-        valid_probs = np.array(valid_probs)
-        word_vectors = np.array(vectors)
-
-        # 1) Semantic benzerlik
-        if context_word is not None:
-            ctx = str(context_word)
-            ctx_vec = nlp(ctx).vector.reshape(1, -1)
-            if np.all(ctx_vec == 0):
-                self.log("[ERROR] Empty context vector. Using uniform similarity.")
-                sim_scores = np.ones_like(valid_probs)
+            mask = [pos == target_pos for pos in pos_tags]
+            if any(mask):
+                words      = [w for w, m in zip(words, mask) if m]
+                probs      = np.array([p for p, m in zip(probs, mask) if m])
+                vectors    = np.array([v for v, m in zip(vectors, mask) if m])
+                pos_tags   = [pos for pos, m in zip(pos_tags, mask) if m]
             else:
-                sim_scores = cosine_similarity(ctx_vec, word_vectors).flatten()
-                sim_scores = np.maximum(sim_scores, 0)
-                sim_scores[sim_scores < semantic_threshold] = 0
-        else:
-            sim_scores = np.ones_like(valid_probs)
+                self.log(f"[WARN] No words match POS '{target_pos}', skipping template filter.")
 
-        # 2) POS-bigram geçiş skoru
-        if pos_bigrams and prev_pos:
+        # 4) Anlamsal benzerlik
+        if context_word:
+            ctx_doc = nlp(str(context_word))
+            if ctx_doc and ctx_doc[0].has_vector:
+                ctx_vec = ctx_doc[0].vector.reshape(1, -1)
+                sim_scores = cosine_similarity(ctx_vec, vectors).flatten()
+                sim_scores = np.clip(sim_scores, 0, None)
+                sim_scores[sim_scores < semantic_threshold] = 0
+            else:
+                sim_scores = np.ones_like(probs)
+        else:
+            sim_scores = np.ones_like(probs)
+
+        # 5) POS-bigram geçiş skoru
+        if prev_pos and pos_bigrams:
             trans_scores = np.array([
                 pos_bigrams.get((prev_pos, pos), 0.01)
-                for pos in valid_pos
+                for pos in pos_tags
             ])
         else:
-            trans_scores = np.ones_like(valid_probs)
+            trans_scores = np.ones_like(probs)
 
-        # 3) Collocation bonus
+        # 6) Collocation bonus
         if context_word and hasattr(self, 'collocations'):
-            coll_map = self.collocations.get(str(context_word), {})
-            coll_bonus = np.array([coll_map.get(w, 0.0) for w in valid_words])
+            coll_map    = self.collocations.get(str(context_word), {})
+            coll_bonus  = np.array([coll_map.get(w, 0.0) for w in words])
             coll_factor = 1 + coll_bonus
         else:
-            coll_factor = np.ones_like(valid_probs)
+            coll_factor = np.ones_like(probs)
 
-        # 4) Puanları birleştir ve normalize et
-        combined = sim_scores * valid_probs * trans_scores * coll_factor
+        # 7) Puanları birleştir, normalize et
+        combined = probs * sim_scores * trans_scores * coll_factor
         total = combined.sum()
-        if total == 0:
-            self.log("[WARN] Combined scores zero. Using uniform distribution.")
+        if total <= 0:
+            self.log("[WARN] Combined scores zero; using uniform distribution.")
             combined = np.ones_like(combined) / len(combined)
         else:
             combined /= total
 
-        # Seçim ve log
-        choice = str(np.random.choice(valid_words, p=combined))  # numpy.str_ -> str dönüşümü
+        # 8) Seçim
+        choice = np.random.choice(words, p=combined).item()
         chosen_pos = nlp(choice)[0].pos_
-        self.log(
-            f"[LOG] ➡️ Chosen: '{choice}' | Chosen POS: {chosen_pos}"
-        )
+        self.log(f"[LOG] ➡️ Chosen: '{choice}' | POS: {chosen_pos}")
         return choice
+
 
 
 
@@ -852,7 +813,7 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Prompt’u ayarla (delimiter ile)
     prompt = (
-        "Correct the grammar and punctuation of the following text:\n"
+        "Correct the coherence, context, grammar and punctuation of the following text:\n"
         "=====\n"
         f"{text}\n"
         "=====\n"
@@ -871,8 +832,8 @@ def correct_grammar_t5(text: str) -> str:
     outputs = model.generate(
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
-        max_new_tokens=300,      # yeterli uzunlukta metin için
-        num_beams=8,
+        max_new_tokens=500,      # yeterli uzunlukta metin için
+        num_beams=5,
         no_repeat_ngram_size=2,
         early_stopping=True
     )
