@@ -337,7 +337,7 @@ class EnhancedLanguageModel:
         self,
         next_words,
         context_word=None,
-        semantic_threshold=0.7,
+        semantic_threshold=0.8,
         position_index=0,
         structure_template=None,
         prev_pos=None,
@@ -725,17 +725,17 @@ class EnhancedLanguageModel:
         var_len = np.var([len(prev.split()) for prev in previous_sentences])
 
         # ✨ Dinamik threshold
-        threshold = 0.75  # biraz daha insaflı başlıyoruz
+        threshold = 0.85  # biraz daha insaflı başlıyoruz
         if avg_len > 15:
             threshold += 0.075
         elif avg_len < 8:
             threshold -= 0.075
         if var_len > 5:
-            threshold += 0.055
+            threshold += 0.065
         if complexity_factor > 2.5:
-            threshold += 0.055
+            threshold += 0.065
         elif complexity_factor < 1.5:
-            threshold -= 0.055
+            threshold -= 0.065
 
         # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
         unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
@@ -802,8 +802,8 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I had forgot that.
-input_words = ("the", "murder",)
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+input_words = ("the", "crime", "was", "committed", "by", "a", "old", "man.")
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
 def correct_grammar_t5(text: str) -> str:
@@ -813,7 +813,7 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Prompt’u ayarla (delimiter ile)
     prompt = (
-        "Correct the coherence, context, grammar and punctuation of the following text:\n"
+        "Please proofread the following text, fixing any issues with clarity, continuity, grammar, and punctuation.:\n"
         "=====\n"
         f"{text}\n"
         "=====\n"
@@ -833,7 +833,7 @@ def correct_grammar_t5(text: str) -> str:
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
         max_new_tokens=500,      # yeterli uzunlukta metin için
-        num_beams=5,
+        num_beams=8,
         no_repeat_ngram_size=2,
         early_stopping=True
     )

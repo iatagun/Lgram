@@ -378,7 +378,7 @@ colloc_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\collo
 build_ngram_model(text_path, bigram_path, trigram_path, fourgram_path, fivegram_path, sixgram_path)
 
 # Collocation modelini oluştur
-build_collocation(text_path, colloc_path, window_size=5, pmi_threshold=11.22)
+build_collocation(text_path, colloc_path, window_size=5, pmi_threshold=9.22)
 # 1) PKL dosyasını yükle
 with open(colloc_path, "rb") as f:
     collocations = pickle.load(f)
