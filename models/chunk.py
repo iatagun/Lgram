@@ -813,7 +813,7 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Prompt’u ayarla (delimiter ile)
     prompt = (
-        "Please proofread the following text, fixing any issues with clarity, continuity, grammar, and punctuation.:\n"
+        "Please proofread the following text, fixing any issues with clarity, continuity, grammar, and punctuation:\n"
         "=====\n"
         f"{text}\n"
         "=====\n"
@@ -825,17 +825,25 @@ def correct_grammar_t5(text: str) -> str:
         prompt,
         return_tensors="pt",
         truncation=True,
-        max_length=512,
+        max_length=812,
     )
 
     # 3. Sadece yeni token’ları üret
     outputs = model.generate(
-        input_ids=inputs["input_ids"],
-        attention_mask=inputs["attention_mask"],
-        max_new_tokens=500,      # yeterli uzunlukta metin için
-        num_beams=8,
-        no_repeat_ngram_size=2,
-        early_stopping=True
+    input_ids=inputs["input_ids"],
+    attention_mask=inputs["attention_mask"],
+    
+    max_new_tokens=800,
+    num_beams=5,            # Sampling modu (beam=1)
+    no_repeat_ngram_size=3,
+    repetition_penalty=1.1,
+    
+    do_sample=True,         # top-k/p sampling
+    top_k=50,
+    top_p=0.95,
+    temperature=0.8,
+    
+    use_cache=True
     )
 
     # 4. Decode et

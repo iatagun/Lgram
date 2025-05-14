@@ -1,0 +1,188 @@
+Loaded existing model.
+[LOG] ➡️ Chosen: 'a' | POS: PRON
+[LOG] ➡️ Chosen: 'badly' | POS: ADV
+[LOG] ➡️ Chosen: 'that' | POS: PRON
+[LOG] ➡️ Chosen: 'we' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'talk' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'about' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'on' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'one' | POS: NUM
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'reason' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'he' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'leader' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Berlin' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | POS: PRON
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'corpse' | POS: NOUN
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'by' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'themselves' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'so' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'have' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'again' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'owe' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'you' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'want' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'this' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'you' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'will' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'never' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'find' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'himself' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'heel' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[LOG] ➡️ Chosen: 'get' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'president' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'pass' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'tenant' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'or' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'that' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'respond' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Alexandra' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Ford' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'step' | POS: VERB
+Attempt 1: Generated incoherent sentence: Find Jackson the president.
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'not' | POS: PART
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'as' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'take' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'day' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'for' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'family' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'make' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'friend' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Mr.' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Darcy' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'who' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'have' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'take' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | POS: PRON
+[LOG] ➡️ Chosen: 'find' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'as' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'bag' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'journey' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'yes' | POS: INTJ
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'know' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'after' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'new' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'world' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'there' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Barrière' | POS: PROPN
+Generated Text:
+The crime was committed by a old man. Indeed such a badly that we talk about on one of reason he and the leader of Berlin his. Reason to the corpse is. Grass have not as take to day for the family and make friend Mr.Darcy who has takeed his. Elizabeth I find as the bag in and be a journey yes I know after a new world there the Barrire.
+
+Corrected Text:
+Please proofread the following text, fixing any issues with clarity, continuity, grammar, and punctuation: ==== The crime was committed by an old man. Indeed, so bad is the weather that we sometimes talk about the reason why he was in Berlin and the city itself. The reason is that he is a rich man. Grass has not grown in this day and age, so it is not suitable for making friends or building communities. I find myself in a bar and ask for a drink when I see a new world around me.

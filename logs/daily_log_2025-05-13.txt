@@ -2497,3 +2497,323 @@ Attempt 1: Generated incoherent sentence: Expect certain awe it.
 
 ' | POS: SPACE
 [LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'chestnut' | POS: INTJ
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[LOG] ➡️ Chosen: '’ll' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'never' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'see' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'but' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'would' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'look' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'so' | POS: ADV
+Attempt 2: Generated incoherent sentence: Steal your money I.
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'no' | POS: INTJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'child' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'can' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'not' | POS: PART
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'live' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'pot' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'dust' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'so' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'do' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'her' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'arm' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+Attempt 3: Generated incoherent sentence: Protocol will be no child cannot live in the pot in the dust so I do her arm.
+[LOG] ➡️ Chosen: 'dress' | POS: NOUN
+[LOG] ➡️ Chosen: 'all' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[LOG] ➡️ Chosen: 'noise' | POS: NOUN
+[LOG] ➡️ Chosen: 'like' | POS: INTJ
+[LOG] ➡️ Chosen: 'he' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'into' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'rediscovery' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'body' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'throw' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'open' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'functional' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'property' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'from' | POS: ADP
+[LOG] ➡️ Chosen: 'he' | POS: PRON
+[SKIP] Not a complete thought: Be pretty dress all the noise like he into the rediscovery of the body throw open.
+[LOG] ➡️ Chosen: 'you' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'remember' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'far' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'down' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'over' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'off' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'at' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Netherfield' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'up' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'other' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'people' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'in' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'leg' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'with' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'discovery' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[LOG] ➡️ Chosen: 'your' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'hind' | POS: VERB
+[LOG] ➡️ Chosen: 'leg' | POS: NOUN
+[LOG] ➡️ Chosen: 'he' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'target' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'an' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'absolute' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'perfection' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'I' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '’m' | POS: PUNCT
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'cry' | POS: VERB
+[LOG] ➡️ Chosen: 'he' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'have' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'no' | POS: INTJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'idea' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'which' | POS: PRON
+[LOG] ➡️ Chosen: 'she' | POS: PRON
+Attempt 1: Generated incoherent sentence: Dupin as your hind leg he the target be an absolute perfection I ’m cry he has no idea which she.
+[LOG] ➡️ Chosen: 't' | POS: PROPN
+[LOG] ➡️ Chosen: 'like' | POS: INTJ
+[LOG] ➡️ Chosen: 'other' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'Rizzolatti' | POS: ADJ
+[LOG] ➡️ Chosen: 'G.' | POS: PROPN
+[LOG] ➡️ Chosen: '1996' | POS: NUM
+[LOG] ➡️ Chosen: 'Rizzolatti' | POS: ADJ
+[LOG] ➡️ Chosen: 'Arbib' | POS: NOUN
+[LOG] ➡️ Chosen: 'MA' | POS: PROPN
+[LOG] ➡️ Chosen: 'MIT' | POS: PROPN
+[LOG] ➡️ Chosen: 'Press' | POS: NOUN
+[LOG] ➡️ Chosen: 'et' | POS: NOUN
+[LOG] ➡️ Chosen: 'al' | POS: PROPN
+[LOG] ➡️ Chosen: '2007' | POS: NUM
+[LOG] ➡️ Chosen: 'support' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'world' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'who' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'know' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | POS: PRON
+Attempt 2: Generated incoherent sentence: Zaharrofâ€ ™ t like other Rizzolatti G.1996 Rizzolatti Arbib MA MIT Press et al 2007 support the world who know it.
+[LOG] ➡️ Chosen: 'at' | POS: ADP
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'end' | POS: VERB
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[LOG] ➡️ Chosen: 'then' | POS: ADV
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[LOG] ➡️ Chosen: 'find' | POS: VERB
+[LOG] ➡️ Chosen: 'to' | POS: ADP
+[LOG] ➡️ Chosen: 'do' | POS: VERB
+[LOG] ➡️ Chosen: 'she' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'he' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'remember' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'use' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'a' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'sacred' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'black' | POS: ADJ
+Attempt 3: Generated incoherent sentence: Be unite at the end then and find to do she it he remember to use to a sacred and black.
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'barrel' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'if' | POS: SCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'you' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'offer' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'valley' | POS: PROPN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'neuron' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'the' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'big' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'man' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'an' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'act' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'it' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: '
+
+' | POS: SPACE
+[LOG] ➡️ Chosen: 'sweet' | POS: ADJ
+[LOG] ➡️ Chosen: 'girl' | POS: NOUN
+[LOG] ➡️ Chosen: ''s' | POS: AUX
+[LOG] ➡️ Chosen: 'knot' | POS: VERB
+[LOG] ➡️ Chosen: 'that' | POS: PRON
+[LOG] ➡️ Chosen: 'seem' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'desirous' | POS: ADJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'of' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'his' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'pocket' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'and' | POS: CCONJ
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'she' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'be' | POS: AUX
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'there' | POS: ADV
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'any' | POS: PRON
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'risk' | POS: NOUN
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'to' | POS: ADP
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'throw' | POS: VERB
+[WARN] Combined scores zero; using uniform distribution.
+[LOG] ➡️ Chosen: 'they' | POS: PRON
+Generated Text:
+The crime was committed by a old man. Philips protest he think the mud and one hand and come from the atrocity of the little else. Morning it,you remember far down over off at Netherfield I up the other people in the leg with his discovery is. He reach the barrel. Spend so sweet girl 's knot that seem desirous of his pocket.
+
+Corrected Text:
+Please proofread the following text, fixing any issues with clarity, continuity, grammar, and punctuation: ===+The crime was committed by an old man. Phillips's protest is that the mud on one hand is the product of the atrocity on the other. In it, you remember, far and away from the novel, where I saw the people in their daily lives with this discovery. He reached the bar. A sweet little girl seemed to be interested in his pocket.
