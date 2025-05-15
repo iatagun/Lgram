@@ -801,23 +801,26 @@ except (FileNotFoundError, EOFError):
     language_model.log("Created and saved new model.")
 
 num_sentences = 5
-# I had forgot that.
-input_words = ("the", "crime", "was", "committed", "by", "a", "old", "man.")
+# I am going to kill you too.
+input_sentence = "Did you know that Gary speaks fluent Russian?"
+input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
 def correct_grammar_t5(text: str) -> str:
     """
-    FLAN-T5 ile gramer ve noktalama düzeltmesi,
-    ardından yalnızca düzeltilmiş metni döndürür.
+    FLAN-T5 ile:
+      • Gramer ve noktalama düzeltmesi
+      • Sadece düzeltilmiş metni döndürme
     """
-    # 1. Prompt’u ayarla (delimiter ile)
+    # 1. Çok net bir talimat + delimiter
     prompt = (
-        "Please proofread the following text, fixing any issues with clarity, continuity, grammar, and punctuation:\n"
-        "=====\n"
+        "Proofread the text between the triple quotes and correct all grammar "
+        "and punctuation errors. Do NOT include the original text or any "
+        "commentary—output ONLY the corrected text.\n"
+        '"""\n'
         f"{text}\n"
-        "=====\n"
-        "Corrected version:"
+        '"""\n'
     )
 
     # 2. Tokenize et
@@ -825,38 +828,35 @@ def correct_grammar_t5(text: str) -> str:
         prompt,
         return_tensors="pt",
         truncation=True,
-        max_length=812,
+        max_length=512
     )
 
-    # 3. Sadece yeni token’ları üret
+    # 3. Beam search (sampling kapalı)
     outputs = model.generate(
-    input_ids=inputs["input_ids"],
-    attention_mask=inputs["attention_mask"],
-    
-    max_new_tokens=800,
-    num_beams=5,            # Sampling modu (beam=1)
-    no_repeat_ngram_size=3,
-    repetition_penalty=1.1,
-    
-    do_sample=True,         # top-k/p sampling
-    top_k=50,
-    top_p=0.95,
-    temperature=0.8,
-    
-    use_cache=True
+        input_ids=inputs["input_ids"],
+        attention_mask=inputs["attention_mask"],
+
+        max_new_tokens=800,
+        num_beams=6,               # yeterli beam genişliği
+        no_repeat_ngram_size=3,
+        repetition_penalty=1.1,
+        early_stopping=True,
+
+        do_sample=False,           # sampling kapalı
+        use_cache=True
     )
 
-    # 4. Decode et
-    generated = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # 4. Decode ve trim
+    generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
-    # 5. Prompt’u kırp: "Corrected version:" sonrası kısmı al
-    if "Corrected version:" in generated:
-        corrected = generated.split("Corrected version:", 1)[1].strip()
+    # 5. Eğer delimter’li bir echo kaldıysa, sonrasında gelen kısmı al
+    if '"""' in generated:
+        corrected = generated.split('"""')[-1].strip()
     else:
-        corrected = generated.strip()
+        corrected = generated
 
-    # 6. Fallback
     return corrected if corrected else text
+
 
 corrected_text = correct_grammar_t5(generated_text)
 language_model.log("\nCorrected Text:\n" + corrected_text)
