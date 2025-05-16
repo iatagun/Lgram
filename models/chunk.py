@@ -165,10 +165,8 @@ class EnhancedLanguageModel:
         return False
 
 
-    def generate_sentence(self, start_words=None, length=17):
-        # —————— EKLENECEK KISIM: process objesini al
-        proc = psutil.Process(os.getpid())
-
+    def generate_sentence(self, start_words=None, length=15):
+        # Generate a raw sentence without context-based adjustments
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
@@ -179,48 +177,16 @@ class EnhancedLanguageModel:
         current_words = list(start_words)
         sentence = current_words.copy()
 
-        # tqdm'yi pbar değişkenine ata
-        pbar = tqdm(
-            range(length),
-            desc="Generating words",
-            position=0,
-            leave=False,
-            dynamic_ncols=True,
-            mininterval=0.05,
-            maxinterval=0.3
-        )
-
-        for _ in pbar:
+        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             prefix = tuple(current_words[-(self.n-1):])
-
-            # 🔥 Dinamik n-gram seçimi
             raw_next_word = self.choose_next_word_dynamically(prefix)
             if not raw_next_word:
                 break
+            current_words.append(raw_next_word)
+            sentence.append(raw_next_word)
 
-            last_sentence = ' '.join(current_words)
-            corrected_sentence = self.correct_grammar(last_sentence)
-            transition_analyzer = TransitionAnalyzer(corrected_sentence)
-            context_word = self.get_center_from_sentence(corrected_sentence, transition_analyzer)
-
-            next_word = self.choose_word_with_context({raw_next_word: 1.0}, context_word)
-            if next_word != current_words[-1]:
-                sentence.append(next_word)
-                current_words.append(next_word)
-
-            if len(sentence) >= length // 2:
-                partial_sentence = ' '.join(sentence)
-                if self.is_complete_thought(partial_sentence):
-                    break
-
-            # —————— EKLENECEK KISIM: her tur postfix ile cpu/mem göster
-            cpu = proc.cpu_percent(interval=None)
-            mem = proc.memory_percent()
-            pbar.set_postfix(cpu=f"{cpu:.1f}%", mem=f"{mem:.1f}%")
-
-        sentence_text = ' '.join(sentence).strip()
-        sentence_text = self.correct_grammar(sentence_text)
-        return self.clean_text(sentence_text)
+        sentence_text = " ".join(sentence)
+        return sentence_text
 
     def correct_grammar(self, text: str) -> str:
         """
@@ -293,51 +259,53 @@ class EnhancedLanguageModel:
         return True
 
 
-    def get_center_from_sentence(self, sentence, transition_analyzer):
-        transition_analyzer = TransitionAnalyzer(sentence)
-        transition_results = transition_analyzer.analyze()
-        doc = nlp(sentence)
-        noun_phrases = [chunk.text for chunk in doc.noun_chunks]
-        subjects, objects, pronouns = [], [], []
-        candidates = defaultdict(int)
+    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.3):
+        def compute_Fc(sent):
+            doc = nlp(sent)
+            sal = []
+            for tok in doc:
+                if tok.dep_ in ('nsubj', 'nsubjpass'):
+                    sal.append((tok.text, 3))
+                elif tok.pos_ == 'PRON':
+                    sal.append((tok.text, 2))
+                elif tok.dep_ in ('dobj', 'pobj', 'attr', 'oprd'):
+                    sal.append((tok.text, 1))
+            sal_sorted = sorted(sal, key=lambda x: (-x[1], sent.find(x[0])))
+            return [w for w, _ in sal_sorted]
 
-        for token in doc:
-            if token.dep_ in ('nsubj', 'nsubjpass'):
-                subjects.append(token.text)
-                candidates[token.text] += 2
-            elif token.dep_ in ('dobj', 'pobj', 'attr', 'oprd'):
-                objects.append(token.text)
-                candidates[token.text] += 1
-            elif token.pos_ == 'PRON':
-                pronouns.append(token.text)
-                candidates[token.text] += 1
+        Cf_prev = compute_Fc(prev_sentence)
+        Cf_curr = compute_Fc(current_sentence)
+        Cb = Cf_prev[0] if Cf_prev and Cf_prev[0] in Cf_curr else None
 
-        if subjects:
-            subjects = sorted(subjects, key=lambda x: (-candidates[x], sentence.index(x)))
-            return subjects[0]
+        # Transition analizini al
+        results = transition_analyzer.analyze()
+        for res in results:
+            tr = res.get('transition')
+            if tr == "Center Continuation (CON)":
+                # Bazen ikinci merkeze geç
+                if Cf_curr and random.random() < p_alt and len(Cf_curr) > 1:
+                    return Cf_curr[1]
+                return Cb
+            if tr in ("Smooth Shift (SSH)", "Rough Shift (RSH)"):
+                # Smooth Shift’te de arada bir farklı shift
+                if Cf_curr and random.random() < p_alt and len(Cf_curr) > 1:
+                    return Cf_curr[1]
+                return Cf_curr[0] if Cf_curr else None
 
-        for result in transition_results:
-            if result['current_sentences'] == sentence:
-                if result['transition'] == "Center Continuation (CON)":
-                    continuation_nps = set(result['current_nps']).intersection(result['next_nps'])
-                    if continuation_nps:
-                        return next(iter(continuation_nps))
-                elif result['transition'] in ("Smooth Shift (SSH)", "Rough Shift (RSH)"):
-                    objects = sorted(objects, key=lambda x: (-candidates[x], sentence.index(x)))
-                    if objects:
-                        return objects[0]
-                    elif pronouns:
-                        return pronouns[0]
+        # Fallback
+        if Cb:
+            return Cb if random.random() > p_alt else (Cf_curr[1] if len(Cf_curr) > 1 else Cb)
+        # Tamamen shift modu: bazen ikinci, bazen ilk
+        return (Cf_curr[1] if len(Cf_curr) > 1 and random.random() < p_alt else
+                (Cf_curr[0] if Cf_curr else None))
 
-        valid_noun_phrases = [np for np in noun_phrases if np in candidates]
-        if valid_noun_phrases:
-            return max(valid_noun_phrases, key=candidates.get, default=None)
-        return None
+    
+
     def choose_word_with_context(
         self,
         next_words,
         context_word=None,
-        semantic_threshold=0.8,
+        semantic_threshold=0.9,
         position_index=0,
         structure_template=None,
         prev_pos=None,
@@ -512,45 +480,71 @@ class EnhancedLanguageModel:
 
     @cache
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
+        from tqdm import tqdm as _tqdm  # ensure tqdm available
+
         generated_sentences = []
         max_attempts = 5
+        context_word = None
 
-        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=True, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        # Outer loop with progress bar
+        for i in _tqdm(range(num_sentences), desc="Generating sentences", leave=True, dynamic_ncols=True):
             attempts = 0
             coherent_sentence = False
+            corrected_sentence = ""
 
-            while attempts < max_attempts and not coherent_sentence:
+            # Inner loop with progress bar for attempts
+            for _ in _tqdm(range(max_attempts), desc=f"Attempts for sentence {i + 1}", leave=False, dynamic_ncols=True):
+                if coherent_sentence:
+                    break
+
+                # 1) Determine start for sentence based on centering
                 if i == 0 and input_words:
-                    generated_sentence = self.generate_sentence(start_words=input_words, length=length)
+                    start = input_words
+                elif context_word:
+                    start = [context_word]
                 else:
-                    last_sentence = generated_sentences[-1] if generated_sentences else ""
-                    adjusted_length = self.advanced_length_adjustment(last_sentence, length)
-                    generated_sentence = self.generate_sentence(length=adjusted_length)
+                    start = None
 
-                # ✨ İlk düzeltmeyi burada uygula (daha iyi uyum için)
-                generated_sentence = self.reorder_sentence(generated_sentence)
-                generated_sentence = self.rewrite_ill_formed_sentence(generated_sentence)
-                generated_sentence = self.correct_grammar(generated_sentence)
-                if self.is_sentence_coherent(generated_sentence, previous_sentences=generated_sentences):
-                    if not self.is_complete_thought(generated_sentence):
-                        self.log(f"[SKIP] Not a complete thought: {generated_sentence}")
-                        attempts += 1
-                        continue
+                # 2) Generate raw sentence
+                raw_sentence = (self.generate_sentence(start_words=start, length=length)
+                                if start else
+                                self.generate_sentence(length=length))
 
-                    generated_sentences.append(generated_sentence)
-                    coherent_sentence = True
+                # 3) Correct grammar
+                corrected_sentence = self.correct_grammar(raw_sentence)
+
+                # 4) Compute new context_word via transition analysis
+                prev_sentence = generated_sentences[-1] if generated_sentences else None
+                if prev_sentence:
+                    analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
+                    context_word = self.get_center_from_sentence(prev_sentence,
+                                                                 corrected_sentence,
+                                                                 analyzer)
                 else:
-                    attempts += 1
-                    self.log(f"Attempt {attempts}: Generated incoherent sentence: {generated_sentence}")
+                    context_word = None
 
-            if not coherent_sentence:
-                self.log(f"Max attempts reached for generating sentence {i + 1}. Adding the incoherent sentence.")
-                generated_sentence = self.correct_grammar(generated_sentence)
-                generated_sentences.append(generated_sentence)
+                # 5) Ensure terminal punctuation
+                if corrected_sentence and not corrected_sentence.endswith(('.', '!', '?')):
+                    corrected_sentence += '.'
 
-        final_text = ' '.join(generated_sentences)
-        final_text = self.post_process_text(final_text)
-        return final_text
+                # 6) Finalize and append
+                generated_sentences.append(corrected_sentence)
+                coherent_sentence = True
+
+            # Fallback if coherence not achieved
+            if not coherent_sentence and corrected_sentence:
+                fallback = corrected_sentence
+                if not fallback.endswith(('.', '!', '?')):
+                    fallback += '.'
+                generated_sentences.append(fallback)
+
+        # Assemble final text
+        final_text = " ".join(generated_sentences)
+        if final_text and not final_text.endswith(('.', '!', '?')):
+            final_text += '.'
+
+        return self.post_process_text(final_text)
+
 
 
     def advanced_length_adjustment(self, last_sentence, base_length):
@@ -802,7 +796,7 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = "Did you know that Gary speaks fluent Russian?"
+input_sentence = ""
 input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
 language_model.log("Generated Text:\n" + generated_text)
@@ -815,7 +809,7 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Çok net bir talimat + delimiter
     prompt = (
-        "Proofread the text between the triple quotes and correct all grammar "
+        "Proofread the text between the triple quotes and fix clarity, continuity and correct all grammar "
         "and punctuation errors. Do NOT include the original text or any "
         "commentary—output ONLY the corrected text.\n"
         '"""\n'
