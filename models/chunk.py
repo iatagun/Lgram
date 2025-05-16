@@ -480,69 +480,58 @@ class EnhancedLanguageModel:
 
     @cache
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
-        from tqdm import tqdm as _tqdm  # ensure tqdm available
-
         generated_sentences = []
         max_attempts = 5
-        context_word = None
+        context_word = None  # İlk center
 
-        # Outer loop with progress bar
-        for i in _tqdm(range(num_sentences), desc="Generating sentences", leave=True, dynamic_ncols=True):
+        for i in range(num_sentences):
             attempts = 0
             coherent_sentence = False
             corrected_sentence = ""
+            prev_sentence = generated_sentences[-1] if generated_sentences else None
 
-            # Inner loop with progress bar for attempts
-            for _ in _tqdm(range(max_attempts), desc=f"Attempts for sentence {i + 1}", leave=False, dynamic_ncols=True):
-                if coherent_sentence:
-                    break
+            # 1) İlk cümlede input_words kullan, diğerlerinde context_word (center)
+            if i == 0 and input_words:
+                start_words = input_words
+            elif context_word:
+                start_words = [context_word]
+            else:
+                start_words = None
 
-                # 1) Determine start for sentence based on centering
-                if i == 0 and input_words:
-                    start = input_words
-                elif context_word:
-                    start = [context_word]
-                else:
-                    start = None
+            # 2) Cümleyi üret, center ile başlamasını ZORUNLU tut
+            while attempts < max_attempts and not coherent_sentence:
+                raw_sentence = self.generate_sentence(start_words=start_words, length=length)
+                # Eğer center ile başlamıyorsa brute-force başa ekle
+                if start_words and not raw_sentence.lower().startswith(str(start_words[0]).lower()):
+                    raw_sentence = str(start_words[0]) + " " + raw_sentence
 
-                # 2) Generate raw sentence
-                raw_sentence = (self.generate_sentence(start_words=start, length=length)
-                                if start else
-                                self.generate_sentence(length=length))
-
-                # 3) Correct grammar
                 corrected_sentence = self.correct_grammar(raw_sentence)
-
-                # 4) Compute new context_word via transition analysis
-                prev_sentence = generated_sentences[-1] if generated_sentences else None
-                if prev_sentence:
-                    analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
-                    context_word = self.get_center_from_sentence(prev_sentence,
-                                                                 corrected_sentence,
-                                                                 analyzer)
-                else:
-                    context_word = None
-
-                # 5) Ensure terminal punctuation
+                # Noktalama zorunluluğu
                 if corrected_sentence and not corrected_sentence.endswith(('.', '!', '?')):
                     corrected_sentence += '.'
 
-                # 6) Finalize and append
-                generated_sentences.append(corrected_sentence)
+                # (İstersen coherence check ekleyebilirsin)
+                #if self.is_sentence_coherent(corrected_sentence, generated_sentences):
                 coherent_sentence = True
+                attempts += 1
 
-            # Fallback if coherence not achieved
-            if not coherent_sentence and corrected_sentence:
-                fallback = corrected_sentence
-                if not fallback.endswith(('.', '!', '?')):
-                    fallback += '.'
-                generated_sentences.append(fallback)
+            # 3) Cümleyi ekle
+            generated_sentences.append(corrected_sentence)
 
-        # Assemble final text
+            # 4) Yeni center'ı bul (yeni cümleyle analiz)
+            if prev_sentence:
+                analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
+                context_word = self.get_center_from_sentence(prev_sentence, corrected_sentence, analyzer)
+            else:
+                # İlk cümlede context_word = ilk özne olsun
+                doc = nlp(corrected_sentence)
+                for tok in doc:
+                    if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'):
+                        context_word = tok.text
+                        break
+
+        # 5) Sonuçları birleştir, post-process et
         final_text = " ".join(generated_sentences)
-        if final_text and not final_text.endswith(('.', '!', '?')):
-            final_text += '.'
-
         return self.post_process_text(final_text)
 
 
@@ -831,8 +820,8 @@ def correct_grammar_t5(text: str) -> str:
         attention_mask=inputs["attention_mask"],
 
         max_new_tokens=800,
-        num_beams=6,               # yeterli beam genişliği
-        no_repeat_ngram_size=3,
+        num_beams=10,               # yeterli beam genişliği
+        no_repeat_ngram_size=2,
         repetition_penalty=1.1,
         early_stopping=True,
 
