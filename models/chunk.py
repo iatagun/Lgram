@@ -4,7 +4,8 @@ from collections import defaultdict, Counter
 import spacy
 import numpy as np
 from tqdm import tqdm
-import psutil
+import sys
+import time
 import os
 import re
 import json
@@ -259,7 +260,7 @@ class EnhancedLanguageModel:
         return True
 
 
-    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.3):
+    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.09):
         def compute_Fc(sent):
             doc = nlp(sent)
             sal = []
@@ -476,7 +477,36 @@ class EnhancedLanguageModel:
         if out and out[-1] not in '.!?':
             out += sentence.strip()[-1] if sentence.strip()[-1] in '.!?' else '.'
         return out
-
+    
+    def get_dynamic_pronoun(self, token):
+        """
+        Token'ın türüne, sayısına ve morfolojik özelliklerine göre uygun zamiri döndürür.
+        Erkek/kadın/şirket/nesne/çoğul ayrımı otomatik!
+        """
+        # Çoğulsa "they"
+        if token.tag_ in ("NNS", "NNPS") or token.morph.get("Number") == ["Plur"]:
+            return "they"
+        
+        # İnsan mı? (PERSON entity veya muhtemel isim, özel isim)
+        if token.ent_type_ == "PERSON" or (token.pos_ == "PROPN" and token.morph.get("Gender")):
+            gender = token.morph.get("Gender")
+            if "Masc" in gender:
+                return "he"
+            elif "Fem" in gender:
+                return "she"
+            else:
+                return "they"  # cinsiyetsiz için
+        
+        # Kurum/organizasyon mu?
+        if token.ent_type_ == "ORG":
+            return "it"
+        
+        # Hayvan ya da cinsiyeti olmayan nesne, soyut kavram
+        if token.ent_type_ in ("PRODUCT", "GPE", "LOC", "EVENT") or token.pos_ == "NOUN":
+            return "it"
+        
+        # Hiçbiri değilse de default olarak "it"
+        return "it"
 
     @cache
     def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
@@ -484,7 +514,7 @@ class EnhancedLanguageModel:
         max_attempts = 5
         context_word = None  # İlk center
 
-        for i in range(num_sentences):
+        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             attempts = 0
             coherent_sentence = False
             corrected_sentence = ""
@@ -522,12 +552,16 @@ class EnhancedLanguageModel:
             if prev_sentence:
                 analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
                 context_word = self.get_center_from_sentence(prev_sentence, corrected_sentence, analyzer)
+                # Sonraki cümlelerde zamirleştir
+                if last_entity_token is not None:
+                    context_word = self.get_dynamic_pronoun(last_entity_token)
             else:
                 # İlk cümlede context_word = ilk özne olsun
                 doc = nlp(corrected_sentence)
                 for tok in doc:
                     if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'):
                         context_word = tok.text
+                        last_entity_token = tok  # Entityyi sakla!
                         break
 
         # 5) Sonuçları birleştir, post-process et
@@ -548,7 +582,7 @@ class EnhancedLanguageModel:
         complexity_factor = ((noun_count + verb_count + adjective_count + adverb_count) +
                             sum(1 for token in doc if token.dep_ in {"conj", "advcl", "relcl"})) // 2
         length_variability = ((last_length - base_length) + complexity_factor) // 3
-        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 20))
+        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 15))
         return adjusted_length
 
     def rewrite_ill_formed_sentence(self, sentence):
@@ -785,9 +819,9 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = ""
+input_sentence = "Gary was already out of the army by the time he moved overseas."
 input_words = tuple(token.lower() for token in input_sentence.split())
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=20)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
 def correct_grammar_t5(text: str) -> str:
@@ -819,8 +853,8 @@ def correct_grammar_t5(text: str) -> str:
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
 
-        max_new_tokens=800,
-        num_beams=10,               # yeterli beam genişliği
+        max_new_tokens=500,
+        num_beams=5,               # yeterli beam genişliği
         no_repeat_ngram_size=2,
         repetition_penalty=1.1,
         early_stopping=True,
