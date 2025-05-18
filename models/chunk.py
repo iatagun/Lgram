@@ -260,7 +260,7 @@ class EnhancedLanguageModel:
         return True
 
 
-    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.09):
+    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.03):
         def compute_Fc(sent):
             doc = nlp(sent)
             sal = []
@@ -582,7 +582,7 @@ class EnhancedLanguageModel:
         complexity_factor = ((noun_count + verb_count + adjective_count + adverb_count) +
                             sum(1 for token in doc if token.dep_ in {"conj", "advcl", "relcl"})) // 2
         length_variability = ((last_length - base_length) + complexity_factor) // 3
-        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 15))
+        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 13))
         return adjusted_length
 
     def rewrite_ill_formed_sentence(self, sentence):
@@ -819,9 +819,9 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = "Gary was already out of the army by the time he moved overseas."
+input_sentence = "The victim "
 input_words = tuple(token.lower() for token in input_sentence.split())
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
 def correct_grammar_t5(text: str) -> str:

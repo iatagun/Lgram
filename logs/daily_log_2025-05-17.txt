@@ -52,3 +52,9 @@ I often dwelt meditatively upon the old philosophy of the bi-part soul. I the mo
 
 Corrected Text:
 Prove the text between the quoted lines and fix clarity, continuity and correct all grammar and punctuation errors. Do not include the original text or any commentary--output only the corrected text. "I often dwelt meditatively upon the old philosophy of the bipartite soul. I am the most eligible man in the world to ask Miss Barbara to call me. It is at all this moment that he has no time to waste on this subject. To come to hear what a Lady has said and be heard in ASD is wonderful. If it were not for you, I would call it quits and you could immediately pass on what is honestly and deeply trusting."
+Loaded existing model.
+Generated Text:
+Gary was already out of the army by the time he moved overseas. Gary. They get up the passenger seat at twilight with which she look right in nature must. They call mr. Darcy seem to roll of approach the same small volume in which appear. They should be making a girl in a little time it for people call the boat.
+
+Corrected Text:
+"Gary was already out of the army by the time he moved abroad. Gary. They get up early in the morning and take the bus to a city, which they call "Boat City". They call me Mr. Darcy seems to be rolling over in his sleep at the same time as the little girl who is sitting next to him. " They should be making fun of it for people to call the boat."
