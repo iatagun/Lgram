@@ -54,4 +54,4 @@ def summarize_collocations(colloc_path, top_n=10):
 # Kullanım örneği:
 colloc_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\collocations.pkl"
 
-summarize_collocations(colloc_path, top_n=20)
+summarize_collocations(colloc_path, top_n=5)
