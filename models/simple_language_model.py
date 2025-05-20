@@ -513,6 +513,7 @@ class EnhancedLanguageModel:
         generated_sentences = []
         max_attempts = 5
         context_word = None  # İlk center
+        last_entity_token = None 
 
         for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             attempts = 0
@@ -582,7 +583,7 @@ class EnhancedLanguageModel:
         complexity_factor = ((noun_count + verb_count + adjective_count + adverb_count) +
                             sum(1 for token in doc if token.dep_ in {"conj", "advcl", "relcl"})) // 2
         length_variability = ((last_length - base_length) + complexity_factor) // 3
-        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 15))
+        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 13))
         return adjusted_length
 
     def rewrite_ill_formed_sentence(self, sentence):
@@ -819,9 +820,9 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = "The fact that these guys were also with Army Intelligence is nothing more than coincidence."
+input_sentence = "The victim "
 input_words = tuple(token.lower() for token in input_sentence.split())
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=15)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
 def correct_grammar_t5(text: str) -> str:
@@ -832,12 +833,11 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Çok net bir talimat + delimiter
     prompt = (
-        "Proofread the text between the triple quotes and fix clarity, continuity and correct all grammar "
-        "and punctuation errors. Do NOT include the original text or any "
-        "commentary—output ONLY the corrected text.\n"
-        '"""\n'
-        f"{text}\n"
-        '"""\n'
+    "Correct only grammar and punctuation errors in the text between triple quotes. "
+    "Preserve the style, tone, and any poetic or ambiguous language. Do NOT explain changes or output the original.\n"
+    '"""\n'
+    f"{text}\n"
+    '"""\n'
     )
 
     # 2. Tokenize et
