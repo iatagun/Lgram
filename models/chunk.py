@@ -260,7 +260,7 @@ class EnhancedLanguageModel:
         return True
 
 
-    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.9):
+    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.8):
         def compute_Fc(sent):
             doc = nlp(sent)
             sal = []
