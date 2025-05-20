@@ -260,7 +260,7 @@ class EnhancedLanguageModel:
         return True
 
 
-    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.8):
+    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.9):
         def compute_Fc(sent):
             doc = nlp(sent)
             sal = []
@@ -513,6 +513,7 @@ class EnhancedLanguageModel:
         generated_sentences = []
         max_attempts = 5
         context_word = None  # İlk center
+        last_entity_token = None 
 
         for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             attempts = 0
@@ -832,12 +833,11 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Çok net bir talimat + delimiter
     prompt = (
-        "Proofread the text between the triple quotes and fix clarity, continuity and correct all grammar "
-        "and punctuation errors. Do NOT include the original text or any "
-        "commentary—output ONLY the corrected text.\n"
-        '"""\n'
-        f"{text}\n"
-        '"""\n'
+    "Correct only grammar and punctuation errors in the text between triple quotes. "
+    "Preserve the style, tone, and any poetic or ambiguous language. Do NOT explain changes or output the original.\n"
+    '"""\n'
+    f"{text}\n"
+    '"""\n'
     )
 
     # 2. Tokenize et
