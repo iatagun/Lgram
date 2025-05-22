@@ -820,7 +820,7 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = "The victim "
+input_sentence = "The truth "
 input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
 language_model.log("Generated Text:\n" + generated_text)
@@ -833,12 +833,12 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Çok net bir talimat + delimiter
     prompt = (
-    "Correct only grammar and punctuation errors in the text between triple quotes. "
-    "Preserve the style, tone, and any poetic or ambiguous language. Do NOT explain changes or output the original.\n"
+    "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.\n"
     '"""\n'
     f"{text}\n"
     '"""\n'
     )
+
 
     # 2. Tokenize et
     inputs = tokenizer(
@@ -854,10 +854,10 @@ def correct_grammar_t5(text: str) -> str:
         attention_mask=inputs["attention_mask"],
 
         max_new_tokens=500,
-        num_beams=5,               # yeterli beam genişliği
+        num_beams=3,               # yeterli beam genişliği
         no_repeat_ngram_size=2,
         repetition_penalty=1.1,
-        early_stopping=True,
+        early_stopping=False,
 
         do_sample=False,           # sampling kapalı
         use_cache=True
@@ -866,12 +866,18 @@ def correct_grammar_t5(text: str) -> str:
     # 4. Decode ve trim
     generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
-    # 5. Eğer delimter’li bir echo kaldıysa, sonrasında gelen kısmı al
-    if '"""' in generated:
-        corrected = generated.split('"""')[-1].strip()
+    # 5. Eğer model prompt'u üretmişse, onu temizle
+    if generated.startswith(prompt):
+        corrected = generated[len(prompt):].strip()
     else:
         corrected = generated
 
+    # 6. Alternatif olarak, prompt içeriğini ortalarda yankılamışsa kesip al
+    # (isteğe bağlı, genellikle gerekli değildir ama ekstra güvenlik)
+    if prompt in corrected:
+        corrected = corrected.replace(prompt, "").strip()
+
+    # 7. Geriye kalan metni döndür, boşsa orijinal metni döndür
     return corrected if corrected else text
 
 
