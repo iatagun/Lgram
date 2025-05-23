@@ -820,7 +820,7 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = "The truth "
+input_sentence = "The crime"
 input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
 language_model.log("Generated Text:\n" + generated_text)
@@ -833,7 +833,7 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Çok net bir talimat + delimiter
     prompt = (
-    "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.\n"
+    "Improve grammar, punctuation, and coherence while keeping the text's original voice.\n"
     '"""\n'
     f"{text}\n"
     '"""\n'
@@ -854,7 +854,7 @@ def correct_grammar_t5(text: str) -> str:
         attention_mask=inputs["attention_mask"],
 
         max_new_tokens=500,
-        num_beams=3,               # yeterli beam genişliği
+        num_beams=5,               # yeterli beam genişliği
         no_repeat_ngram_size=2,
         repetition_penalty=1.1,
         early_stopping=False,
@@ -863,21 +863,25 @@ def correct_grammar_t5(text: str) -> str:
         use_cache=True
     )
 
-    # 4. Decode ve trim
     generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
-    # 5. Eğer model prompt'u üretmişse, onu temizle
+    # 1. Eğer prompt'tan yankı varsa, temizle
     if generated.startswith(prompt):
         corrected = generated[len(prompt):].strip()
     else:
         corrected = generated
 
-    # 6. Alternatif olarak, prompt içeriğini ortalarda yankılamışsa kesip al
-    # (isteğe bağlı, genellikle gerekli değildir ama ekstra güvenlik)
-    if prompt in corrected:
-        corrected = corrected.replace(prompt, "").strip()
+    # 2. İlk cümleyi ayır ve kaldır
+    import re
 
-    # 7. Geriye kalan metni döndür, boşsa orijinal metni döndür
+    # Noktalama işaretine göre ilk cümleyi tespit et
+    first_sentence_end = re.search(r'[.!?]', corrected)
+    if first_sentence_end:
+        corrected = corrected[first_sentence_end.end():].strip()  # ilk cümleyi at
+    else:
+        corrected = ""  # hiç noktalama yoksa, her şeyi sil (fallback)
+
+    # 3. Eğer tamamen boş kaldıysa, orijinal metni döndür
     return corrected if corrected else text
 
 
