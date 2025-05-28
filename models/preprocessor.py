@@ -3,7 +3,7 @@ import random
 
 nlp = spacy.load("en_core_web_lg")
 nlp.max_length = 2_000_000  # SpaCy'yi daha toleranslı yapıyoruz
-text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
+text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\more.txt"
 
 def smart_format_text_into_paragraphs_safe(text, min_sentences=3, max_sentences=5, chunk_size=500_000):
     """

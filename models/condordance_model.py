@@ -16,8 +16,8 @@ nltk.download('stopwords')
 
 # Parametreler
 window_size = 5
-embedding_dim = 100
-chunk_size = 500_000
+embedding_dim = 1000
+chunk_size = 200_000
 file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\more.txt"
 
 # Token ve temizlik
@@ -26,10 +26,10 @@ def preprocess_tokens(text):
     stop_words = set(stopwords.words('english'))
     tokens = [t for t in tokens if t.isalnum() and t not in stop_words]
     counter = Counter(tokens)
-    return [t for t in tokens if counter[t] > 3]
+    return [t for t in tokens if counter[t] > 1]
 
 # Chunk fonksiyonu
-def read_in_chunks(file_path, chunk_size=500_000):
+def read_in_chunks(file_path, chunk_size=200_000):
     with open(file_path, 'r', encoding='utf-8') as f:
         while True:
             chunk = f.read(chunk_size)
@@ -48,7 +48,7 @@ class WordEmbeddingModel(nn.Module):
         return self.dropout(self.embeddings(inputs))
 
 # Loader fonksiyonu
-def get_loader(pairs, batch_size=512):
+def get_loader(pairs, batch_size=1024):
     x = torch.tensor([p[0] for p in pairs], dtype=torch.long)
     y = torch.tensor([p[1] for p in pairs], dtype=torch.long)
     labels = torch.tensor([p[2] for p in pairs], dtype=torch.float)
@@ -98,7 +98,7 @@ for chunk in read_in_chunks(file_path, chunk_size=chunk_size):
     train_loader = get_loader(train_pairs)
     val_loader = get_loader(val_pairs)
 
-    for epoch in range(5):
+    for epoch in range(20):
         model.train()
         total_loss = 0.0
         for bx, by, bl in train_loader:
