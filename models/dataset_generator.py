@@ -1,37 +1,45 @@
+from datasets import load_dataset
+import nltk
+from nltk.tokenize import sent_tokenize
 import random
 
-subjects = [
-    "elizabeth", "darcy", "miss bingley", "mrs hurst", "mr hurst", 
-    "eliza bennet", "bingley", "sister", "lady", "woman", 
-    "assistant", "physician", "housekeeper", "mr jones"
+nltk.download("punkt")
+
+# 1. Dataseti yükle ve karıştır
+raw_ds = load_dataset("wikipedia", "20220301.en", split="train")
+raw_ds = raw_ds.shuffle(seed=42)
+
+# 2. Tematik keyword listesi
+keywords = [
+    "physics", "biology", "philosophy", "psychology", "history", "language",
+    "mathematics", "technology", "art", "music", "literature", "neuroscience",
+    "computer", "chemistry", "engineering"
 ]
 
-actions = [
-    "said", "replied", "cried", "added", "observed", "joined", "recommended", 
-    "called", "left", "described", "knew", "undervalue", "doubt", 
-    "employ", "succeed", "complain", "propose", "settled", "sent"
-]
+# 3. Belirli başlıklara göre örnek seç
+selected = []
+for example in raw_ds:
+    title = example.get("title", "").lower()
+    if any(k in title for k in keywords):
+        selected.append(example)
+    if len(selected) >= 100:
+        break
 
-objects = [
-    "accomplishments", "music", "singing", "drawing", "dancing", 
-    "languages", "voice", "address", "expressions", "capacity", 
-    "taste", "application", "elegance", "mind", "reading", 
-    "device", "art", "relief", "attention"
-]
+print(f"Toplam seçilen madde: {len(selected)}")
 
-places = [
-    "room", "town", "country", "house", "morning", "supper"
-]
+# 4. Cümlelere böl ve sınırlı sayıda al
+sentences = []
+for ex in selected:
+    sents = sent_tokenize(ex["text"])
+    sentences.extend(sents)
 
+# 5. 5000 cümle ile sınırla
+random.shuffle(sentences)
+sentences = sentences[:5000]
 
+# 6. Dosyaya yaz
+with open("thematic_wiki.txt", "w", encoding="utf-8") as f:
+    for sent in sentences:
+        f.write(sent.strip() + "\n")
 
-def generate_sentence():
-    subj = random.choice(subjects)
-    verb = random.choice(actions)
-    obj = random.choice(objects)
-    loc = random.choice(places)
-    return f"{subj} {verb} {obj} {loc}."
-
-with open("daily_life_dataset.txt", "w", encoding="utf-8") as f:
-    for _ in range(10000):  # 10K satır üret
-        f.write(generate_sentence() + "\n")
+print("Cümleler 'thematic_wiki.txt' dosyasına yazıldı.")

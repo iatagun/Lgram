@@ -15,10 +15,10 @@ nltk.download('punkt')
 nltk.download('stopwords')
 
 # Parametreler
-window_size = 5
-embedding_dim = 1000
+window_size = 12
+embedding_dim = 500
 chunk_size = 200_000
-file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\more.txt"
+file_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\thematic_wiki.txt"
 
 # Token ve temizlik
 def preprocess_tokens(text):
@@ -98,7 +98,7 @@ for chunk in read_in_chunks(file_path, chunk_size=chunk_size):
     train_loader = get_loader(train_pairs)
     val_loader = get_loader(val_pairs)
 
-    for epoch in range(20):
+    for epoch in range(5):
         model.train()
         total_loss = 0.0
         for bx, by, bl in train_loader:

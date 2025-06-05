@@ -15,7 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cosine
 from functools import cache
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-
+from paraphraser import paraphrase_sentence
 # 1. Model ve tokenizer'ı başlat
 tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
 model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
@@ -823,8 +823,11 @@ num_sentences = 5
 input_sentence = "The crime"
 input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
+paraphrased = paraphrase_sentence(generated_text)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
+print("Paraphrased Text:\n" + paraphrased)
+
 def correct_grammar_t5(text: str) -> str:
     """
     FLAN-T5 ile:
@@ -833,7 +836,7 @@ def correct_grammar_t5(text: str) -> str:
     """
     # 1. Çok net bir talimat + delimiter
     prompt = (
-    "Improve grammar, punctuation, and coherence while keeping the text's original voice.\n"
+    "Keep the text's original voice while improving grammar, punctuation, and coherence.\n"
     '"""\n'
     f"{text}\n"
     '"""\n'
@@ -885,6 +888,6 @@ def correct_grammar_t5(text: str) -> str:
     return corrected if corrected else text
 
 
-corrected_text = correct_grammar_t5(generated_text)
-language_model.log("\nCorrected Text:\n" + corrected_text)
-print("\nCorrected Text:\n" + corrected_text)
+corrected_text_generated = correct_grammar_t5(generated_text)
+language_model.log("\nCorrected Text:\n" + corrected_text_generated)
+print("\nCorrected Text:\n" + corrected_text_generated)
