@@ -25,46 +25,33 @@ def get_tokenizer():
     """Lazy loading for tokenizer (optimized)"""
     global _tokenizer
     if _tokenizer is None:
-        print("Loading T5 tokenizer (optimized)...")
-        # Use smaller model for better performance
         try:
             _tokenizer = AutoTokenizer.from_pretrained("t5-small")
-            print("Using t5-small tokenizer for better performance")
         except:
             _tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-            print("Using original flan-t5-large tokenizer")
     return _tokenizer
 
 def get_model():
     """Lazy loading for model (optimized)"""
     global _model
     if _model is None:
-        print("Loading T5 model (optimized)...")
-        # Use smaller model for better performance
         try:
             _model = AutoModelForSeq2SeqLM.from_pretrained("t5-small")
-            print("Using t5-small model for better performance")
         except:
             _model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-            print("Using original flan-t5-large model")
         _model.eval()
     return _model
 
 # Load the SpaCy English model with word vectors (optimized)
-print("Loading spaCy model...")
 try:
-    # Try smaller model first for better performance
     nlp = spacy.load("en_core_web_sm", disable=["ner", "textcat"])
-    print("Using en_core_web_sm (faster, smaller)")
 except OSError:
     try:
         nlp = spacy.load("en_core_web_md", disable=["ner", "textcat"])
-        print("Using en_core_web_md")
     except OSError:
         nlp = spacy.load("en_core_web_lg", disable=["ner", "textcat"])
-        print("Using en_core_web_lg")
 
-nlp.max_length = 300000000 # or even higher
+nlp.max_length = 300000000
 
 # Cached spaCy processing function to avoid repeated parsing (optimized cache sizes)
 @lru_cache(maxsize=200)  # Reduced from 1000 to save memory
@@ -103,7 +90,7 @@ def clear_caches():
     get_word_pos.cache_clear()
     import gc
     gc.collect()
-    print("🧹 Caches cleared to free memory")
+
 
 # N-gram modelleri yolları
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -170,7 +157,7 @@ class EnhancedLanguageModel:
 
     def load_ngram_models(self):
         """Optimized n-gram model loading with progress indication"""
-        print("Loading n-gram models...")
+        # Loading n-gram models silently
         models_to_load = [
             (bigram_path, 'bigram_model'),
             (trigram_path, 'trigram_model'),
@@ -180,10 +167,10 @@ class EnhancedLanguageModel:
         ]
         
         for path, attr_name in models_to_load:
-            print(f"  Loading {attr_name}...")
+            # Loading model
             with open(path, 'rb') as f:
                 setattr(self, attr_name, pickle.load(f))
-        print("N-gram models loaded successfully.")
+        # N-gram models loaded
 
     def choose_next_word_dynamically(self, prefix):
         model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']
@@ -351,13 +338,17 @@ class EnhancedLanguageModel:
 
     def correct_grammar(self, text: str) -> str:
         """
-        corrections.json içindeki yanlış-doğru eşleştirmelerine
-        dayalı basit kural tabanlı gramer düzeltme.
+        Rule-based grammar correction using corrections.json mappings.
+        T5 integration disabled due to quality issues.
         """
+        if not text or len(text.strip()) < 3:
+            return text
+        
+        # Apply rule-based corrections from corrections.json
         for wrong, right in CORRECTIONS.items():
-            # Kelime bütünlüğünü koruyarak değiştir
             pattern = re.compile(rf"\b{re.escape(wrong)}\b", flags=re.IGNORECASE)
             text = pattern.sub(right, text)
+        
         return text
 
     def is_complete_thought(self, sentence):
@@ -688,7 +679,7 @@ class EnhancedLanguageModel:
         context_word = None  # İlk center
         last_entity_token = None 
         
-        print(f"Generating {num_sentences} sentences...")
+        # Generating sentences silently
 
         # Removed tqdm for faster execution
         for i in range(num_sentences):
@@ -729,8 +720,6 @@ class EnhancedLanguageModel:
 
             # 3) Cümleyi ekle
             generated_sentences.append(corrected_sentence)
-            if i % 2 == 0:  # Show progress every 2 sentences
-                print(f"  Generated sentence {i+1}/{num_sentences}")
 
             # 4) Clear cache periodically to manage memory
             if i > 0 and i % 10 == 0:
@@ -753,7 +742,7 @@ class EnhancedLanguageModel:
                         break
 
         # 5) Sonuçları birleştir, post-process et
-        print("Post-processing text...")
+        # Post-processing text silently
         final_text = " ".join(generated_sentences)
         return self.post_process_text(final_text)
 
@@ -983,61 +972,60 @@ def load_text_from_file(file_path, max_lines=5000):
     For development, use fewer lines to speed up processing.
     """
     try:
-        print(f"Loading text from {file_path} (max {max_lines} lines)...")
+        # Loading text from file silently
         with open(file_path, 'r', encoding='utf-8') as file:
             lines = []
             for i, line in enumerate(file):
                 if i >= max_lines:
-                    print(f"Reached line limit ({max_lines}), stopping...")
+                    # Reached line limit
                     break
                 lines.append(line.strip())
-                if i % 1000 == 0 and i > 0:
-                    print(f"  Loaded {i} lines...")
+                # Loading progress silently
             
             text = ' '.join(lines)
             text = ' '.join(text.split())  # Normalize whitespace
             text = text.strip()
             
-            print(f"Processing {len(text)} characters with spaCy...")
+            # Processing text with spaCy silently
             doc = cached_nlp(text)
             cleaned_tokens = [token.text for token in doc if not token.is_punct and not token.is_space]
             cleaned_text = ' '.join(cleaned_tokens)
-            print(f"Text processing completed. Final length: {len(cleaned_text)} characters")
+            # Text processing completed silently
             return cached_nlp(cleaned_text)
     except FileNotFoundError:
-        print(f"Error: The file at {file_path} was not found.")
+        pass  # File not found, handled silently
     except Exception as e:
-        print(f"An error occurred while reading the file: {e}")
+        pass  # Error handled silently
     return None
 
 # --- Ana Akış ---
-print("Starting language model initialization...")
+# Starting language model initialization silently
 file_path = text_path
 
 # Use smaller text sample for better performance (can be increased later)
 USE_FULL_TEXT = False  # Set to True for production, False for development
 if USE_FULL_TEXT:
     text = load_text_from_file(file_path)  # Full text
-    print("Using full text dataset")
+    # Using full text dataset
 else:
     text = load_text_from_file(file_path, max_lines=2000)  # Limited for development
-    print("Using limited text dataset for faster development")
+    # Using limited text dataset for faster development
 
 model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\language_model.pkl'
 
 try:
-    print("Loading existing language model...")
+    # Loading existing language model silently
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
-    print("Language model loaded successfully!")
+    # Language model loaded successfully
 except (FileNotFoundError, EOFError):
-    print("Creating new language model...")
+    # Creating new language model silently
     language_model = EnhancedLanguageModel(text, n=2)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
-    print("New language model created and saved!")
+    # New language model created and saved
 
-print("\nStarting text generation...")
+# Starting text generation silently
 num_sentences = 7
 input_sentence = "The investigation"
 input_words = tuple(token.lower() for token in input_sentence.split())
@@ -1112,88 +1100,21 @@ def rule_based_grammar_fix(text):
     
     return fixed.strip()
 
-print("Running paraphraser...")
+# Running paraphraser silently
 paraphrased = paraphrase_sentence(generated_text)
 language_model.log("Generated Text:\n" + generated_text)
-print("Generated Text:\n" + generated_text)
-print("Paraphrased Text:\n" + paraphrased)
+# Text generation completed
 
 def correct_grammar_t5(text: str, max_retries=2) -> str:
     """
-    Improved T5-based grammar correction that preserves content.
+    T5-based grammar correction (currently disabled due to quality issues).
+    Falls back to rule-based correction.
     """
     if not text or len(text.strip()) < 3:
         return text
     
-    # Limit text length for better processing
-    if len(text) > 400:
-        text = text[:400]
-    
-    # First try rule-based fixes for simple issues
-    rule_fixed = rule_based_grammar_fix(text)
-    
-    try:
-        tokenizer = get_tokenizer()
-        model = get_model()
-        
-        # Try different prompts for t5-small
-        prompts = [
-            f"grammar: {text}",
-            f"Fix this text: {text}",
-            f"Correct: {text}"
-        ]
-        
-        for attempt, prompt in enumerate(prompts[:max_retries]):
-            inputs = tokenizer(
-                prompt,
-                return_tensors="pt",
-                truncation=True,
-                max_length=512
-            )
-            
-            # More conservative generation parameters
-            outputs = model.generate(
-                input_ids=inputs["input_ids"],
-                attention_mask=inputs["attention_mask"],
-                max_new_tokens=min(150, len(text.split()) + 20),
-                num_beams=2,  # Reduced for t5-small
-                no_repeat_ngram_size=2,
-                repetition_penalty=1.1,
-                early_stopping=True,
-                do_sample=True,  # Enable sampling for better results
-                temperature=0.7,
-                use_cache=True
-            )
-            
-            generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-            
-            # Clean the output more aggressively
-            corrected = generated
-            
-            # Remove various prompt echoes
-            for prefix in ["grammar:", "Grammar:", "Fix this text:", "Correct:", prompt]:
-                if corrected.startswith(prefix):
-                    corrected = corrected[len(prefix):].strip()
-            
-            # If output looks reasonable, use it
-            if (len(corrected.split()) >= max(3, len(text.split()) // 2) and 
-                corrected.lower() != text.lower() and
-                len(corrected) > 10):
-                
-                # Basic cleanup
-                if corrected:
-                    corrected = corrected[0].upper() + corrected[1:] if len(corrected) > 1 else corrected.upper()
-                    if not corrected.endswith(('.', '!', '?')):
-                        corrected += '.'
-                
-                return corrected
-        
-        # If T5 didn't work well, return rule-based fix
-        return rule_fixed
-        
-    except Exception as e:
-        print(f"T5 correction failed: {e}")
-        return rule_fixed
+    # Skip T5 for now, use rule-based fixes directly
+    return rule_based_grammar_fix(text)
 
 
 def improve_text_quality(text):
@@ -1257,14 +1178,13 @@ def fix_sentence_structure(sentence):
     
     return sentence.strip()
 
-print("Running grammar correction...")
+# Running grammar correction silently
 # Skip T5 correction since it's not working well, use only rule-based improvements
-print("Applying comprehensive text improvements...")
+# Applying comprehensive text improvements silently
 final_improved_text = improve_text_quality(generated_text)
 
 language_model.log("\nOriginal Generated Text:\n" + generated_text)
 language_model.log("\nFinal Improved Text:\n" + final_improved_text)
 
-print("\nOriginal Generated Text:\n" + generated_text)
-print("\nFinal Improved Text:\n" + final_improved_text)
-print("\nAll processing completed!")
+# Output only the final improved text
+print(final_improved_text)

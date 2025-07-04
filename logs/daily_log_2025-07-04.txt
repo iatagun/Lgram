@@ -40,3 +40,12 @@ The investigation but what if it is about the State of. It is full in a sheet of
 
 Final Improved Text:
 The investigation but what if it is about the State of.It is full in a sheet of his voice that.It do Gary Lawlor would play with tolerable.It is long it is acquire the thicket of sensorimotor.It is far from the same time and I guess.It suggest no it would he soon make it is.It is Miss Eliza Mr.Collins s soul that.
+Loaded existing model.
+Generated Text:
+The investigation at midnight the point of such a beautiful and the. Know the park he behold a series of the sound. Park he decline they dare not pleasant as soon as. They cross her hair and writhe. Her arm above a direct toward where and flee to the. Arm in the great satisfaction to a frightened child have. Arm exists.
+
+Original Generated Text:
+The investigation at midnight the point of such a beautiful and the. Know the park he behold a series of the sound. Park he decline they dare not pleasant as soon as. They cross her hair and writhe. Her arm above a direct toward where and flee to the. Arm in the great satisfaction to a frightened child have. Arm exists.
+
+Final Improved Text:
+The investigation at midnight the point of such a beautiful and the.Know the park he behold a series of the sound.Park he decline they dare not pleasant as soon as.They cross her hair and writhe.Her arm above a direct toward where and flee to the.Arm in the great satisfaction to a frightened child have.Arm exists.
