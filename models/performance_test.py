@@ -3,7 +3,6 @@ import psutil
 import os
 import sys
 import tracemalloc
-from memory_profiler import profile
 import gc
 
 # Add the models directory to Python path
@@ -211,13 +210,6 @@ if __name__ == "__main__":
         print("Installing psutil...")
         os.system("pip install psutil")
         import psutil
-    
-    try:
-        import memory_profiler
-    except ImportError:
-        print("Installing memory-profiler...")
-        os.system("pip install memory-profiler")
-        import memory_profiler
     
     # Run the comprehensive test
     run_comprehensive_test()

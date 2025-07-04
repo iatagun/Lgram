@@ -4,3 +4,21 @@ The crime cannot mind race be likely to be of Silas Marner say. Crime but perhap
 
 Corrected Text:
 Crime but perhaps one writer who is amazing be finding his reputation be. It is no doubt and return the defense secretary and I can. it is then she spring and remember the moral and in the assassin would.
+Loaded existing model.
+Generated Text:
+The crime he has not been an investigation and sleep in truth break to tell. He to get a couple of the time of this is on the longing. It possible to find I want any sign of these word in Saskatchewan Party. It is frank. It would have to this journal is already at the age reference.
+
+Corrected Text:
+He is on the longing. It would have to this journal is already at the age reference.
+Loaded existing model.
+Generated Text:
+The crime she would have done with the Avery scholarship be no indeed I. Crime he is therefore be convince he and the body is the thing so. It is a silent for he write up now well enough to a little. It for some color of the thought is nothing of Earth 's book. It the message in the air with he then it happen.
+
+Corrected Text:
+""" The crime she would have done with the Avery scholarship be no indeed I. Crime he is therefore be convince him and the body is the thing so.
+Loaded existing model.
+Generated Text:
+The crime then you know that such a problem Nehaniv. Crime moment s area. It is actually think it is able to she come in more than ever. It good health care for Mr. Cass s key. Reach inside the rubbish heap of keep his.
+
+Corrected Text:
+Grammatical: The crime then you know that such a problem Nehaniv. Crime moment s area. It is actually think it is able to she come in more than ever. it good health care for Mr. Cass' key. Reach inside the rubbish heap of keep his.
