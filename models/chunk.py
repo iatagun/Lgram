@@ -1038,10 +1038,10 @@ except (FileNotFoundError, EOFError):
     print("New language model created and saved!")
 
 print("\nStarting text generation...")
-num_sentences = 5
-input_sentence = "The crime"
+num_sentences = 7
+input_sentence = "The investigation"
 input_words = tuple(token.lower() for token in input_sentence.split())
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
 
 def rule_based_grammar_fix(text):
     """
