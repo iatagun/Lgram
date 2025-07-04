@@ -13,17 +13,97 @@ import datetime
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cosine
-from functools import cache
+from functools import cache, lru_cache
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from paraphraser import paraphrase_sentence
-# 1. Model ve tokenizer'ı başlat
-tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-model.eval()
 
-# Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_md")
+# 1. Model ve tokenizer'ı lazy loading ile başlat
+_tokenizer = None
+_model = None
+
+def get_tokenizer():
+    """Lazy loading for tokenizer (optimized)"""
+    global _tokenizer
+    if _tokenizer is None:
+        print("Loading T5 tokenizer (optimized)...")
+        # Use smaller model for better performance
+        try:
+            _tokenizer = AutoTokenizer.from_pretrained("t5-small")
+            print("Using t5-small tokenizer for better performance")
+        except:
+            _tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+            print("Using original flan-t5-large tokenizer")
+    return _tokenizer
+
+def get_model():
+    """Lazy loading for model (optimized)"""
+    global _model
+    if _model is None:
+        print("Loading T5 model (optimized)...")
+        # Use smaller model for better performance
+        try:
+            _model = AutoModelForSeq2SeqLM.from_pretrained("t5-small")
+            print("Using t5-small model for better performance")
+        except:
+            _model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+            print("Using original flan-t5-large model")
+        _model.eval()
+    return _model
+
+# Load the SpaCy English model with word vectors (optimized)
+print("Loading spaCy model...")
+try:
+    # Try smaller model first for better performance
+    nlp = spacy.load("en_core_web_sm", disable=["ner", "textcat"])
+    print("Using en_core_web_sm (faster, smaller)")
+except OSError:
+    try:
+        nlp = spacy.load("en_core_web_md", disable=["ner", "textcat"])
+        print("Using en_core_web_md")
+    except OSError:
+        nlp = spacy.load("en_core_web_lg", disable=["ner", "textcat"])
+        print("Using en_core_web_lg")
+
 nlp.max_length = 300000000 # or even higher
+
+# Cached spaCy processing function to avoid repeated parsing (optimized cache sizes)
+@lru_cache(maxsize=200)  # Reduced from 1000 to save memory
+def cached_nlp(text):
+    """Cache spaCy processing to avoid repeated parsing of same text"""
+    return nlp(str(text))
+
+@lru_cache(maxsize=100)  # Reduced from 500
+def cached_nlp_with_disable(text, disable_components):
+    """Cache spaCy processing with disabled components"""
+    disable_list = list(disable_components) if disable_components else []
+    return nlp(str(text), disable=disable_list)
+
+@lru_cache(maxsize=200)  # Reduced from 1000
+def get_word_vector(word):
+    """Cache word vectors to avoid repeated processing"""
+    doc = cached_nlp(str(word))
+    if doc and len(doc) > 0 and doc[0].has_vector:
+        return doc[0].vector
+    return None
+
+@lru_cache(maxsize=200)  # Reduced from 1000
+def get_word_pos(word):
+    """Cache POS tags to avoid repeated processing"""
+    doc = cached_nlp(str(word))
+    if doc and len(doc) > 0:
+        return doc[0].pos_
+    return None
+
+# Memory management functions
+def clear_caches():
+    """Clear all caches to free memory"""
+    cached_nlp.cache_clear()
+    cached_nlp_with_disable.cache_clear()
+    get_word_vector.cache_clear()
+    get_word_pos.cache_clear()
+    import gc
+    gc.collect()
+    print("🧹 Caches cleared to free memory")
 
 # N-gram modelleri yolları
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -67,7 +147,7 @@ class EnhancedLanguageModel:
 
     def build_model(self, text):
         model = defaultdict(lambda: defaultdict(int))
-        doc = nlp(text.lower())
+        doc = cached_nlp(text.lower())
         tokens = [token.text for token in doc if token.is_alpha]
         n_grams = [tuple(tokens[i:i+self.n]) for i in range(len(tokens)-self.n+1)]
 
@@ -89,75 +169,76 @@ class EnhancedLanguageModel:
         return dict(model), dict(total_counts)
 
     def load_ngram_models(self):
-        with open(bigram_path, 'rb') as f:
-            self.bigram_model = pickle.load(f)
-        with open(trigram_path, 'rb') as f:
-            self.trigram_model = pickle.load(f)
-        with open(fourgram_path, 'rb') as f:
-            self.fourgram_model = pickle.load(f)
-        with open(fivegram_path, 'rb') as f:
-            self.fivegram_model = pickle.load(f)
-        with open(sixgram_path, 'rb') as f:
-            self.sixgram_model = pickle.load(f)
+        """Optimized n-gram model loading with progress indication"""
+        print("Loading n-gram models...")
+        models_to_load = [
+            (bigram_path, 'bigram_model'),
+            (trigram_path, 'trigram_model'),
+            (fourgram_path, 'fourgram_model'),
+            (fivegram_path, 'fivegram_model'),
+            (sixgram_path, 'sixgram_model')
+        ]
+        
+        for path, attr_name in models_to_load:
+            print(f"  Loading {attr_name}...")
+            with open(path, 'rb') as f:
+                setattr(self, attr_name, pickle.load(f))
+        print("N-gram models loaded successfully.")
 
     def choose_next_word_dynamically(self, prefix):
         model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']
-        candidates = []
-
-        # Toplu aday listesi oluştur
+        
+        # Early exit optimization: check highest priority models first
         for model_attr in model_priority:
             model = getattr(self, model_attr, None)
             if model:
                 next_words = model.get(prefix)
                 if next_words:
-                    candidates.append((model_attr, next_words))
+                    # Found candidates, proceed with selection
+                    weighted_candidates = []
+                    for word, prob in next_words.items():
+                        adjusted_prob = prob
+                        
+                        # 🔥 Semantic relation kontrolü (optimize: only check top candidates)
+                        if len(next_words) < 20 and self.is_semantically_related(prefix, word):
+                            adjusted_prob *= 1.7  # %70 ekstra ağırlık
 
-        if not candidates:
-            return None
+                        # 🤝 Collocation bonusu (PMI tabanlı)
+                        last = prefix[-1] if prefix else None
+                        if last and hasattr(self, 'collocations'):
+                            bonus = self.collocations.get(last, {}).get(word, 0)
+                            adjusted_prob *= (1 + bonus)
 
-        weighted_candidates = []
-        for model_attr, words_dict in candidates:
-            weight = model_priority.index(model_attr) + 1
-            for word, prob in words_dict.items():
-                adjusted_prob = prob / weight
-
-                # 🔥 Semantic relation kontrolü
-                if self.is_semantically_related(prefix, word):
-                    adjusted_prob *= 1.7  # %70 ekstra ağırlık
-
-                # 🤝 Collocation bonusu (PMI tabanlı)
-                last = prefix[-1] if prefix else None
-                if last and hasattr(self, 'collocations'):
-                    bonus = self.collocations.get(last, {}).get(word, 0)
-                    # PMI genellikle 0–2 arası değerler aldığı için (1+bonus) formülü uygundur
-                    adjusted_prob *= (1 + bonus)
-
-                weighted_candidates.append((word, adjusted_prob))
-
-        if not weighted_candidates:
-            return None
-
-        # Kelime ve ağırlıkları ayır
-        words, scores = zip(*weighted_candidates)
-        # Random seçim
-        chosen_word = random.choices(words, weights=scores, k=1)[0]
-
-        return chosen_word
+                        weighted_candidates.append((word, adjusted_prob))
+                    
+                    if weighted_candidates:
+                        # Kelime ve ağırlıkları ayır
+                        words, scores = zip(*weighted_candidates)
+                        # Random seçim
+                        chosen_word = random.choices(words, weights=scores, k=1)[0]
+                        return chosen_word
+        
+        return None
 
     def is_semantically_related(self, prefix, word):
         """
         Prefix'in son kelimesi ile candidate word arasında semantic similarity ölçer.
+        Optimized version with early exit.
         """
         if not prefix:
             return False
 
         try:
             last_word = prefix[-1]
-            token1 = nlp(last_word)[0]
-            token2 = nlp(word)[0]
-
-            if token1.has_vector and token2.has_vector:
-                similarity = 1 - cosine(token1.vector, token2.vector)
+            # Use cached vectors to avoid repeated processing
+            vector1 = get_word_vector(last_word)
+            vector2 = get_word_vector(word)
+            
+            if vector1 is not None and vector2 is not None:
+                # Fast cosine similarity calculation
+                dot_product = np.dot(vector1, vector2)
+                norm_product = np.linalg.norm(vector1) * np.linalg.norm(vector2)
+                similarity = dot_product / (norm_product + 1e-8)  # Add small epsilon to avoid division by zero
                 if similarity > 0.7:  # Threshold seçiyoruz
                     return True
         except:
@@ -178,7 +259,11 @@ class EnhancedLanguageModel:
         current_words = list(start_words)
         sentence = current_words.copy()
 
-        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        # Remove tqdm for faster execution - only show progress for long sentences
+        show_progress = length > 20
+        iterator = tqdm(range(length), desc="Generating words", disable=not show_progress) if show_progress else range(length)
+        
+        for _ in iterator:
             prefix = tuple(current_words[-(self.n-1):])
             raw_next_word = self.choose_next_word_dynamically(prefix)
             if not raw_next_word:
@@ -208,7 +293,7 @@ class EnhancedLanguageModel:
             sentence = ' '.join(sentence)
 
         sentence = self.correct_grammar(sentence)
-        doc = nlp(sentence)
+        doc = cached_nlp(sentence)
 
         if len(doc) < 3:
             return False
@@ -262,7 +347,7 @@ class EnhancedLanguageModel:
 
     def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.8):
         def compute_Fc(sent):
-            doc = nlp(sent)
+            doc = cached_nlp(sent)
             sal = []
             for tok in doc:
                 if tok.dep_ in ('nsubj', 'nsubjpass'):
@@ -324,14 +409,26 @@ class EnhancedLanguageModel:
         else:
             probs = np.ones_like(probs) / len(probs)
 
-        # 2) POS ve vektörleri bir kerede çıkar
-        docs = [nlp(w) for w in words]
-        pos_tags = [doc[0].pos_ if doc and doc[0].pos_ else None for doc in docs]
-        vector_dim = nlp.vocab.vectors_length
-        vectors = np.array([
-            doc[0].vector if doc and doc[0].has_vector else np.zeros((vector_dim,))
-            for doc in docs
-        ])
+        # 2) POS ve vektörleri batch processing ile optimize et
+        if len(words) > 50:  # Only use expensive calculations for reasonable word counts
+            # Sample subset for expensive operations
+            indices = np.random.choice(len(words), size=min(50, len(words)), replace=False)
+            words = [words[i] for i in indices]
+            probs = probs[indices]
+            probs /= probs.sum()
+
+        pos_tags = [get_word_pos(w) for w in words]
+        
+        # Only compute vectors if needed for semantic similarity
+        if context_word and semantic_threshold > 0:
+            vector_dim = nlp.vocab.vectors_length
+            vectors = []
+            for w in words:
+                vec = get_word_vector(w)
+                vectors.append(vec if vec is not None else np.zeros((vector_dim,)))
+            vectors = np.array(vectors)
+        else:
+            vectors = None
 
         # 3) Şablon bazlı filtreleme (structure_template)
         if structure_template:
@@ -340,16 +437,17 @@ class EnhancedLanguageModel:
             if any(mask):
                 words      = [w for w, m in zip(words, mask) if m]
                 probs      = np.array([p for p, m in zip(probs, mask) if m])
-                vectors    = np.array([v for v, m in zip(vectors, mask) if m])
+                if vectors is not None:
+                    vectors = np.array([v for v, m in zip(vectors, mask) if m])
                 pos_tags   = [pos for pos, m in zip(pos_tags, mask) if m]
             else:
                 self.log(f"[WARN] No words match POS '{target_pos}', skipping template filter.")
 
-        # 4) Anlamsal benzerlik
-        if context_word:
-            ctx_doc = nlp(str(context_word))
-            if ctx_doc and ctx_doc[0].has_vector:
-                ctx_vec = ctx_doc[0].vector.reshape(1, -1)
+        # 4) Anlamsal benzerlik (only if vectors computed)
+        if context_word and vectors is not None:
+            ctx_vec = get_word_vector(str(context_word))
+            if ctx_vec is not None:
+                ctx_vec = ctx_vec.reshape(1, -1)
                 sim_scores = cosine_similarity(ctx_vec, vectors).flatten()
                 sim_scores = np.clip(sim_scores, 0, None)
                 sim_scores[sim_scores < semantic_threshold] = 0
@@ -386,7 +484,7 @@ class EnhancedLanguageModel:
 
         # 8) Seçim
         choice = np.random.choice(words, p=combined).item()
-        chosen_pos = nlp(choice)[0].pos_
+        chosen_pos = get_word_pos(choice)
         self.log(f"[LOG] ➡️ Chosen: '{choice}' | POS: {chosen_pos}")
         return choice
 
@@ -514,8 +612,11 @@ class EnhancedLanguageModel:
         max_attempts = 5
         context_word = None  # İlk center
         last_entity_token = None 
+        
+        print(f"Generating {num_sentences} sentences...")
 
-        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        # Removed tqdm for faster execution
+        for i in range(num_sentences):
             attempts = 0
             coherent_sentence = False
             corrected_sentence = ""
@@ -548,6 +649,12 @@ class EnhancedLanguageModel:
 
             # 3) Cümleyi ekle
             generated_sentences.append(corrected_sentence)
+            if i % 2 == 0:  # Show progress every 2 sentences
+                print(f"  Generated sentence {i+1}/{num_sentences}")
+
+            # 4) Clear cache periodically to manage memory
+            if i > 0 and i % 10 == 0:
+                clear_caches()
 
             # 4) Yeni center'ı bul (yeni cümleyle analiz)
             if prev_sentence:
@@ -558,7 +665,7 @@ class EnhancedLanguageModel:
                     context_word = self.get_dynamic_pronoun(last_entity_token)
             else:
                 # İlk cümlede context_word = ilk özne olsun
-                doc = nlp(corrected_sentence)
+                doc = cached_nlp(corrected_sentence)
                 for tok in doc:
                     if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'):
                         context_word = tok.text
@@ -566,6 +673,7 @@ class EnhancedLanguageModel:
                         break
 
         # 5) Sonuçları birleştir, post-process et
+        print("Post-processing text...")
         final_text = " ".join(generated_sentences)
         return self.post_process_text(final_text)
 
@@ -575,7 +683,7 @@ class EnhancedLanguageModel:
         last_words = last_sentence.split()
         last_length = len(last_words)
         clause_count = sum(last_sentence.count(conj) for conj in [',', 'and', 'but', 'or', 'yet']) + 1
-        doc = nlp(last_sentence)
+        doc = cached_nlp(last_sentence)
         noun_count = sum(1 for token in doc if token.pos_ == "NOUN")
         verb_count = sum(1 for token in doc if token.pos_ == "VERB")
         adjective_count = sum(1 for token in doc if token.pos_ == "ADJ")
@@ -594,7 +702,7 @@ class EnhancedLanguageModel:
         import re
 
         # 1. İlk analiz
-        doc = nlp(sentence)
+        doc = cached_nlp(sentence)
         tokens = list(doc)
         has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
         has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
@@ -668,7 +776,7 @@ class EnhancedLanguageModel:
                         cleaned_sentence += '.'
 
                 # Named Entity düzeltmesi
-                doc = nlp(cleaned_sentence)
+                doc = cached_nlp(cleaned_sentence)
                 for entity in doc.ents:
                     if entity.label_ in ["PERSON", "ORG", "GPE"]:
                         cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b', entity.text, cleaned_sentence)
@@ -712,13 +820,13 @@ class EnhancedLanguageModel:
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
             return False
 
-        current_doc = nlp(sentence)
+        current_doc = cached_nlp(sentence)
         current_embedding = current_doc.vector
 
         if previous_sentences is None or len(previous_sentences) == 0:
             return True
 
-        previous_embeddings = [nlp(prev).vector for prev in previous_sentences if prev.strip()]
+        previous_embeddings = [cached_nlp(prev).vector for prev in previous_sentences if prev.strip()]
         if not previous_embeddings:
             return True
 
@@ -789,16 +897,33 @@ class EnhancedLanguageModel:
         instance.total_counts = total_counts
         return instance
 
-def load_text_from_file(file_path):
+def load_text_from_file(file_path, max_lines=5000):
+    """
+    Load text from file with optional line limit for performance.
+    For development, use fewer lines to speed up processing.
+    """
     try:
+        print(f"Loading text from {file_path} (max {max_lines} lines)...")
         with open(file_path, 'r', encoding='utf-8') as file:
-            text = file.read()
-            text = ' '.join(text.split())
+            lines = []
+            for i, line in enumerate(file):
+                if i >= max_lines:
+                    print(f"Reached line limit ({max_lines}), stopping...")
+                    break
+                lines.append(line.strip())
+                if i % 1000 == 0 and i > 0:
+                    print(f"  Loaded {i} lines...")
+            
+            text = ' '.join(lines)
+            text = ' '.join(text.split())  # Normalize whitespace
             text = text.strip()
-            doc = nlp(text)
+            
+            print(f"Processing {len(text)} characters with spaCy...")
+            doc = cached_nlp(text)
             cleaned_tokens = [token.text for token in doc if not token.is_punct and not token.is_space]
             cleaned_text = ' '.join(cleaned_tokens)
-            return nlp(cleaned_text)
+            print(f"Text processing completed. Final length: {len(cleaned_text)} characters")
+            return cached_nlp(cleaned_text)
     except FileNotFoundError:
         print(f"Error: The file at {file_path} was not found.")
     except Exception as e:
@@ -806,23 +931,39 @@ def load_text_from_file(file_path):
     return None
 
 # --- Ana Akış ---
+print("Starting language model initialization...")
 file_path = text_path
-text = load_text_from_file(file_path)
+
+# Use smaller text sample for better performance (can be increased later)
+USE_FULL_TEXT = False  # Set to True for production, False for development
+if USE_FULL_TEXT:
+    text = load_text_from_file(file_path)  # Full text
+    print("Using full text dataset")
+else:
+    text = load_text_from_file(file_path, max_lines=2000)  # Limited for development
+    print("Using limited text dataset for faster development")
+
 model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\language_model.pkl'
 
 try:
+    print("Loading existing language model...")
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
+    print("Language model loaded successfully!")
 except (FileNotFoundError, EOFError):
+    print("Creating new language model...")
     language_model = EnhancedLanguageModel(text, n=2)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
+    print("New language model created and saved!")
 
+print("\nStarting text generation...")
 num_sentences = 5
-# I am going to kill you too.
 input_sentence = "The crime"
 input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
+
+print("Running paraphraser...")
 paraphrased = paraphrase_sentence(generated_text)
 language_model.log("Generated Text:\n" + generated_text)
 print("Generated Text:\n" + generated_text)
@@ -834,6 +975,9 @@ def correct_grammar_t5(text: str) -> str:
       • Gramer ve noktalama düzeltmesi
       • Sadece düzeltilmiş metni döndürme
     """
+    tokenizer = get_tokenizer()
+    model = get_model()
+    
     # 1. Çok net bir talimat + delimiter
     prompt = (
     "Keep the text's original voice while improving grammar, punctuation, and coherence.\n"
@@ -888,6 +1032,8 @@ def correct_grammar_t5(text: str) -> str:
     return corrected if corrected else text
 
 
+print("Running grammar correction...")
 corrected_text_generated = correct_grammar_t5(generated_text)
 language_model.log("\nCorrected Text:\n" + corrected_text_generated)
 print("\nCorrected Text:\n" + corrected_text_generated)
+print("\nAll processing completed!")
