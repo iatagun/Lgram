@@ -13,84 +13,17 @@ import datetime
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cosine
-from functools import cache, lru_cache
+from functools import cache
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-from paraphraser import paraphrase_sentence
 
-# 1. Model ve tokenizer'ı lazy loading ile başlat
-_tokenizer = None
-_model = None
+# 1. Model ve tokenizer'ı başlat
+tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+model.eval()
 
-def get_tokenizer():
-    """Lazy loading for tokenizer (optimized)"""
-    global _tokenizer
-    if _tokenizer is None:
-        try:
-            _tokenizer = AutoTokenizer.from_pretrained("t5-small")
-        except:
-            _tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-    return _tokenizer
-
-def get_model():
-    """Lazy loading for model (optimized)"""
-    global _model
-    if _model is None:
-        try:
-            _model = AutoModelForSeq2SeqLM.from_pretrained("t5-small")
-        except:
-            _model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-        _model.eval()
-    return _model
-
-# Load the SpaCy English model with word vectors (optimized)
-try:
-    nlp = spacy.load("en_core_web_sm", disable=["ner", "textcat"])
-except OSError:
-    try:
-        nlp = spacy.load("en_core_web_md", disable=["ner", "textcat"])
-    except OSError:
-        nlp = spacy.load("en_core_web_lg", disable=["ner", "textcat"])
-
-nlp.max_length = 300000000
-
-# Cached spaCy processing function to avoid repeated parsing (optimized cache sizes)
-@lru_cache(maxsize=200)  # Reduced from 1000 to save memory
-def cached_nlp(text):
-    """Cache spaCy processing to avoid repeated parsing of same text"""
-    return nlp(str(text))
-
-@lru_cache(maxsize=100)  # Reduced from 500
-def cached_nlp_with_disable(text, disable_components):
-    """Cache spaCy processing with disabled components"""
-    disable_list = list(disable_components) if disable_components else []
-    return nlp(str(text), disable=disable_list)
-
-@lru_cache(maxsize=200)  # Reduced from 1000
-def get_word_vector(word):
-    """Cache word vectors to avoid repeated processing"""
-    doc = cached_nlp(str(word))
-    if doc and len(doc) > 0 and doc[0].has_vector:
-        return doc[0].vector
-    return None
-
-@lru_cache(maxsize=200)  # Reduced from 1000
-def get_word_pos(word):
-    """Cache POS tags to avoid repeated processing"""
-    doc = cached_nlp(str(word))
-    if doc and len(doc) > 0:
-        return doc[0].pos_
-    return None
-
-# Memory management functions
-def clear_caches():
-    """Clear all caches to free memory"""
-    cached_nlp.cache_clear()
-    cached_nlp_with_disable.cache_clear()
-    get_word_vector.cache_clear()
-    get_word_pos.cache_clear()
-    import gc
-    gc.collect()
-
+# Load the SpaCy English model with word vectors
+nlp = spacy.load("en_core_web_md")
+nlp.max_length = 300000000 # or even higher
 
 # N-gram modelleri yolları
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -134,7 +67,7 @@ class EnhancedLanguageModel:
 
     def build_model(self, text):
         model = defaultdict(lambda: defaultdict(int))
-        doc = cached_nlp(text.lower())
+        doc = nlp(text.lower())
         tokens = [token.text for token in doc if token.is_alpha]
         n_grams = [tuple(tokens[i:i+self.n]) for i in range(len(tokens)-self.n+1)]
 
@@ -156,76 +89,75 @@ class EnhancedLanguageModel:
         return dict(model), dict(total_counts)
 
     def load_ngram_models(self):
-        """Optimized n-gram model loading with progress indication"""
-        # Loading n-gram models silently
-        models_to_load = [
-            (bigram_path, 'bigram_model'),
-            (trigram_path, 'trigram_model'),
-            (fourgram_path, 'fourgram_model'),
-            (fivegram_path, 'fivegram_model'),
-            (sixgram_path, 'sixgram_model')
-        ]
-        
-        for path, attr_name in models_to_load:
-            # Loading model
-            with open(path, 'rb') as f:
-                setattr(self, attr_name, pickle.load(f))
-        # N-gram models loaded
+        with open(bigram_path, 'rb') as f:
+            self.bigram_model = pickle.load(f)
+        with open(trigram_path, 'rb') as f:
+            self.trigram_model = pickle.load(f)
+        with open(fourgram_path, 'rb') as f:
+            self.fourgram_model = pickle.load(f)
+        with open(fivegram_path, 'rb') as f:
+            self.fivegram_model = pickle.load(f)
+        with open(sixgram_path, 'rb') as f:
+            self.sixgram_model = pickle.load(f)
 
     def choose_next_word_dynamically(self, prefix):
         model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']
-        
-        # Early exit optimization: check highest priority models first
+        candidates = []
+
+        # Toplu aday listesi oluştur
         for model_attr in model_priority:
             model = getattr(self, model_attr, None)
             if model:
                 next_words = model.get(prefix)
                 if next_words:
-                    # Found candidates, proceed with selection
-                    weighted_candidates = []
-                    for word, prob in next_words.items():
-                        adjusted_prob = prob
-                        
-                        # 🔥 Semantic relation kontrolü (optimize: only check top candidates)
-                        if len(next_words) < 20 and self.is_semantically_related(prefix, word):
-                            adjusted_prob *= 1.7  # %70 ekstra ağırlık
+                    candidates.append((model_attr, next_words))
 
-                        # 🤝 Collocation bonusu (PMI tabanlı)
-                        last = prefix[-1] if prefix else None
-                        if last and hasattr(self, 'collocations'):
-                            bonus = self.collocations.get(last, {}).get(word, 0)
-                            adjusted_prob *= (1 + bonus)
+        if not candidates:
+            return None
 
-                        weighted_candidates.append((word, adjusted_prob))
-                    
-                    if weighted_candidates:
-                        # Kelime ve ağırlıkları ayır
-                        words, scores = zip(*weighted_candidates)
-                        # Random seçim
-                        chosen_word = random.choices(words, weights=scores, k=1)[0]
-                        return chosen_word
-        
-        return None
+        weighted_candidates = []
+        for model_attr, words_dict in candidates:
+            weight = model_priority.index(model_attr) + 1
+            for word, prob in words_dict.items():
+                adjusted_prob = prob / weight
+
+                # 🔥 Semantic relation kontrolü
+                if self.is_semantically_related(prefix, word):
+                    adjusted_prob *= 1.7  # %70 ekstra ağırlık
+
+                # 🤝 Collocation bonusu (PMI tabanlı)
+                last = prefix[-1] if prefix else None
+                if last and hasattr(self, 'collocations'):
+                    bonus = self.collocations.get(last, {}).get(word, 0)
+                    # PMI genellikle 0–2 arası değerler aldığı için (1+bonus) formülü uygundur
+                    adjusted_prob *= (1 + bonus)
+
+                weighted_candidates.append((word, adjusted_prob))
+
+        if not weighted_candidates:
+            return None
+
+        # Kelime ve ağırlıkları ayır
+        words, scores = zip(*weighted_candidates)
+        # Random seçim
+        chosen_word = random.choices(words, weights=scores, k=1)[0]
+
+        return chosen_word
 
     def is_semantically_related(self, prefix, word):
         """
         Prefix'in son kelimesi ile candidate word arasında semantic similarity ölçer.
-        Optimized version with early exit.
         """
         if not prefix:
             return False
 
         try:
             last_word = prefix[-1]
-            # Use cached vectors to avoid repeated processing
-            vector1 = get_word_vector(last_word)
-            vector2 = get_word_vector(word)
-            
-            if vector1 is not None and vector2 is not None:
-                # Fast cosine similarity calculation
-                dot_product = np.dot(vector1, vector2)
-                norm_product = np.linalg.norm(vector1) * np.linalg.norm(vector2)
-                similarity = dot_product / (norm_product + 1e-8)  # Add small epsilon to avoid division by zero
+            token1 = nlp(last_word)[0]
+            token2 = nlp(word)[0]
+
+            if token1.has_vector and token2.has_vector:
+                similarity = 1 - cosine(token1.vector, token2.vector)
                 if similarity > 0.7:  # Threshold seçiyoruz
                     return True
         except:
@@ -235,14 +167,9 @@ class EnhancedLanguageModel:
 
 
     def generate_sentence(self, start_words=None, length=15):
-        # Generate a more coherent sentence with better word selection
+        # Generate a raw sentence without context-based adjustments
         if start_words is None:
-            # Choose a better starting point from trigram model
-            start_candidates = [k for k in self.trigram_model.keys() if len(k) >= 2]
-            if start_candidates:
-                start_words = random.choice(start_candidates)
-            else:
-                start_words = ("the", "crime")  # fallback
+            start_words = random.choice(list(self.trigram_model.keys()))
         else:
             start_words = tuple(start_words)
             if len(start_words) < self.n - 1:
@@ -251,104 +178,26 @@ class EnhancedLanguageModel:
         current_words = list(start_words)
         sentence = current_words.copy()
 
-        # Track POS patterns for better sentence structure
-        pos_pattern = []
-        
-        # Generate words with better coherence checking
-        for i in range(length):
+        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             prefix = tuple(current_words[-(self.n-1):])
-            
-            # Try to get next word with multiple fallbacks
             raw_next_word = self.choose_next_word_dynamically(prefix)
-            
-            # If no word found, try shorter prefix
-            if not raw_next_word and len(prefix) > 1:
-                shorter_prefix = prefix[-1:]
-                raw_next_word = self.choose_next_word_dynamically(shorter_prefix)
-            
-            # If still no word, use basic model
-            if not raw_next_word and hasattr(self, 'bigram_model'):
-                bigram_prefix = prefix[-1:] if prefix else ()
-                if bigram_prefix in self.bigram_model:
-                    candidates = self.bigram_model[bigram_prefix]
-                    if candidates:
-                        raw_next_word = random.choices(
-                            list(candidates.keys()),
-                            weights=list(candidates.values()),
-                            k=1
-                        )[0]
-            
             if not raw_next_word:
                 break
-                
-            # Check for basic coherence (avoid immediate repetition)
-            if len(current_words) > 1 and raw_next_word == current_words[-1]:
-                continue
-                
             current_words.append(raw_next_word)
             sentence.append(raw_next_word)
-            
-            # Track POS for sentence structure
-            word_pos = get_word_pos(raw_next_word)
-            if word_pos:
-                pos_pattern.append(word_pos)
-            
-            # Early stopping for complete thoughts
-            if i > 8 and raw_next_word in ['.', 'period'] or (
-                len(pos_pattern) >= 3 and 
-                any(pos in pos_pattern for pos in ['NOUN', 'PROPN']) and
-                any(pos in pos_pattern for pos in ['VERB', 'AUX']) and
-                i >= 8
-            ):
-                break
 
         sentence_text = " ".join(sentence)
-        
-        # Basic post-processing for better readability
-        sentence_text = self.basic_sentence_cleanup(sentence_text)
-        
         return sentence_text
-    
-    def basic_sentence_cleanup(self, text):
-        """Basic cleanup for generated sentences"""
-        if not text:
-            return text
-            
-        # Remove duplicate consecutive words
-        words = text.split()
-        cleaned_words = []
-        prev_word = None
-        
-        for word in words:
-            if word.lower() != prev_word:
-                cleaned_words.append(word)
-            prev_word = word.lower()
-        
-        text = " ".join(cleaned_words)
-        
-        # Ensure proper capitalization
-        if text:
-            text = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
-            
-        # Ensure ends with punctuation
-        if text and not text.endswith(('.', '!', '?')):
-            text += '.'
-            
-        return text
 
     def correct_grammar(self, text: str) -> str:
         """
-        Rule-based grammar correction using corrections.json mappings.
-        T5 integration disabled due to quality issues.
+        corrections.json içindeki yanlış-doğru eşleştirmelerine
+        dayalı basit kural tabanlı gramer düzeltme.
         """
-        if not text or len(text.strip()) < 3:
-            return text
-        
-        # Apply rule-based corrections from corrections.json
         for wrong, right in CORRECTIONS.items():
+            # Kelime bütünlüğünü koruyarak değiştir
             pattern = re.compile(rf"\b{re.escape(wrong)}\b", flags=re.IGNORECASE)
             text = pattern.sub(right, text)
-        
         return text
 
     def is_complete_thought(self, sentence):
@@ -359,7 +208,7 @@ class EnhancedLanguageModel:
             sentence = ' '.join(sentence)
 
         sentence = self.correct_grammar(sentence)
-        doc = cached_nlp(sentence)
+        doc = nlp(sentence)
 
         if len(doc) < 3:
             return False
@@ -413,7 +262,7 @@ class EnhancedLanguageModel:
 
     def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.8):
         def compute_Fc(sent):
-            doc = cached_nlp(sent)
+            doc = nlp(sent)
             sal = []
             for tok in doc:
                 if tok.dep_ in ('nsubj', 'nsubjpass'):
@@ -475,26 +324,14 @@ class EnhancedLanguageModel:
         else:
             probs = np.ones_like(probs) / len(probs)
 
-        # 2) POS ve vektörleri batch processing ile optimize et
-        if len(words) > 50:  # Only use expensive calculations for reasonable word counts
-            # Sample subset for expensive operations
-            indices = np.random.choice(len(words), size=min(50, len(words)), replace=False)
-            words = [words[i] for i in indices]
-            probs = probs[indices]
-            probs /= probs.sum()
-
-        pos_tags = [get_word_pos(w) for w in words]
-        
-        # Only compute vectors if needed for semantic similarity
-        if context_word and semantic_threshold > 0:
-            vector_dim = nlp.vocab.vectors_length
-            vectors = []
-            for w in words:
-                vec = get_word_vector(w)
-                vectors.append(vec if vec is not None else np.zeros((vector_dim,)))
-            vectors = np.array(vectors)
-        else:
-            vectors = None
+        # 2) POS ve vektörleri bir kerede çıkar
+        docs = [nlp(w) for w in words]
+        pos_tags = [doc[0].pos_ if doc and doc[0].pos_ else None for doc in docs]
+        vector_dim = nlp.vocab.vectors_length
+        vectors = np.array([
+            doc[0].vector if doc and doc[0].has_vector else np.zeros((vector_dim,))
+            for doc in docs
+        ])
 
         # 3) Şablon bazlı filtreleme (structure_template)
         if structure_template:
@@ -503,17 +340,16 @@ class EnhancedLanguageModel:
             if any(mask):
                 words      = [w for w, m in zip(words, mask) if m]
                 probs      = np.array([p for p, m in zip(probs, mask) if m])
-                if vectors is not None:
-                    vectors = np.array([v for v, m in zip(vectors, mask) if m])
+                vectors    = np.array([v for v, m in zip(vectors, mask) if m])
                 pos_tags   = [pos for pos, m in zip(pos_tags, mask) if m]
             else:
                 self.log(f"[WARN] No words match POS '{target_pos}', skipping template filter.")
 
-        # 4) Anlamsal benzerlik (only if vectors computed)
-        if context_word and vectors is not None:
-            ctx_vec = get_word_vector(str(context_word))
-            if ctx_vec is not None:
-                ctx_vec = ctx_vec.reshape(1, -1)
+        # 4) Anlamsal benzerlik
+        if context_word:
+            ctx_doc = nlp(str(context_word))
+            if ctx_doc and ctx_doc[0].has_vector:
+                ctx_vec = ctx_doc[0].vector.reshape(1, -1)
                 sim_scores = cosine_similarity(ctx_vec, vectors).flatten()
                 sim_scores = np.clip(sim_scores, 0, None)
                 sim_scores[sim_scores < semantic_threshold] = 0
@@ -550,7 +386,7 @@ class EnhancedLanguageModel:
 
         # 8) Seçim
         choice = np.random.choice(words, p=combined).item()
-        chosen_pos = get_word_pos(choice)
+        chosen_pos = nlp(choice)[0].pos_
         self.log(f"[LOG] ➡️ Chosen: '{choice}' | POS: {chosen_pos}")
         return choice
 
@@ -678,11 +514,8 @@ class EnhancedLanguageModel:
         max_attempts = 5
         context_word = None  # İlk center
         last_entity_token = None 
-        
-        # Generating sentences silently
 
-        # Removed tqdm for faster execution
-        for i in range(num_sentences):
+        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
             attempts = 0
             coherent_sentence = False
             corrected_sentence = ""
@@ -708,22 +541,13 @@ class EnhancedLanguageModel:
                 if corrected_sentence and not corrected_sentence.endswith(('.', '!', '?')):
                     corrected_sentence += '.'
 
-                # Enable coherence check for better quality
-                if i == 0 or self.is_sentence_coherent(corrected_sentence, generated_sentences):
-                    coherent_sentence = True
-                else:
-                    attempts += 1
-                    if attempts >= max_attempts:
-                        # If coherence check fails, still use the sentence but apply basic fixes
-                        corrected_sentence = self.rewrite_ill_formed_sentence(corrected_sentence)
-                        coherent_sentence = True
+                # (İstersen coherence check ekleyebilirsin)
+                #if self.is_sentence_coherent(corrected_sentence, generated_sentences):
+                coherent_sentence = True
+                attempts += 1
 
             # 3) Cümleyi ekle
             generated_sentences.append(corrected_sentence)
-
-            # 4) Clear cache periodically to manage memory
-            if i > 0 and i % 10 == 0:
-                clear_caches()
 
             # 4) Yeni center'ı bul (yeni cümleyle analiz)
             if prev_sentence:
@@ -734,7 +558,7 @@ class EnhancedLanguageModel:
                     context_word = self.get_dynamic_pronoun(last_entity_token)
             else:
                 # İlk cümlede context_word = ilk özne olsun
-                doc = cached_nlp(corrected_sentence)
+                doc = nlp(corrected_sentence)
                 for tok in doc:
                     if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'):
                         context_word = tok.text
@@ -742,7 +566,6 @@ class EnhancedLanguageModel:
                         break
 
         # 5) Sonuçları birleştir, post-process et
-        # Post-processing text silently
         final_text = " ".join(generated_sentences)
         return self.post_process_text(final_text)
 
@@ -752,7 +575,7 @@ class EnhancedLanguageModel:
         last_words = last_sentence.split()
         last_length = len(last_words)
         clause_count = sum(last_sentence.count(conj) for conj in [',', 'and', 'but', 'or', 'yet']) + 1
-        doc = cached_nlp(last_sentence)
+        doc = nlp(last_sentence)
         noun_count = sum(1 for token in doc if token.pos_ == "NOUN")
         verb_count = sum(1 for token in doc if token.pos_ == "VERB")
         adjective_count = sum(1 for token in doc if token.pos_ == "ADJ")
@@ -771,7 +594,7 @@ class EnhancedLanguageModel:
         import re
 
         # 1. İlk analiz
-        doc = cached_nlp(sentence)
+        doc = nlp(sentence)
         tokens = list(doc)
         has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
         has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
@@ -830,7 +653,7 @@ class EnhancedLanguageModel:
                 cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
 
                 # Bozuk boşluk ve noktalama düzeltmesi
-                cleaned_sentence = re.sub(r'\s+([,.!?;:])', r'\1', cleaned_sentence)
+                cleaned_sentence = re.sub(r'\s+([,.!?])', r'\1', cleaned_sentence)
                 cleaned_sentence = re.sub(r'([,.!?])\s+', r'\1 ', cleaned_sentence)
                 cleaned_sentence = re.sub(r'\s{2,}', ' ', cleaned_sentence)
                 cleaned_sentence = cleaned_sentence.rstrip(",")
@@ -845,7 +668,7 @@ class EnhancedLanguageModel:
                         cleaned_sentence += '.'
 
                 # Named Entity düzeltmesi
-                doc = cached_nlp(cleaned_sentence)
+                doc = nlp(cleaned_sentence)
                 for entity in doc.ents:
                     if entity.label_ in ["PERSON", "ORG", "GPE"]:
                         cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b', entity.text, cleaned_sentence)
@@ -889,13 +712,13 @@ class EnhancedLanguageModel:
         if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
             return False
 
-        current_doc = cached_nlp(sentence)
+        current_doc = nlp(sentence)
         current_embedding = current_doc.vector
 
         if previous_sentences is None or len(previous_sentences) == 0:
             return True
 
-        previous_embeddings = [cached_nlp(prev).vector for prev in previous_sentences if prev.strip()]
+        previous_embeddings = [nlp(prev).vector for prev in previous_sentences if prev.strip()]
         if not previous_embeddings:
             return True
 
@@ -966,225 +789,98 @@ class EnhancedLanguageModel:
         instance.total_counts = total_counts
         return instance
 
-def load_text_from_file(file_path, max_lines=5000):
-    """
-    Load text from file with optional line limit for performance.
-    For development, use fewer lines to speed up processing.
-    """
+def load_text_from_file(file_path):
     try:
-        # Loading text from file silently
         with open(file_path, 'r', encoding='utf-8') as file:
-            lines = []
-            for i, line in enumerate(file):
-                if i >= max_lines:
-                    # Reached line limit
-                    break
-                lines.append(line.strip())
-                # Loading progress silently
-            
-            text = ' '.join(lines)
-            text = ' '.join(text.split())  # Normalize whitespace
+            text = file.read()
+            text = ' '.join(text.split())
             text = text.strip()
-            
-            # Processing text with spaCy silently
-            doc = cached_nlp(text)
+            doc = nlp(text)
             cleaned_tokens = [token.text for token in doc if not token.is_punct and not token.is_space]
             cleaned_text = ' '.join(cleaned_tokens)
-            # Text processing completed silently
-            return cached_nlp(cleaned_text)
+            return nlp(cleaned_text)
     except FileNotFoundError:
-        pass  # File not found, handled silently
+        print(f"Error: The file at {file_path} was not found.")
     except Exception as e:
-        pass  # Error handled silently
+        print(f"An error occurred while reading the file: {e}")
     return None
 
 # --- Ana Akış ---
-# Starting language model initialization silently
 file_path = text_path
-
-# Use smaller text sample for better performance (can be increased later)
-USE_FULL_TEXT = False  # Set to True for production, False for development
-if USE_FULL_TEXT:
-    text = load_text_from_file(file_path)  # Full text
-    # Using full text dataset
-else:
-    text = load_text_from_file(file_path, max_lines=2000)  # Limited for development
-    # Using limited text dataset for faster development
-
+text = load_text_from_file(file_path)
 model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\language_model.pkl'
 
 try:
-    # Loading existing language model silently
     language_model = EnhancedLanguageModel.load_model(model_file)
     language_model.log("Loaded existing model.")
-    # Language model loaded successfully
 except (FileNotFoundError, EOFError):
-    # Creating new language model silently
     language_model = EnhancedLanguageModel(text, n=2)
     language_model.save_model(model_file)
     language_model.log("Created and saved new model.")
-    # New language model created and saved
 
-# Starting text generation silently
-num_sentences = 7
-input_sentence = "The investigation"
+num_sentences = 5
+# I am going to kill you too.
+input_sentence = "The truth "
 input_words = tuple(token.lower() for token in input_sentence.split())
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=10)
-
-def rule_based_grammar_fix(text):
-    """
-    Enhanced rule-based grammar fixes as fallback when T5 fails.
-    """
-    if not text:
-        return text
-    
-    import re
-    
-    # Basic fixes
-    fixed = text.strip()
-    
-    # Remove duplicate consecutive words
-    words = fixed.split()
-    cleaned_words = []
-    prev_word = None
-    for word in words:
-        if word.lower() != prev_word:
-            cleaned_words.append(word)
-        prev_word = word.lower()
-    fixed = ' '.join(cleaned_words)
-    
-    # Fix spacing around punctuation
-    fixed = re.sub(r'\s+([,.!?;:])', r'\1', fixed)
-    fixed = re.sub(r'([.!?])\s*([A-Z])', r'\1 \2', fixed)
-    
-    # Fix common grammar issues specific to our generated text
-    fixed = re.sub(r'\bI\s+to\b', 'I want to', fixed)
-    fixed = re.sub(r'\bwhich\s+send\b', 'which sends', fixed)
-    fixed = re.sub(r'\bwhich\s+the\b', 'which is the', fixed)
-    fixed = re.sub(r'\bHave\s+frequently\s+see\b', 'I have frequently seen', fixed)
-    fixed = re.sub(r'\bBe\s+looking\b', 'is looking', fixed)
-    fixed = re.sub(r'\bhave\s+seeed\b', 'have seen', fixed, flags=re.IGNORECASE)
-    fixed = re.sub(r'\bis\s+announce\b', 'is announced', fixed, flags=re.IGNORECASE)
-    fixed = re.sub(r'\bhave\s+never\s+be\b', 'have never been', fixed, flags=re.IGNORECASE)
-    fixed = re.sub(r'\bis\s+pay\s+to\b', 'is important to', fixed, flags=re.IGNORECASE)
-    fixed = re.sub(r'\bmust\s+speak\s+of\b', 'speaks of', fixed, flags=re.IGNORECASE)
-    fixed = re.sub(r'\bis\s+do\s+with\b', 'is related to', fixed, flags=re.IGNORECASE)
-    
-    # Fix sentence fragments
-    fixed = re.sub(r'^\s*\.\s*', '', fixed)  # Remove leading periods
-    fixed = re.sub(r'\s*\.\s*\.\s*', '. ', fixed)  # Fix double periods
-    
-    # Fix incomplete endings
-    fixed = re.sub(r'\s+of\s+Mr\s*\.?$', ' of Mr. Smith.', fixed)
-    fixed = re.sub(r'\s+with\s+a\s*\.?$', '.', fixed)
-    
-    # Fix common capitalization issues
-    sentences = re.split(r'([.!?]+)', fixed)
-    for i in range(0, len(sentences), 2):
-        if sentences[i].strip():
-            sentences[i] = sentences[i].strip()
-            if sentences[i]:
-                sentences[i] = sentences[i][0].upper() + sentences[i][1:]
-    
-    fixed = ''.join(sentences)
-    
-    # Ensure ends with punctuation
-    if fixed and not fixed.endswith(('.', '!', '?')):
-        fixed += '.'
-    
-    # Fix double spaces
-    fixed = re.sub(r'\s+', ' ', fixed)
-    
-    # Remove broken sentence starts
-    fixed = re.sub(r'^\s*(and|but|or|if|because)\s+', '', fixed, flags=re.IGNORECASE)
-    
-    return fixed.strip()
-
-# Running paraphraser silently
-paraphrased = paraphrase_sentence(generated_text)
+generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
 language_model.log("Generated Text:\n" + generated_text)
-# Text generation completed
-
-def correct_grammar_t5(text: str, max_retries=2) -> str:
+print("Generated Text:\n" + generated_text)
+def correct_grammar_t5(text: str) -> str:
     """
-    T5-based grammar correction (currently disabled due to quality issues).
-    Falls back to rule-based correction.
+    FLAN-T5 ile:
+      • Gramer ve noktalama düzeltmesi
+      • Sadece düzeltilmiş metni döndürme
     """
-    if not text or len(text.strip()) < 3:
-        return text
-    
-    # Skip T5 for now, use rule-based fixes directly
-    return rule_based_grammar_fix(text)
+    # 1. Çok net bir talimat + delimiter
+    prompt = (
+    "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.\n"
+    '"""\n'
+    f"{text}\n"
+    '"""\n'
+    )
 
 
-def improve_text_quality(text):
-    """
-    Apply comprehensive text improvements combining multiple approaches.
-    """
-    if not text:
-        return text
-    
-    # First apply rule-based fixes
-    improved = rule_based_grammar_fix(text)
-    
-    # Split into sentences for individual processing
-    import re
-    sentences = re.split(r'(?<=[.!?])\s+', improved)
-    
-    improved_sentences = []
-    for sentence in sentences:
-        if sentence.strip():
-            # Apply basic sentence structure fixes
-            fixed_sentence = fix_sentence_structure(sentence.strip())
-            if len(fixed_sentence.split()) >= 3:  # Only keep sentences with substance
-                improved_sentences.append(fixed_sentence)
-    
-    # Rejoin sentences
-    result = ' '.join(improved_sentences)
-    
-    # Final cleanup
-    result = re.sub(r'\s+', ' ', result).strip()
-    if result and not result.endswith(('.', '!', '?')):
-        result += '.'
-    
-    return result
+    # 2. Tokenize et
+    inputs = tokenizer(
+        prompt,
+        return_tensors="pt",
+        truncation=True,
+        max_length=512
+    )
 
-def fix_sentence_structure(sentence):
-    """
-    Fix basic sentence structure issues.
-    """
-    import re
-    
-    if not sentence:
-        return sentence
-    
-    # Remove incomplete fragments at the end
-    sentence = re.sub(r'\s+(the|a|an|of|to|with|in|on|at|by)\s*\.?\s*$', '.', sentence, flags=re.IGNORECASE)
-    
-    # Fix common patterns
-    sentence = re.sub(r'\bthe\s+the\b', 'the', sentence, flags=re.IGNORECASE)
-    sentence = re.sub(r'\ba\s+a\b', 'a', sentence, flags=re.IGNORECASE)
-    sentence = re.sub(r'\band\s+and\b', 'and', sentence, flags=re.IGNORECASE)
-    
-    # Fix incomplete verb phrases
-    sentence = re.sub(r'\bmust\s*\.$', 'must do so.', sentence)
-    sentence = re.sub(r'\bcould\s+be\s+welcome\s+the', 'could be welcomed', sentence)
-    sentence = re.sub(r'\bthe\s+weapon\s+and\s+angry\b', 'the weapon and the angry', sentence)
-    sentence = re.sub(r'\bmay\s+be\s+going\s+to\s*\.$', 'may be going somewhere.', sentence)
-    
-    # Ensure proper sentence ending
-    if not sentence.endswith(('.', '!', '?')):
-        sentence += '.'
-    
-    return sentence.strip()
+    # 3. Beam search (sampling kapalı)
+    outputs = model.generate(
+        input_ids=inputs["input_ids"],
+        attention_mask=inputs["attention_mask"],
 
-# Running grammar correction silently
-# Skip T5 correction since it's not working well, use only rule-based improvements
-# Applying comprehensive text improvements silently
-final_improved_text = improve_text_quality(generated_text)
+        max_new_tokens=500,
+        num_beams=3,               # yeterli beam genişliği
+        no_repeat_ngram_size=2,
+        repetition_penalty=1.1,
+        early_stopping=False,
 
-language_model.log("\nOriginal Generated Text:\n" + generated_text)
-language_model.log("\nFinal Improved Text:\n" + final_improved_text)
+        do_sample=False,           # sampling kapalı
+        use_cache=True
+    )
 
-# Output only the final improved text
-print(final_improved_text)
+    # 4. Decode ve trim
+    generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+
+    # 5. Eğer model prompt'u üretmişse, onu temizle
+    if generated.startswith(prompt):
+        corrected = generated[len(prompt):].strip()
+    else:
+        corrected = generated
+
+    # 6. Alternatif olarak, prompt içeriğini ortalarda yankılamışsa kesip al
+    # (isteğe bağlı, genellikle gerekli değildir ama ekstra güvenlik)
+    if prompt in corrected:
+        corrected = corrected.replace(prompt, "").strip()
+
+    # 7. Geriye kalan metni döndür, boşsa orijinal metni döndür
+    return corrected if corrected else text
+
+
+corrected_text = correct_grammar_t5(generated_text)
+language_model.log("\nCorrected Text:\n" + corrected_text)
+print("\nCorrected Text:\n" + corrected_text)
