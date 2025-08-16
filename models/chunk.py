@@ -22,7 +22,7 @@ model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-sy
 model.eval()
 
 # Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_md")
+nlp = spacy.load("en_core_web_sm")
 nlp.max_length = 300000000 # or even higher
 
 # N-gram modelleri yolları
