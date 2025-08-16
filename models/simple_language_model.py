@@ -830,15 +830,10 @@ def correct_grammar_t5(text: str) -> str:
     FLAN-T5 ile:
       • Gramer ve noktalama düzeltmesi
       • Sadece düzeltilmiş metni döndürme
+      • Prompt echo'larını tamamen kaldırma
     """
-    # 1. Çok net bir talimat + delimiter
-    prompt = (
-    "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.\n"
-    '"""\n'
-    f"{text}\n"
-    '"""\n'
-    )
-
+    # 1. Daha basit ve net prompt
+    prompt = f"grammar: {text}"
 
     # 2. Tokenize et
     inputs = tokenizer(
@@ -848,37 +843,75 @@ def correct_grammar_t5(text: str) -> str:
         max_length=512
     )
 
-    # 3. Beam search (sampling kapalı)
+    # 3. Conservative generation parameters
     outputs = model.generate(
         input_ids=inputs["input_ids"],
         attention_mask=inputs["attention_mask"],
-
-        max_new_tokens=500,
-        num_beams=3,               # yeterli beam genişliği
-        no_repeat_ngram_size=2,
-        repetition_penalty=1.1,
-        early_stopping=False,
-
-        do_sample=False,           # sampling kapalı
+        max_new_tokens=min(200, len(text.split()) * 2),
+        num_beams=2,
+        no_repeat_ngram_size=3,
+        repetition_penalty=1.2,
+        early_stopping=True,
+        do_sample=False,
+        temperature=0.1,
         use_cache=True
     )
 
-    # 4. Decode ve trim
+    # 4. Decode
     generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
 
-    # 5. Eğer model prompt'u üretmişse, onu temizle
-    if generated.startswith(prompt):
-        corrected = generated[len(prompt):].strip()
-    else:
-        corrected = generated
+    # 5. Agresif prompt echo temizleme
+    corrected = generated
+    
+    # Prompt başlangıçları kaldır
+    prompt_prefixes = [
+        "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.",
+        "Correct grammar and punctuation in the text below",
+        "grammar:",
+        "Grammar:",
+        "correct:",
+        "Correct:",
+        "fix:",
+        "Fix:",
+        prompt,
+        text  # Orijinal metni de kaldır
+    ]
+    
+    for prefix in prompt_prefixes:
+        if corrected.startswith(prefix):
+            corrected = corrected[len(prefix):].strip()
+    
+    # Prompt delimiter'ları kaldır
+    corrected = corrected.replace('"""', '').strip()
+    corrected = re.sub(r'^[\"\'\`\n\r\s]+', '', corrected)
+    corrected = re.sub(r'[\"\'\`\n\r\s]+$', '', corrected)
+    
+    # Prompt kelimelerini ortadan kaldır
+    prompt_words = ["grammar", "punctuation", "correct", "coherence", "stylistic", "choices", "ambiguity"]
+    for word in prompt_words:
+        # Başta tek başına duran prompt kelimelerini kaldır
+        corrected = re.sub(rf'^\b{word}\b\s*:?\s*', '', corrected, flags=re.IGNORECASE)
+    
+    # Boş satırları ve gereksiz boşlukları temizle
+    corrected = re.sub(r'\n+', ' ', corrected)
+    corrected = re.sub(r'\s+', ' ', corrected)
+    corrected = corrected.strip()
+    
+    # Eğer düzeltilmiş metin orijinalden çok farklıysa veya çok kısaysa, orijinali döndür
+    if (not corrected or 
+        len(corrected.split()) < max(2, len(text.split()) // 3) or
+        corrected.lower() == text.lower()):
+        return text
+    
+    # Noktalama düzelt
+    if corrected and not corrected.endswith(('.', '!', '?')):
+        corrected += '.'
+    
+    # İlk harf büyük
+    if corrected:
+        corrected = corrected[0].upper() + corrected[1:] if len(corrected) > 1 else corrected.upper()
 
-    # 6. Alternatif olarak, prompt içeriğini ortalarda yankılamışsa kesip al
-    # (isteğe bağlı, genellikle gerekli değildir ama ekstra güvenlik)
-    if prompt in corrected:
-        corrected = corrected.replace(prompt, "").strip()
-
-    # 7. Geriye kalan metni döndür, boşsa orijinal metni döndür
-    return corrected if corrected else text
+    return corrected
 
 
 corrected_text = correct_grammar_t5(generated_text)
