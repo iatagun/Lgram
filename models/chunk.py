@@ -13,17 +13,28 @@ import datetime
 from transition_analyzer import TransitionAnalyzer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cosine
-from functools import cache
+from functools import cache, lru_cache
+import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 # 1. Model ve tokenizer'ı başlat
-tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
+tokenizer = AutoTokenizer.from_pretrained(
+    "pszemraj/flan-t5-large-grammar-synthesis",
+    use_fast=True,  # Fast tokenizer kullan
+    padding_side="left"
+)
+model = AutoModelForSeq2SeqLM.from_pretrained(
+    "pszemraj/flan-t5-large-grammar-synthesis",
+    torch_dtype=torch.float16,  # Half precision
+    device_map="auto",  # Otomatik GPU yerleştirme
+    low_cpu_mem_usage=True
+)
 model.eval()
+model = torch.compile(model)  # PyTorch 2.0 optimization
 
 # Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_sm")
-nlp.max_length = 300000000 # or even higher
+nlp = spacy.load("en_core_web_sm", disable=["ner", "textcat", "lemmatizer"])
+nlp.max_length = 1000000  # Daha düşük limit
 
 # N-gram modelleri yolları
 text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
@@ -333,6 +344,11 @@ class EnhancedLanguageModel:
             for doc in docs
         ])
 
+        # Batch processing:
+        doc = nlp(" ".join(words))  # Tek seferde parse et
+        pos_tags = [token.pos_ for token in doc]
+        vectors = [token.vector for token in doc if token.has_vector]
+
         # 3) Şablon bazlı filtreleme (structure_template)
         if structure_template:
             target_pos = structure_template[position_index % len(structure_template)]
@@ -515,7 +531,11 @@ class EnhancedLanguageModel:
         context_word = None  # İlk center
         last_entity_token = None 
 
-        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        for i in tqdm(range(num_sentences), 
+                      desc="Generating sentences",
+                      disable=num_sentences < 10,  # Küçük işlemler için disable
+                      mininterval=0.1,  # Update frequency
+                      maxinterval=1.0):
             attempts = 0
             coherent_sentence = False
             corrected_sentence = ""
