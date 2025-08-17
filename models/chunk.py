@@ -16,6 +16,7 @@ from scipy.spatial.distance import cosine
 from functools import cache, lru_cache
 import torch
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+import shutil  # Terminal size için
 
 # 1. Model ve tokenizer'ı başlat
 tokenizer = AutoTokenizer.from_pretrained(
@@ -157,48 +158,123 @@ class EnhancedLanguageModel:
 
     def is_semantically_related(self, prefix, word):
         """
-        Prefix'in son kelimesi ile candidate word arasında semantic similarity ölçer.
+        Geliştirilmiş semantic similarity - çoklu faktör analizi
         """
         if not prefix:
             return False
 
         try:
             last_word = prefix[-1]
+            
+            # 1. Vektör similaritesi (mevcut)
             token1 = nlp(last_word)[0]
             token2 = nlp(word)[0]
-
+            
             if token1.has_vector and token2.has_vector:
                 similarity = 1 - cosine(token1.vector, token2.vector)
-                if similarity > 0.7:  # Threshold seçiyoruz
+                
+                # 2. POS uyumu bonusu
+                pos_bonus = 0
+                if (token1.pos_ == 'NOUN' and token2.pos_ == 'VERB') or \
+                   (token1.pos_ == 'ADJ' and token2.pos_ == 'NOUN') or \
+                   (token1.pos_ == 'VERB' and token2.pos_ in ['ADV', 'NOUN']):
+                    pos_bonus = 0.1
+                
+                # 3. Dependency relation bonus
+                dep_bonus = 0
+                if token1.dep_ in ['nsubj', 'ROOT'] and token2.pos_ == 'VERB':
+                    dep_bonus = 0.15
+                elif token1.pos_ == 'VERB' and token2.dep_ in ['dobj', 'pobj']:
+                    dep_bonus = 0.15
+                
+                # 4. Thematic consistency
+                theme_bonus = self.get_thematic_bonus(last_word, word)
+                
+                final_score = similarity + pos_bonus + dep_bonus + theme_bonus
+                
+                if final_score > 0.65:  # Threshold düşürdük
                     return True
+                    
         except:
             pass
-
         return False
 
+    def get_thematic_bonus(self, word1, word2):
+        """Tematik tutarlılık bonusu"""
+        # Kelime kategorileri
+        themes = {
+            'technology': ['computer', 'internet', 'digital', 'software', 'data', 'system'],
+            'nature': ['tree', 'forest', 'river', 'mountain', 'animal', 'plant'],
+            'emotion': ['happy', 'sad', 'angry', 'love', 'fear', 'joy'],
+            'time': ['yesterday', 'tomorrow', 'morning', 'night', 'hour', 'minute'],
+            'business': ['company', 'market', 'profit', 'customer', 'business', 'work']
+        }
+        
+        for theme, words in themes.items():
+            if word1.lower() in words and word2.lower() in words:
+                return 0.2  # %20 bonus
+        return 0
 
-    def generate_sentence(self, start_words=None, length=15):
-        # Generate a raw sentence without context-based adjustments
+    def generate_sentence(self, start_words=None, base_length=15):
+        # Dinamik uzunluk seçimi
+        target_length = self.get_dynamic_sentence_length(base_length)
+        
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
             start_words = tuple(start_words)
-            if len(start_words) < self.n - 1:
-                raise ValueError(f"start_words must contain at least {self.n - 1} words.")
 
         current_words = list(start_words)
         sentence = current_words.copy()
-
-        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        min_length = 5
+        
+        for i in range(target_length):
             prefix = tuple(current_words[-(self.n-1):])
             raw_next_word = self.choose_next_word_dynamically(prefix)
+            
             if not raw_next_word:
                 break
+                
             current_words.append(raw_next_word)
             sentence.append(raw_next_word)
-
+            
+            # Doğal bitiş kontrolü (target_length'e ulaştıktan sonra)
+            if len(sentence) >= min_length and len(sentence) >= target_length * 0.7:
+                if self.should_end_sentence(sentence):
+                    break
+        
         sentence_text = " ".join(sentence)
         return sentence_text
+
+    def should_end_sentence(self, sentence_words):
+        """Cümle şimdi bitirilmeli mi?"""
+        if len(sentence_words) < 5:
+            return False
+            
+        # Son kelimenin POS'una bak
+        last_word = sentence_words[-1]
+        doc = nlp(last_word)
+        if doc and doc[0].pos_ in ['NOUN', 'PRON', 'ADJ']:
+            return random.random() < 0.4  # %40 ihtimalle bitir
+        
+        return False
+
+    def get_dynamic_sentence_length(self, base_length, context_sentences=None):
+        """Dinamik cümle uzunluğu"""
+        # Doğal varyasyon
+        variations = [
+            (0.25, range(5, 8)),   # %25 kısa
+            (0.55, range(8, 13)),  # %30 orta-kısa  
+            (0.80, range(13, 17)), # %25 orta-uzun
+            (1.0, range(17, 22))   # %20 uzun
+        ]
+        
+        rand = random.random()
+        for prob, length_range in variations:
+            if rand <= prob:
+                return random.choice(length_range)
+        
+        return base_length  # fallback
 
     def correct_grammar(self, text: str) -> str:
         """
@@ -530,28 +606,59 @@ class EnhancedLanguageModel:
         max_attempts = 5
         context_word = None  # İlk center
         last_entity_token = None 
+        terminal_width = shutil.get_terminal_size().columns
+        bar_width = min(terminal_width - 20, 120)  # Maximum 120, minimum terminal-20
 
-        for i in tqdm(range(num_sentences), 
-                      desc="Generating sentences",
-                      disable=num_sentences < 10,  # Küçük işlemler için disable
-                      mininterval=0.1,  # Update frequency
-                      maxinterval=1.0):
+        pbar = tqdm(range(num_sentences), 
+                    desc="✨ Text Generation",
+                    disable=False,
+                    mininterval=0.05,
+                    maxinterval=0.3,
+                    unit=" sent",
+                    ncols=bar_width,
+                    colour='cyan',
+                    bar_format='{l_bar}{bar:50}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] {postfix}')
+
+        for i in pbar:
             attempts = 0
             coherent_sentence = False
             corrected_sentence = ""
             prev_sentence = generated_sentences[-1] if generated_sentences else None
 
+            # Progress bar başlangıç durumu
+            pbar.set_postfix_str(f"📝 Starting sentence {i+1}...")
+            
             # 1) İlk cümlede input_words kullan, diğerlerinde context_word (center)
             if i == 0 and input_words:
                 start_words = input_words
+                pbar.set_postfix_str(f"🎯 Using input: '{' '.join(start_words)}'")
             elif context_word:
                 start_words = [context_word]
+                pbar.set_postfix_str(f"🔗 Continuing from: '{context_word}'")
             else:
                 start_words = None
+                pbar.set_postfix_str("🎲 Random start...")
 
             # 2) Cümleyi üret, center ile başlamasını ZORUNLU tut
             while attempts < max_attempts and not coherent_sentence:
-                raw_sentence = self.generate_sentence(start_words=start_words, length=length)
+                attempts += 1
+                
+                # Generating durumunu göster
+                pbar.set_postfix({
+                    'Step': f'Gen #{attempts}',
+                    'Target': f'{length}w',
+                    'Status': '⚡ Generating...'
+                })
+                
+                raw_sentence = self.generate_sentence(start_words=start_words, base_length=length)
+                
+                # Düzeltme durumunu göster
+                pbar.set_postfix({
+                    'Step': f'Attempt {attempts}',
+                    'Length': f'{len(raw_sentence.split())}w',
+                    'Status': '🔧 Correcting...'
+                })
+                
                 # Eğer center ile başlamıyorsa brute-force başa ekle
                 if start_words and not raw_sentence.lower().startswith(str(start_words[0]).lower()):
                     raw_sentence = str(start_words[0]) + " " + raw_sentence
@@ -561,15 +668,23 @@ class EnhancedLanguageModel:
                 if corrected_sentence and not corrected_sentence.endswith(('.', '!', '?')):
                     corrected_sentence += '.'
 
-                # (İstersen coherence check ekleyebilirsin)
-                #if self.is_sentence_coherent(corrected_sentence, generated_sentences):
                 coherent_sentence = True
-                attempts += 1
+                
+                # Başarı durumunu göster
+                word_count = len(corrected_sentence.split())
+                pbar.set_postfix({
+                    'Words': f'{word_count}w',
+                    'Attempts': f'{attempts}/{max_attempts}',
+                    'Status': '✅ Ready!'
+                })
 
             # 3) Cümleyi ekle
             generated_sentences.append(corrected_sentence)
 
-            # 4) Yeni center'ı bul (yeni cümleyle analiz)
+            # 4) Center bulma durumunu göster
+            pbar.set_postfix_str("🎯 Finding next center...")
+            
+            # Yeni center'ı bul (yeni cümleyle analiz)
             if prev_sentence:
                 analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
                 context_word = self.get_center_from_sentence(prev_sentence, corrected_sentence, analyzer)
@@ -585,6 +700,24 @@ class EnhancedLanguageModel:
                         last_entity_token = tok  # Entityyi sakla!
                         break
 
+            # Final durumu göster
+            total_words = sum(len(s.split()) for s in generated_sentences)
+            avg_words = total_words / len(generated_sentences)
+            next_center = context_word if context_word else "Random"
+            
+            pbar.set_postfix({
+                'Completed': f'{i+1}/{num_sentences}',
+                'Total Words': f'{total_words}w',
+                'Avg/Sent': f'{avg_words:.1f}w',
+                'Next': f'"{next_center[:8]}..."',
+                'Status': '🎉 Done!'
+            })
+            
+            # Kısa bir bekleme (görsel efekt için)
+            time.sleep(0.05)
+
+        # Progress tamamlandığında
+        pbar.set_postfix_str("🏁 All sentences generated successfully!")
         # 5) Sonuçları birleştir, post-process et
         final_text = " ".join(generated_sentences)
         return self.post_process_text(final_text)
