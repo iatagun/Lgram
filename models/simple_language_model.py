@@ -48,8 +48,9 @@ class Config:
     
     # Model paths
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    NGRAMS_DIR = os.path.join(BASE_DIR, "ngrams")
-    
+    # ngrams klasörü proje kökünde
+    NGRAMS_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'ngrams'))
+
     TEXT_PATH = os.path.join(NGRAMS_DIR, "text_data.txt")
     BIGRAM_PATH = os.path.join(NGRAMS_DIR, "bigram_model.pkl")
     TRIGRAM_PATH = os.path.join(NGRAMS_DIR, "trigram_model.pkl")
@@ -441,7 +442,7 @@ class EnhancedLanguageModel:
             return self.correct_grammar(text)
         
         try:
-            prompt = f"grammar, coherence, ambiguity: {text}"
+            prompt = f"grammar, coherence, ambiguity, story, novel: {text}"
             
             inputs = TOKENIZER(
                 prompt,
@@ -479,6 +480,8 @@ class EnhancedLanguageModel:
         # Remove prompt echoes
         prompt_prefixes = [
             "grammar, coherence, ambiguity:",
+            "grammar, coherence, ambiguity, story:",
+            "grammar, coherence, ambiguity, story, novel:",
             "grammar:",
             "Grammar:",
             "correct:",
@@ -917,7 +920,7 @@ if __name__ == "__main__":
         model = create_language_model()
         
         # Generate text
-        input_sentence = "She founded a number of schools."
+        input_sentence = "The truth "
         input_words = input_sentence.strip().rstrip('.').split()
         
         generated_text = model.generate_text(

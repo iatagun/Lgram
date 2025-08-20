@@ -16,6 +16,8 @@ centering_lgram.egg-info/dependency_links.txt
 centering_lgram.egg-info/entry_points.txt
 centering_lgram.egg-info/requires.txt
 centering_lgram.egg-info/top_level.txt
+dist/centering_lgram-1.0.38-py3-none-any.whl
+dist/centering_lgram-1.0.38.tar.gz
 lgram/__init__.py
 lgram/cli.py
 lgram/core.py
