@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "centering-lgram"
+version = "1.0.0"
+authors = [
+    {name = "İlker Atagün", email = "ilker.atagun@gmail.com"},
+]
+description = "Advanced Language Model with Centering Theory for Coherent Text Generation"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+keywords = [
+    "nlp", "natural language processing", "text generation", 
+    "centering theory", "coherence", "language model",
+    "n-gram", "discourse analysis", "computational linguistics"
+]
+dependencies = [
+    "torch>=1.9.0",
+    "transformers>=4.20.0",
+    "spacy>=3.4.0",
+    "scikit-learn>=1.0.0",
+    "scipy>=1.7.0",
+    "numpy>=1.21.0",
+    "tqdm>=4.62.0",
+]
+
+[project.optional-dependencies]
+django = ["django>=3.2.0"]
+full = [
+    "django>=3.2.0",
+    "jupyter>=1.0.0",
+    "matplotlib>=3.5.0",
+    "plotly>=5.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "mypy>=0.950",
+    "build>=0.8.0",
+    "twine>=4.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/iatagun/Lgram"
+"Bug Reports" = "https://github.com/iatagun/Lgram/issues"
+"Source" = "https://github.com/iatagun/Lgram"
+"Documentation" = "https://github.com/iatagun/Lgram/blob/main/README.md"
+
+[project.scripts]
+centering-lgram = "lgram.cli:main"
+lgram = "lgram.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lgram*"]
+
+[tool.setuptools.package-data]
+lgram = [
+    "data/*.txt",
+    "data/*.json", 
+    "data/*.pkl",
+    "models/data/*.pkl",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

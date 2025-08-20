@@ -26,7 +26,7 @@ requirements = [
 ]
 
 setup(
-    name='lgram',
+    name='centering-lgram',
     version='1.0.0',
     author='İlker Atagün',
     author_email='ilker.atagun@gmail.com',
@@ -74,7 +74,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'lgram=lgram.cli:main',
+            'centering-lgram=lgram.cli:main',
+            'lgram=lgram.cli:main',  # Keep backward compatibility
         ],
     },
     include_package_data=True,

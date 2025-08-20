@@ -1,0 +1,3 @@
+[console_scripts]
+centering-lgram = lgram.cli:main
+lgram = lgram.cli:main

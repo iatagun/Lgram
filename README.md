@@ -1,14 +1,95 @@
 
-# 🧠 Centering-Based Coherence & N-Gram Language Generation Framework
+# 🧠 Centering-Lgram: Advanced Language Model with Centering Theory
 
-This project is a comprehensive framework that combines **Centering Theory**, **Transition Analysis**, **Contextual N-gram Generation**, and **Grammatical Correction** to produce **contextually coherent sentences** and linguistically analyze the output.
+[![PyPI version](https://badge.fury.io/py/centering-lgram.svg)](https://badge.fury.io/py/centering-lgram)
+[![Python versions](https://img.shields.io/pypi/pyversions/centering-lgram.svg)](https://pypi.org/project/centering-lgram/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Downloads](https://pepy.tech/badge/centering-lgram)](https://pepy.tech/project/centering-lgram)
 
-## 🔍 Main Components
+A sophisticated natural language processing library that combines **N-gram language models** with **Centering Theory** to generate coherent and contextually appropriate text. Lgram provides state-of-the-art discourse coherence analysis and text generation capabilities.
 
-### 1. `CenteringModel`
-Defines transition types between sentence pairs based on **Centering Theory** (`CON`, `RET`, `SSH`, `RSH`, `EST`, `NTT`) and calculates a **total coherence score** by assigning weights to each transition.
+## ✨ Key Features
 
-- Input: Free-form text (str)
+- **🎯 Coherent Text Generation**: Advanced n-gram models (2-gram to 6-gram) with centering theory
+- **🧠 Discourse Analysis**: Implementation of centering theory for coherence evaluation
+- **🔧 Grammar Correction**: T5 transformer-based grammar and style correction
+- **🌐 Semantic Analysis**: SpaCy-powered semantic relationship detection
+- **📊 Collocation Analysis**: Statistical collocation and thematic consistency
+- **⚡ Django Ready**: Production-ready integration with Django framework
+- **🎨 CLI Interface**: Easy-to-use command line tools
+- **📈 Progress Tracking**: Visual progress bars and detailed logging
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Install from PyPI
+pip install centering-lgram
+
+# Install with all optional dependencies
+pip install centering-lgram[full]
+
+# Install for Django projects
+pip install centering-lgram[django]
+```
+
+### Basic Usage
+
+```python
+from lgram import create_language_model
+
+# Create or load a language model
+model = create_language_model()
+
+# Generate coherent text
+text = model.generate_text(
+    num_sentences=3,
+    input_words=["The", "weather"],
+    length=12,
+    use_progress_bar=True
+)
+print(text)
+```
+
+### Advanced Usage with Centering Theory
+
+```python
+from lgram import EnhancedLanguageModel
+
+# Initialize with custom settings
+model = EnhancedLanguageModel(n=3)  # Use 3-gram model
+
+# Generate with centering theory for better coherence
+coherent_text = model.generate_text_with_centering(
+    num_sentences=5,
+    input_words=["She", "founded"],
+    length=15
+)
+
+# Apply grammar correction
+corrected_text = model.correct_grammar_t5(coherent_text)
+print(corrected_text)
+```
+
+### Command Line Interface
+
+```bash
+# Generate text from command line
+centering-lgram generate --input "The weather today" --sentences 3 --correct
+
+# Use centering theory
+centering-lgram generate --input "She founded" --sentences 5 --centering --progress
+
+# Show system information
+centering-lgram info
+
+# Train a new model
+centering-lgram train --text-file data.txt --model-file my_model.pkl
+
+# Backward compatibility - old command still works
+lgram generate --input "Hello world" --sentences 3
+```
 - Output: Transition scores, types, and detailed pairwise information
 
 ### 2. `TransitionAnalyzer`
