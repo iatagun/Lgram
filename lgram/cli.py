@@ -6,12 +6,12 @@ Command Line Interface for Lgram package.
 import argparse
 import sys
 import os
+import argparse
+import sys
+import os
 from typing import List, Optional
-
-def main():
-    """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        description='Centering-Lgram: Advanced Language Model with Centering Theory',
+def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -115,7 +115,7 @@ Examples:
 
 def handle_version():
     """Handle version command."""
-    try:
+def handle_version():
         from lgram import __version__, __author__, __url__
         print(f"Centering-Lgram version {__version__}")
         print(f"Author: {__author__}")
@@ -127,7 +127,7 @@ def handle_version():
 
 def handle_info():
     """Handle info command."""
-    try:
+def handle_info():
         from lgram import show_info
         from lgram.utils import print_system_info
         
@@ -140,7 +140,7 @@ def handle_info():
 
 def handle_generate(args):
     """Handle generate command."""
-    try:
+def handle_generate(args):
         from lgram import create_language_model
         
         print("🚀 Initializing Centering-Lgram model...")
@@ -191,7 +191,7 @@ def handle_generate(args):
 
 def handle_train(args):
     """Handle train command."""
-    try:
+def handle_train(args):
         from lgram import EnhancedLanguageModel, TextLoader
         
         print(f"📚 Loading training text from: {args.text_file}")

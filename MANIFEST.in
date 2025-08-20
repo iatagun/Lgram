@@ -8,7 +8,8 @@ include pyproject.toml
 recursive-include lgram *.py
 
 # Include model and data files
-recursive-include models *.py
+recursive-include lgram/models *.py
+recursive-include lgram/models/logs *
 recursive-include ngrams *.pkl *.json *.txt
 recursive-include logs *.txt
 

@@ -17,30 +17,13 @@ models_dir = os.path.join(parent_dir, 'models')
 if models_dir not in sys.path:
     sys.path.insert(0, models_dir)
 
-try:
-    from simple_language_model import (
-        EnhancedLanguageModel,
-        Config,
-        ModelInitializer,
-        TextLoader,
-        create_language_model
-    )
-except ImportError as e:
-    # Fallback import path
-    try:
-        sys.path.insert(0, parent_dir)
-        from models.simple_language_model import (
-            EnhancedLanguageModel,
-            Config, 
-            ModelInitializer,
-            TextLoader,
-            create_language_model
-        )
-    except ImportError:
-        raise ImportError(
-            f"Could not import core modules. Original error: {e}. "
-            "Please ensure the models directory is properly set up."
-        )
+from .models.simple_language_model import (
+    EnhancedLanguageModel,
+    Config,
+    ModelInitializer,
+    TextLoader,
+    create_language_model
+)
 
 __all__ = [
     'EnhancedLanguageModel',
