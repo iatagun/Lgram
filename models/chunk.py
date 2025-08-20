@@ -441,7 +441,7 @@ class EnhancedLanguageModel:
             return self.correct_grammar(text)
         
         try:
-            prompt = f"grammar, coherence, ambiguity, story: {text}"
+            prompt = f"grammar, coherence, ambiguity, story, novel: {text}"
             
             inputs = TOKENIZER(
                 prompt,
@@ -480,6 +480,7 @@ class EnhancedLanguageModel:
         prompt_prefixes = [
             "grammar, coherence, ambiguity:",
             "grammar, coherence, ambiguity, story:",
+            "grammar, coherence, ambiguity, story, novel:",
             "grammar:",
             "Grammar:",
             "correct:",
@@ -918,7 +919,7 @@ if __name__ == "__main__":
         model = create_language_model()
         
         # Generate text
-        input_sentence = "On 1 August 2012, "
+        input_sentence = "The truth "
         input_words = input_sentence.strip().rstrip('.').split()
         
         generated_text = model.generate_text(
