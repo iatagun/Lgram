@@ -27,7 +27,7 @@ requirements = [
 
 setup(
     name='centering-lgram',
-    version='1.0.3',
+    version='1.0.8',
     author='İlker Atagün',
     author_email='ilker.atagun@gmail.com',
     description='Advanced Language Model with Centering Theory for Coherent Text Generation',

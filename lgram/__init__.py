@@ -1,4 +1,3 @@
-
 """
 Centering-Lgram: Advanced Language Model with Centering Theory for Coherent Text Generation
 
@@ -12,9 +11,10 @@ Key Features:
 - Semantic relationship analysis using SpaCy
 - Django framework integration ready
 - Collocation and thematic consistency analysis
+"""
 
 # --- Package Metadata ---
-__version__ = "1.0.3"
+__version__ = "1.0.8"
 __author__ = "İlker Atagün"
 __email__ = "ilker.atagun@gmail.com"
 __license__ = "MIT"
@@ -134,10 +134,10 @@ def check_gpu_availability():
 def print_system_info() -> None:
     """Print system information relevant to Lgram."""
     gpu_info = check_gpu_availability()
-    
-    print("🖥️  System Information:")
-    print(f"   GPU Available: {'✅' if gpu_info['gpu_available'] else '❌'}")
-    
+
+    print("System Information:")
+    print(f"   GPU Available: {'YES' if gpu_info['gpu_available'] else 'NO'}")
+
     if gpu_info['gpu_available']:
         print(f"   GPU Count: {gpu_info['gpu_count']}")
         print(f"   CUDA Version: {gpu_info['cuda_version']}")
@@ -145,35 +145,31 @@ def print_system_info() -> None:
             print(f"   GPU {i}: {name}")
         if gpu_info['total_memory'] > 0:
             print(f"   GPU Memory: {gpu_info['total_memory']} GB")
-    
+
     print()
 
 def show_info():
     """Show package information"""
-    status_icon = "✅" if _import_success else "⚠️"
-    
-    print(f"""
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                    LGRAM                                      ║
-║            Advanced Language Model with Centering Theory v{__version__}             ║
-║                                   {status_icon}                                      ║
-║  🎯 Coherent Text Generation with Discourse Analysis                         ║
-║  🧠 N-gram Models (2-gram to 6-gram) + Centering Theory                     ║
-║  🔧 Grammar Correction with T5 Transformers                                 ║
-║  🌐 Django Framework Ready                                                   ║
-║                                                                               ║
-║  Author: {__author__}                                              ║
-║  GitHub: {__url__}                                     ║
-║                                                                               ║
-║  Quick Start:                                                                 ║
-║    from lgram import create_language_model                                    ║
-║    model = create_language_model()                                            ║
-║    text = model.generate_text(num_sentences=3, input_words=["Hello"])        ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-    """)
-    
+    status_icon = "OK" if _import_success else "WARN"
+    info_text = f"""
+LGRAM - Advanced Language Model with Centering Theory v{__version__} [{status_icon}]
+Author: {__author__}
+GitHub: {__url__}
+
+Coherent Text Generation with Discourse Analysis
+N-gram Models (2-gram to 6-gram) + Centering Theory
+Grammar Correction with T5 Transformers
+Django Framework Ready
+
+Quick Start:
+    from lgram import create_language_model
+    model = create_language_model()
+    text = model.generate_text(num_sentences=3, input_words=["Hello"])
+"""
+    print(info_text)
+
     if not _import_success:
-        print("⚠️  Warning: Some core components could not be imported.")
+        print("WARNING: Some core components could not be imported.")
         print("   Please ensure all dependencies are installed: pip install centering-lgram[full]")
         print()
 
