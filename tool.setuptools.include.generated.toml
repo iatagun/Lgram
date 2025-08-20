@@ -1,0 +1,22 @@
+[tool.setuptools.packages.find]
+include = ["lgram*", "models*", "ngrams*", "logs*", "tests*", "*"]
+
+[tool.setuptools.package-data]
+lgram = [
+    "*.py",
+    "models/*.py",
+    "models/logs/*",
+]
+models = [
+    "*.py",
+    "logs/*",
+]
+ngrams = [
+    "*.txt", "*.json", "*.pkl", "*.pt"
+]
+logs = [
+    "*.txt"
+]
+tests = [
+    "*.py"
+]

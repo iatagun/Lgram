@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "centering-lgram"
-version = "1.0.39"
+version = "1.0.42"
 authors = [
     {name = "İlker Atagün", email = "ilker.atagun@gmail.com"},
 ]
@@ -69,14 +69,26 @@ centering-lgram = "lgram.cli:main"
 lgram = "lgram.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["lgram*"]
+include = ["lgram*", "models*", "ngrams*", "logs*", "tests*", "*"]
 
 [tool.setuptools.package-data]
 lgram = [
-    "data/*.txt",
-    "data/*.json", 
-    "data/*.pkl",
-    "models/data/*.pkl",
+    "*.py",
+    "models/*.py",
+    "models/logs/*",
+]
+models = [
+    "*.py",
+    "logs/*",
+]
+ngrams = [
+    "*.txt", "*.json", "*.pkl", "*.pt"
+]
+logs = [
+    "*.txt"
+]
+tests = [
+    "*.py"
 ]
 
 [tool.black]

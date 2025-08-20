@@ -27,7 +27,7 @@ requirements = [
 
 setup(
     name='centering-lgram',
-    version='1.0.39',
+        version='1.0.42',
     author='İlker Atagün',
     author_email='ilker.atagun@gmail.com',
     description='Advanced Language Model with Centering Theory for Coherent Text Generation',
@@ -39,7 +39,7 @@ setup(
         'Source': 'https://github.com/iatagun/Lgram',
         'Documentation': 'https://github.com/iatagun/Lgram/blob/main/README.md',
     },
-    packages=find_packages(),
+    packages=find_packages(include=["lgram*", "models*", "ngrams*", "logs*", "tests*", "*"]),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -81,13 +81,22 @@ setup(
     include_package_data=True,
     package_data={
         'lgram': [
-            'data/*.txt',
-            'data/*.json',
-            'data/*.pkl',
-            'models/data/*.pkl',
+            '*.py',
+            'models/*.py',
+            'models/logs/*',
+        ],
+        'models': [
+            '*.py',
+            'logs/*',
         ],
         'ngrams': [
             '*.txt', '*.json', '*.pkl', '*.pt'
+        ],
+        'logs': [
+            '*.txt'
+        ],
+        'tests': [
+            '*.py'
         ],
     },
     keywords=[

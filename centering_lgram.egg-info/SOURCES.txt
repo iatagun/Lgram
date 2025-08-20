@@ -9,6 +9,7 @@ output.txt
 pyproject.toml
 requirements.txt
 setup.py
+test.py
 test_t5.py
 centering_lgram.egg-info/PKG-INFO
 centering_lgram.egg-info/SOURCES.txt
@@ -18,6 +19,8 @@ centering_lgram.egg-info/requires.txt
 centering_lgram.egg-info/top_level.txt
 dist/centering_lgram-1.0.38-py3-none-any.whl
 dist/centering_lgram-1.0.38.tar.gz
+dist/centering_lgram-1.0.39-py3-none-any.whl
+dist/centering_lgram-1.0.39.tar.gz
 lgram/__init__.py
 lgram/cli.py
 lgram/core.py
