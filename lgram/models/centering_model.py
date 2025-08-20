@@ -1,4 +1,4 @@
-from transition_analyzer import TransitionAnalyzer
+from .transition_analyzer import TransitionAnalyzer
 
 class TransitionScorer:
     def __init__(self, weights=None):

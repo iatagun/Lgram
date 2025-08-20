@@ -1,3 +1,4 @@
+
 """
 Centering-Lgram: Advanced Language Model with Centering Theory for Coherent Text Generation
 
@@ -12,6 +13,13 @@ Key Features:
 - Django framework integration ready
 - Collocation and thematic consistency analysis
 
+# --- Package Metadata ---
+__version__ = "1.0.3"
+__author__ = "İlker Atagün"
+__email__ = "ilker.atagun@gmail.com"
+__license__ = "MIT"
+__url__ = "https://github.com/iatagun/Lgram"
+
 Example usage:
     >>> from lgram import EnhancedLanguageModel, create_language_model
     >>> 
@@ -22,57 +30,16 @@ Example usage:
     >>> text = model.generate_text(
     ...     num_sentences=3,
     ...     input_words=["The", "weather"],
-    ...     length=12,
-    ...     use_progress_bar=True
-    ... )
-    >>> print(text)
-    
-    >>> # Generate with centering theory
-    >>> coherent_text = model.generate_text_with_centering(
-    ...     num_sentences=5,
-    ...     input_words=["She", "founded"],
-    ...     length=15
-    ... )
-    >>> print(coherent_text)
 
-Author: İlker Atagün
-Email: ilker.atagun@gmail.com
-License: MIT
-Version: 1.0.0
-"""
-
-import sys
-import os
-import logging
-from typing import Optional
-
-# Package metadata
-__version__ = "1.0.0"
-__author__ = "İlker Atagün"
-__email__ = "ilker.atagun@gmail.com"
-__license__ = "MIT"
-__title__ = "centering-lgram"
-__description__ = "Advanced Language Model with Centering Theory for Coherent Text Generation"
-__url__ = "https://github.com/iatagun/Lgram"
-
-# Set up path for imports
-_current_dir = os.path.dirname(os.path.abspath(__file__))
-_parent_dir = os.path.dirname(_current_dir)
-_models_dir = os.path.join(_parent_dir, 'models')
-
-# Add models directory to path
-if _models_dir not in sys.path:
-    sys.path.insert(0, _models_dir)
-
-# Import core components with fallback
-try:
-    # Try importing from models directory
-    from simple_language_model import (
+    # Import all main classes and functions from core.py for PyPI compatibility
+    from .core import (
         EnhancedLanguageModel,
         Config,
         ModelInitializer,
         TextLoader,
         create_language_model
+    )
+    _import_success = True
     )
     _import_success = True
 except ImportError as e1:
