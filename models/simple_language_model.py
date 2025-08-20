@@ -1,268 +1,666 @@
-import random
-import pickle
-from collections import defaultdict, Counter
-import spacy
-import numpy as np
-from tqdm import tqdm
-import sys
-import time
 import os
 import re
 import json
+import time
+import pickle
+import random
+import shutil
 import datetime
-from transition_analyzer import TransitionAnalyzer
+from collections import defaultdict, Counter
+from functools import cache, lru_cache
+from typing import Optional, List, Tuple, Dict, Any
+import logging
+
+import numpy as np
+import spacy
+import torch
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.spatial.distance import cosine
-from functools import cache
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+from tqdm import tqdm
 
-# 1. Model ve tokenizer'ı başlat
-tokenizer = AutoTokenizer.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-model = AutoModelForSeq2SeqLM.from_pretrained("pszemraj/flan-t5-large-grammar-synthesis")
-model.eval()
+# Try relative import first, fallback to absolute import
+try:
+    from .centering_theory import EnhancedCenteringTheory, TransitionType
+    from .transition_analyzer import TransitionAnalyzer
+except ImportError:
+    try:
+        from centering_theory import EnhancedCenteringTheory, TransitionType
+        from transition_analyzer import TransitionAnalyzer
+    except ImportError:
+        # Create dummy classes if not available
+        class TransitionType:
+            pass
+        class EnhancedCenteringTheory:
+            def __init__(self, *args, **kwargs):
+                pass
+        class TransitionAnalyzer:
+            def __init__(self, *args, **kwargs):
+                pass
+            def analyze(self):
+                return []
 
-# Load the SpaCy English model with word vectors
-nlp = spacy.load("en_core_web_md")
-nlp.max_length = 300000000 # or even higher
+# Configure logging
+logger = logging.getLogger(__name__)
 
-# N-gram modelleri yolları
-text_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\text_data.txt"
-bigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\bigram_model.pkl"
-trigram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\trigram_model.pkl"
-fourgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fourgram_model.pkl"
-fivegram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\fivegram_model.pkl"
-sixgram_path = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\sixgram_model.pkl"
-corrections_file = "C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\corrections.json"
-with open(corrections_file, encoding="utf-8") as f:
-    CORRECTIONS = json.load(f)
+class Config:
+    """Configuration class for Enhanced Language Model"""
+    
+    # Model paths
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    NGRAMS_DIR = os.path.join(BASE_DIR, "ngrams")
+    
+    TEXT_PATH = os.path.join(NGRAMS_DIR, "text_data.txt")
+    BIGRAM_PATH = os.path.join(NGRAMS_DIR, "bigram_model.pkl")
+    TRIGRAM_PATH = os.path.join(NGRAMS_DIR, "trigram_model.pkl")
+    FOURGRAM_PATH = os.path.join(NGRAMS_DIR, "fourgram_model.pkl")
+    FIVEGRAM_PATH = os.path.join(NGRAMS_DIR, "fivegram_model.pkl")
+    SIXGRAM_PATH = os.path.join(NGRAMS_DIR, "sixgram_model.pkl")
+    CORRECTIONS_FILE = os.path.join(NGRAMS_DIR, "corrections.json")
+    MODEL_FILE = os.path.join(NGRAMS_DIR, "language_model.pkl")
+    COLLOCATIONS_PATH = os.path.join(NGRAMS_DIR, "collocations.pkl")
+    
+    # Model parameters
+    T5_MODEL_NAME = "pszemraj/flan-t5-large-grammar-synthesis"
+    SPACY_MODEL_NAME = "en_core_web_sm"
+    SPACY_MAX_LENGTH = 1000000
+    
+    # Generation parameters
+    DEFAULT_NUM_SENTENCES = 5
+    DEFAULT_SENTENCE_LENGTH = 13
+    MIN_SENTENCE_LENGTH = 5
+    MAX_ATTEMPTS = 5
+    SEMANTIC_THRESHOLD = 0.65
 
+
+class ModelInitializer:
+    """Handles model initialization and loading"""
+    
+    @staticmethod
+    def initialize_t5_model():
+        """Initialize T5 model for grammar correction"""
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(
+                Config.T5_MODEL_NAME,
+                use_fast=True,
+                padding_side="left"
+            )
+            
+            model = AutoModelForSeq2SeqLM.from_pretrained(
+                Config.T5_MODEL_NAME,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                low_cpu_mem_usage=True
+            )
+            
+            model.eval()
+            model = torch.compile(model)
+            
+            logger.info("T5 model initialized successfully")
+            return tokenizer, model
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize T5 model: {e}")
+            return None, None
+    
+    @staticmethod
+    def initialize_spacy_model():
+        """Initialize SpaCy model"""
+        try:
+            nlp = spacy.load(
+                Config.SPACY_MODEL_NAME, 
+                disable=["ner", "textcat", "lemmatizer"]
+            )
+            nlp.max_length = Config.SPACY_MAX_LENGTH
+            
+            logger.info("SpaCy model initialized successfully")
+            return nlp
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize SpaCy model: {e}")
+            return None
+    
+    @staticmethod
+    def load_corrections():
+        """Load corrections dictionary"""
+        try:
+            with open(Config.CORRECTIONS_FILE, encoding="utf-8") as f:
+                corrections = json.load(f)
+            logger.info("Corrections loaded successfully")
+            return corrections
+        except Exception as e:
+            logger.error(f"Failed to load corrections: {e}")
+            return {}
+
+
+# Initialize models globally (Django compatible)
+try:
+    TOKENIZER, T5_MODEL = ModelInitializer.initialize_t5_model()
+    NLP = ModelInitializer.initialize_spacy_model()
+    CORRECTIONS = ModelInitializer.load_corrections()
+except Exception as e:
+    logger.error(f"Model initialization failed: {e}")
+    TOKENIZER, T5_MODEL, NLP, CORRECTIONS = None, None, None, {}
 
 
 class EnhancedLanguageModel:
-    def __init__(self, text, n=2, colloc_path="collocations.pkl"):
+    """Enhanced Language Model for text generation with coherence and grammar correction"""
+    
+    def __init__(self, text: Optional[str] = None, n: int = 2, 
+                 colloc_path: str = Config.COLLOCATIONS_PATH):
+        """
+        Initialize the Enhanced Language Model
+        
+        Args:
+            text: Training text (optional)
+            n: N-gram size
+            colloc_path: Path to collocations file
+        """
         self.n = n
-        self.model, self.total_counts = self.build_model(text)
-        self.load_ngram_models()
         self.collocations = self._load_collocations(colloc_path)
-
+        
+        if text:
+            self.model, self.total_counts = self.build_model(text)
+        else:
+            self.model, self.total_counts = {}, {}
+        
+        self._load_ngram_models()
+        
+        # Initialize centering theory
+        if NLP:
+            self.centering = EnhancedCenteringTheory(NLP)
+        else:
+            self.centering = None
+        
+        # Ensure models are available
+        if not all([NLP, TOKENIZER, T5_MODEL]):
+            raise RuntimeError("Required models not initialized")
+    
     @cache
-    def _load_collocations(self, path):
+    def _load_collocations(self, path: str) -> Dict:
+        """Load collocations from file with caching"""
         try:
             with open(path, 'rb') as f:
                 return pickle.load(f)
         except FileNotFoundError:
-            # Hata yönetimi: dosya yoksa boş dict dön
+            logger.warning(f"Collocations file not found: {path}")
             return {}
-
-    def get_log_file(self):
+        except Exception as e:
+            logger.error(f"Error loading collocations: {e}")
+            return {}
+    
+    def _get_log_file(self) -> str:
+        """Get log file path for current date"""
         today = datetime.datetime.now().strftime("%Y-%m-%d")
-        logs_dir = "logs"
+        logs_dir = os.path.join(Config.BASE_DIR, "logs")
         os.makedirs(logs_dir, exist_ok=True)
         return os.path.join(logs_dir, f"daily_log_{today}.txt")
-
-    def log(self, message):
-        log_file = self.get_log_file()
-        with open(log_file, "a", encoding="utf-8") as f:
-            f.write(message + "\n")
-
-    def build_model(self, text):
+    
+    def log(self, message: str) -> None:
+        """Log message to file"""
+        try:
+            log_file = self._get_log_file()
+            with open(log_file, "a", encoding="utf-8") as f:
+                timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+                f.write(f"[{timestamp}] {message}\n")
+        except Exception as e:
+            logger.error(f"Logging failed: {e}")
+    
+    def build_model(self, text: str) -> Tuple[Dict, Dict]:
+        """Build n-gram model from text"""
+        if not NLP:
+            raise RuntimeError("SpaCy model not available")
+        
         model = defaultdict(lambda: defaultdict(int))
-        doc = nlp(text.lower())
+        doc = NLP(text.lower())
         tokens = [token.text for token in doc if token.is_alpha]
+        
         n_grams = [tuple(tokens[i:i+self.n]) for i in range(len(tokens)-self.n+1)]
-
+        
         for n_gram in n_grams:
             prefix = n_gram[:-1]
             next_word = n_gram[-1]
             model[prefix][next_word] += 1
-
+        
         total_counts = defaultdict(int)
         for prefix, next_words in model.items():
             total_count = sum(next_words.values())
             total_counts[prefix] = total_count
+            
             for word in next_words:
                 next_words[word] = (next_words[word] + 1) / (total_count + len(next_words))
+            
             for word in next_words:
                 continuation_count = sum(1 for ngram in n_grams if ngram[-1] == word)
                 next_words[word] += (continuation_count / len(tokens))
-
+        
         return dict(model), dict(total_counts)
-
-    def load_ngram_models(self):
-        with open(bigram_path, 'rb') as f:
-            self.bigram_model = pickle.load(f)
-        with open(trigram_path, 'rb') as f:
-            self.trigram_model = pickle.load(f)
-        with open(fourgram_path, 'rb') as f:
-            self.fourgram_model = pickle.load(f)
-        with open(fivegram_path, 'rb') as f:
-            self.fivegram_model = pickle.load(f)
-        with open(sixgram_path, 'rb') as f:
-            self.sixgram_model = pickle.load(f)
-
-    def choose_next_word_dynamically(self, prefix):
-        model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 'trigram_model', 'bigram_model']
+    
+    def _load_ngram_models(self) -> None:
+        """Load all n-gram models"""
+        model_paths = {
+            'bigram_model': Config.BIGRAM_PATH,
+            'trigram_model': Config.TRIGRAM_PATH,
+            'fourgram_model': Config.FOURGRAM_PATH,
+            'fivegram_model': Config.FIVEGRAM_PATH,
+            'sixgram_model': Config.SIXGRAM_PATH
+        }
+        
+        for model_name, path in model_paths.items():
+            try:
+                with open(path, 'rb') as f:
+                    setattr(self, model_name, pickle.load(f))
+                logger.debug(f"Loaded {model_name}")
+            except Exception as e:
+                logger.error(f"Failed to load {model_name}: {e}")
+                setattr(self, model_name, {})
+    
+    def is_semantically_related(self, prefix: Tuple[str], word: str) -> bool:
+        """Check semantic relationship between prefix and word"""
+        if not prefix or not NLP:
+            return False
+        
+        try:
+            last_word = prefix[-1]
+            token1 = NLP(last_word)[0]
+            token2 = NLP(word)[0]
+            
+            if token1.has_vector and token2.has_vector:
+                similarity = 1 - cosine(token1.vector, token2.vector)
+                
+                # POS compatibility bonus
+                pos_bonus = self._get_pos_bonus(token1, token2)
+                
+                # Dependency relation bonus
+                dep_bonus = self._get_dependency_bonus(token1, token2)
+                
+                # Thematic consistency bonus
+                theme_bonus = self._get_thematic_bonus(last_word, word)
+                
+                final_score = similarity + pos_bonus + dep_bonus + theme_bonus
+                
+                return final_score > Config.SEMANTIC_THRESHOLD
+                
+        except Exception as e:
+            logger.debug(f"Semantic relation check failed: {e}")
+        
+        return False
+    
+    def _get_pos_bonus(self, token1, token2) -> float:
+        """Calculate POS compatibility bonus"""
+        if ((token1.pos_ == 'NOUN' and token2.pos_ == 'VERB') or
+            (token1.pos_ == 'ADJ' and token2.pos_ == 'NOUN') or
+            (token1.pos_ == 'VERB' and token2.pos_ in ['ADV', 'NOUN'])):
+            return 0.1
+        return 0
+    
+    def _get_dependency_bonus(self, token1, token2) -> float:
+        """Calculate dependency relation bonus"""
+        if ((token1.dep_ in ['nsubj', 'ROOT'] and token2.pos_ == 'VERB') or
+            (token1.pos_ == 'VERB' and token2.dep_ in ['dobj', 'pobj'])):
+            return 0.15
+        return 0
+    
+    def _get_thematic_bonus(self, word1: str, word2: str) -> float:
+        """Calculate thematic consistency bonus"""
+        themes = {
+            'technology': ['computer', 'internet', 'digital', 'software', 'data', 'system'],
+            'nature': ['tree', 'forest', 'river', 'mountain', 'animal', 'plant'],
+            'emotion': ['happy', 'sad', 'angry', 'love', 'fear', 'joy'],
+            'time': ['yesterday', 'tomorrow', 'morning', 'night', 'hour', 'minute'],
+            'business': ['company', 'market', 'profit', 'customer', 'business', 'work']
+        }
+        
+        for theme, words in themes.items():
+            if word1.lower() in words and word2.lower() in words:
+                return 0.2
+        return 0
+    
+    def choose_next_word_dynamically(self, prefix: Tuple[str]) -> Optional[str]:
+        """Choose next word based on multiple n-gram models"""
+        model_priority = ['sixgram_model', 'fivegram_model', 'fourgram_model', 
+                         'trigram_model', 'bigram_model']
         candidates = []
-
-        # Toplu aday listesi oluştur
+        
         for model_attr in model_priority:
             model = getattr(self, model_attr, None)
             if model:
                 next_words = model.get(prefix)
                 if next_words:
                     candidates.append((model_attr, next_words))
-
+        
         if not candidates:
             return None
-
+        
         weighted_candidates = []
         for model_attr, words_dict in candidates:
             weight = model_priority.index(model_attr) + 1
+            
             for word, prob in words_dict.items():
                 adjusted_prob = prob / weight
-
-                # 🔥 Semantic relation kontrolü
+                
+                # Semantic relation bonus
                 if self.is_semantically_related(prefix, word):
-                    adjusted_prob *= 1.7  # %70 ekstra ağırlık
-
-                # 🤝 Collocation bonusu (PMI tabanlı)
+                    adjusted_prob *= 1.7
+                
+                # Collocation bonus
                 last = prefix[-1] if prefix else None
-                if last and hasattr(self, 'collocations'):
+                if last and self.collocations:
                     bonus = self.collocations.get(last, {}).get(word, 0)
-                    # PMI genellikle 0–2 arası değerler aldığı için (1+bonus) formülü uygundur
                     adjusted_prob *= (1 + bonus)
-
+                
                 weighted_candidates.append((word, adjusted_prob))
-
+        
         if not weighted_candidates:
             return None
-
-        # Kelime ve ağırlıkları ayır
+        
         words, scores = zip(*weighted_candidates)
-        # Random seçim
         chosen_word = random.choices(words, weights=scores, k=1)[0]
-
+        
         return chosen_word
-
-    def is_semantically_related(self, prefix, word):
-        """
-        Prefix'in son kelimesi ile candidate word arasında semantic similarity ölçer.
-        """
-        if not prefix:
-            return False
-
-        try:
-            last_word = prefix[-1]
-            token1 = nlp(last_word)[0]
-            token2 = nlp(word)[0]
-
-            if token1.has_vector and token2.has_vector:
-                similarity = 1 - cosine(token1.vector, token2.vector)
-                if similarity > 0.7:  # Threshold seçiyoruz
-                    return True
-        except:
-            pass
-
-        return False
-
-
-    def generate_sentence(self, start_words=None, length=15):
-        # Generate a raw sentence without context-based adjustments
+    
+    def generate_sentence(self, start_words: Optional[List[str]] = None, 
+                         base_length: int = Config.DEFAULT_SENTENCE_LENGTH) -> str:
+        """Generate a single sentence"""
+        target_length = self._get_dynamic_sentence_length(base_length)
+        
         if start_words is None:
             start_words = random.choice(list(self.trigram_model.keys()))
         else:
             start_words = tuple(start_words)
-            if len(start_words) < self.n - 1:
-                raise ValueError(f"start_words must contain at least {self.n - 1} words.")
-
+        
         current_words = list(start_words)
         sentence = current_words.copy()
-
-        for _ in tqdm(range(length), desc="Generating words", position=0, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
+        min_length = Config.MIN_SENTENCE_LENGTH
+        
+        for i in range(target_length):
             prefix = tuple(current_words[-(self.n-1):])
             raw_next_word = self.choose_next_word_dynamically(prefix)
+            
             if not raw_next_word:
                 break
+            
             current_words.append(raw_next_word)
             sentence.append(raw_next_word)
-
-        sentence_text = " ".join(sentence)
-        return sentence_text
-
+            
+            if (len(sentence) >= min_length and 
+                len(sentence) >= target_length * 0.7 and
+                self._should_end_sentence(sentence)):
+                break
+        
+        return " ".join(sentence)
+    
+    def _should_end_sentence(self, sentence_words: List[str]) -> bool:
+        """Determine if sentence should end"""
+        if len(sentence_words) < Config.MIN_SENTENCE_LENGTH:
+            return False
+        
+        if not NLP:
+            return random.random() < 0.4
+        
+        last_word = sentence_words[-1]
+        doc = NLP(last_word)
+        
+        if doc and doc[0].pos_ in ['NOUN', 'PRON', 'ADJ']:
+            return random.random() < 0.4
+        
+        return False
+    
+    def _get_dynamic_sentence_length(self, base_length: int, 
+                                   context_sentences: Optional[List[str]] = None) -> int:
+        """Get dynamic sentence length with variation"""
+        variations = [
+            (0.25, range(5, 8)),
+            (0.55, range(8, 13)),
+            (0.80, range(13, 17)),
+            (1.0, range(17, 22))
+        ]
+        
+        rand = random.random()
+        for prob, length_range in variations:
+            if rand <= prob:
+                return random.choice(length_range)
+        
+        return base_length
+    
     def correct_grammar(self, text: str) -> str:
-        """
-        corrections.json içindeki yanlış-doğru eşleştirmelerine
-        dayalı basit kural tabanlı gramer düzeltme.
-        """
+        """Apply rule-based grammar corrections"""
+        if not CORRECTIONS:
+            return text
+        
         for wrong, right in CORRECTIONS.items():
-            # Kelime bütünlüğünü koruyarak değiştir
             pattern = re.compile(rf"\b{re.escape(wrong)}\b", flags=re.IGNORECASE)
             text = pattern.sub(right, text)
+        
         return text
-
-    def is_complete_thought(self, sentence):
-        if not sentence:
-            return False
-
-        if isinstance(sentence, list):
-            sentence = ' '.join(sentence)
-
-        sentence = self.correct_grammar(sentence)
-        doc = nlp(sentence)
-
-        if len(doc) < 3:
-            return False
-
-        if doc[-1].text not in ['.', '!', '?']:
-            return False
-
-        has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in doc)
-        has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in doc)
-
-        if not (has_subject and has_verb):
-            return False
-
-        subject_count = sum(1 for tok in doc if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'))
-        verb_count = sum(1 for tok in doc if tok.pos_ in ('VERB', 'AUX'))
-
-        # ✨ Subj-Verb dengesi kontrolü
-        if subject_count > 2 and verb_count == 0:
-            return False
-
-        # ✨ Bağlaçlarla başlama kontrolü
-        if doc[0].pos_ == 'CCONJ' or (len(doc) > 1 and doc[1].pos_ == 'CCONJ'):
-            return False
-
-        # ✨ Çok düşük içerik (sadece pronoun veya adverb) kontrolü
-        content_tokens = [tok for tok in doc if tok.pos_ in ('NOUN', 'VERB', 'ADJ', 'ADV')]
-        if len(content_tokens) < 2:
-            return False
-
-        # ✨ Bağımlı cümleler kontrolü
-        dependent_clauses = any(tok.dep_ in ('advcl', 'acl', 'relcl', 'csubj', 'csubjpass', 'xcomp') for tok in doc)
-        if dependent_clauses and not has_subject:
-            return False
-
-        # ✨ Çoklu bağlaç yapısı ve kopukluk kontrolü
-        conj_tokens = [tok for tok in doc if tok.dep_ == 'conj']
-        if len(conj_tokens) > 2 and not has_subject:
-            return False
-
-        # ✨ Negation handling
-        has_negation = any(tok.dep_ == 'neg' for tok in doc)
-        if has_negation and not has_verb:
-            return False
-
-        # ✨ Quote veya Parenthesis düzgün kapanmış mı
-        if sentence.count('"') % 2 != 0 or sentence.count('(') != sentence.count(')'):
-            return False
-
-        return True
-
-
-    def get_center_from_sentence(self, prev_sentence, current_sentence, transition_analyzer, p_alt=0.8):
+    
+    def correct_grammar_t5(self, text: str) -> str:
+        """Correct grammar using T5 model"""
+        if not all([TOKENIZER, T5_MODEL]):
+            logger.warning("T5 model not available, using rule-based correction")
+            return self.correct_grammar(text)
+        
+        try:
+            prompt = f"grammar, coherence, ambiguity: {text}"
+            
+            inputs = TOKENIZER(
+                prompt,
+                return_tensors="pt",
+                truncation=True,
+                max_length=512
+            )
+            
+            outputs = T5_MODEL.generate(
+                input_ids=inputs["input_ids"],
+                attention_mask=inputs["attention_mask"],
+                max_new_tokens=min(200, len(text.split()) * 2),
+                num_beams=2,
+                no_repeat_ngram_size=3,
+                repetition_penalty=1.2,
+                early_stopping=True,
+                do_sample=False,
+                temperature=0.1,
+                use_cache=True
+            )
+            
+            generated = TOKENIZER.decode(outputs[0], skip_special_tokens=True).strip()
+            corrected = self._clean_t5_output(generated, text, prompt)
+            
+            return corrected
+            
+        except Exception as e:
+            logger.error(f"T5 grammar correction failed: {e}")
+            return self.correct_grammar(text)
+    
+    def _clean_t5_output(self, generated: str, original: str, prompt: str) -> str:
+        """Clean T5 model output"""
+        corrected = generated
+        
+        # Remove prompt echoes
+        prompt_prefixes = [
+            "grammar, coherence, ambiguity:",
+            "grammar:",
+            "Grammar:",
+            "correct:",
+            "Correct:",
+            prompt,
+            original
+        ]
+        
+        for prefix in prompt_prefixes:
+            if corrected.startswith(prefix):
+                corrected = corrected[len(prefix):].strip()
+        
+        # Clean delimiters and unwanted characters
+        corrected = corrected.replace('"""', '').strip()
+        corrected = re.sub(r'^[\"\'\`\n\r\s]+', '', corrected)
+        corrected = re.sub(r'[\"\'\`\n\r\s]+$', '', corrected)
+        
+        # Remove prompt words
+        prompt_words = ["grammar", "punctuation", "correct", "coherence", "ambiguity"]
+        for word in prompt_words:
+            corrected = re.sub(rf'^\b{word}\b\s*:?\s*', '', corrected, flags=re.IGNORECASE)
+        
+        # Clean whitespace
+        corrected = re.sub(r'\n+', ' ', corrected)
+        corrected = re.sub(r'\s+', ' ', corrected)
+        corrected = corrected.strip()
+        
+        # Validation
+        if (not corrected or 
+            len(corrected.split()) < max(2, len(original.split()) // 3) or
+            corrected.lower() == original.lower()):
+            return original
+        
+        # Final formatting
+        if corrected and not corrected.endswith(('.', '!', '?')):
+            corrected += '.'
+        
+        if corrected:
+            corrected = corrected[0].upper() + corrected[1:] if len(corrected) > 1 else corrected.upper()
+        
+        return corrected
+    
+    def generate_text(self, num_sentences: int = Config.DEFAULT_NUM_SENTENCES,
+                     input_words: Optional[List[str]] = None,
+                     length: int = Config.DEFAULT_SENTENCE_LENGTH,
+                     use_progress_bar: bool = False) -> str:
+        """
+        Generate coherent text with multiple sentences
+        
+        Args:
+            num_sentences: Number of sentences to generate
+            input_words: Starting words for first sentence
+            length: Base length for sentences
+            use_progress_bar: Whether to show progress bar
+            
+        Returns:
+            Generated and post-processed text
+        """
+        generated_sentences = []
+        context_word = None
+        last_entity_token = None
+        
+        # Progress bar setup
+        if use_progress_bar:
+            try:
+                terminal_width = shutil.get_terminal_size().columns
+                bar_width = min(terminal_width - 20, 120)
+                pbar = tqdm(
+                    range(num_sentences),
+                    desc="✨ Text Generation",
+                    unit=" sent",
+                    ncols=bar_width,
+                    colour='cyan'
+                )
+            except:
+                pbar = range(num_sentences)
+        else:
+            pbar = range(num_sentences)
+        
+        for i in pbar:
+            attempts = 0
+            coherent_sentence = False
+            corrected_sentence = ""
+            prev_sentence = generated_sentences[-1] if generated_sentences else None
+            
+            # Determine starting words
+            if i == 0 and input_words:
+                start_words = input_words
+            elif context_word:
+                start_words = [context_word]
+            else:
+                start_words = None
+            
+            # Generate sentence with retry logic
+            while attempts < Config.MAX_ATTEMPTS and not coherent_sentence:
+                attempts += 1
+                
+                raw_sentence = self.generate_sentence(
+                    start_words=start_words, 
+                    base_length=length
+                )
+                
+                # Ensure sentence starts with context word
+                if start_words and not raw_sentence.lower().startswith(str(start_words[0]).lower()):
+                    raw_sentence = str(start_words[0]) + " " + raw_sentence
+                
+                corrected_sentence = self.correct_grammar(raw_sentence)
+                
+                if corrected_sentence and not corrected_sentence.endswith(('.', '!', '?')):
+                    corrected_sentence += '.'
+                
+                coherent_sentence = True
+            
+            generated_sentences.append(corrected_sentence)
+            
+            # Find next context word
+            if prev_sentence and NLP:
+                try:
+                    analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
+                    context_word = self._get_center_from_sentence(
+                        prev_sentence, corrected_sentence, analyzer
+                    )
+                    
+                    if last_entity_token:
+                        context_word = self._get_dynamic_pronoun(last_entity_token)
+                        
+                except Exception as e:
+                    logger.debug(f"Context analysis failed: {e}")
+                    context_word = None
+            else:
+                # First sentence - find subject
+                if NLP and corrected_sentence:
+                    doc = NLP(corrected_sentence)
+                    for tok in doc:
+                        if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'):
+                            context_word = tok.text
+                            last_entity_token = tok
+                            break
+        
+        final_text = " ".join(generated_sentences)
+        return self._post_process_text(final_text)
+    
+    def generate_text_with_centering(self, num_sentences: int = 5,
+                                   input_words: Optional[List[str]] = None,
+                                   length: int = 13) -> str:
+        """Generate text using enhanced centering theory"""
+        generated_sentences = []
+        
+        for i in range(num_sentences):
+            if i == 0 and input_words:
+                # First sentence with input words
+                sentence = self.generate_sentence(input_words, length)
+            else:
+                # Use centering theory for subsequent sentences
+                center = self.centering.get_coherent_next_center() if self.centering else None
+                start_words = [center] if center else None
+                sentence = self.generate_sentence(start_words, length)
+            
+            # Update centering state
+            if self.centering:
+                self.centering.update_discourse(sentence)
+            
+            generated_sentences.append(sentence)
+        
+        final_text = " ".join(generated_sentences)
+        
+        # Evaluate coherence
+        if self.centering:
+            coherence_info = self.centering.evaluate_coherence(generated_sentences)
+            logger.info(f"Coherence score: {coherence_info['coherence_score']:.3f}")
+            logger.info(f"Transitions: {coherence_info['transition_distribution']}")
+        
+        return self._post_process_text(final_text)
+    
+    def _get_center_from_sentence(self, prev_sentence: str, current_sentence: str, 
+                                 transition_analyzer, p_alt: float = 0.8) -> Optional[str]:
+        """Get center word from sentence using transition analysis"""
+        if not NLP:
+            return None
+        
         def compute_Fc(sent):
-            doc = nlp(sent)
+            doc = NLP(sent)
             sal = []
             for tok in doc:
                 if tok.dep_ in ('nsubj', 'nsubjpass'):
@@ -271,419 +669,133 @@ class EnhancedLanguageModel:
                     sal.append((tok.text, 2))
                 elif tok.dep_ in ('dobj', 'pobj', 'attr', 'oprd'):
                     sal.append((tok.text, 1))
+            
             sal_sorted = sorted(sal, key=lambda x: (-x[1], sent.find(x[0])))
             return [w for w, _ in sal_sorted]
-
-        Cf_prev = compute_Fc(prev_sentence)
-        Cf_curr = compute_Fc(current_sentence)
-        Cb = Cf_prev[0] if Cf_prev and Cf_prev[0] in Cf_curr else None
-
-        # Transition analizini al
-        results = transition_analyzer.analyze()
-        for res in results:
-            tr = res.get('transition')
-            if tr == "Center Continuation (CON)":
-                # Bazen ikinci merkeze geç
-                if Cf_curr and random.random() < p_alt and len(Cf_curr) > 1:
-                    return Cf_curr[1]
-                return Cb
-            if tr in ("Smooth Shift (SSH)", "Rough Shift (RSH)"):
-                # Smooth Shift’te de arada bir farklı shift
-                if Cf_curr and random.random() < p_alt and len(Cf_curr) > 1:
-                    return Cf_curr[1]
-                return Cf_curr[0] if Cf_curr else None
-
-        # Fallback
-        if Cb:
-            return Cb if random.random() > p_alt else (Cf_curr[1] if len(Cf_curr) > 1 else Cb)
-        # Tamamen shift modu: bazen ikinci, bazen ilk
-        return (Cf_curr[1] if len(Cf_curr) > 1 and random.random() < p_alt else
-                (Cf_curr[0] if Cf_curr else None))
-
-    
-
-    def choose_word_with_context(
-        self,
-        next_words,
-        context_word=None,
-        semantic_threshold=0.9,
-        position_index=0,
-        structure_template=None,
-        prev_pos=None,
-        pos_bigrams=None
-    ):
-        if not next_words:
+        
+        try:
+            Cf_prev = compute_Fc(prev_sentence)
+            Cf_curr = compute_Fc(current_sentence)
+            Cb = Cf_prev[0] if Cf_prev and Cf_prev[0] in Cf_curr else None
+            
+            results = transition_analyzer.analyze()
+            for res in results:
+                tr = res.get('transition')
+                if tr == "Center Continuation (CON)":
+                    if Cf_curr and random.random() < p_alt and len(Cf_curr) > 1:
+                        return Cf_curr[1]
+                    return Cb
+                if tr in ("Smooth Shift (SSH)", "Rough Shift (RSH)"):
+                    if Cf_curr and random.random() < p_alt and len(Cf_curr) > 1:
+                        return Cf_curr[1]
+                    return Cf_curr[0] if Cf_curr else None
+            
+            # Fallback
+            if Cb:
+                return Cb if random.random() > p_alt else (Cf_curr[1] if len(Cf_curr) > 1 else Cb)
+            
+            return (Cf_curr[1] if len(Cf_curr) > 1 and random.random() < p_alt else
+                   (Cf_curr[0] if Cf_curr else None))
+               
+        except Exception as e:
+            logger.debug(f"Center finding failed: {e}")
             return None
-
-        # 1) Temel olasılıklar
-        words = list(next_words.keys())
-        probs = np.array(list(next_words.values()), dtype=float)
-        probs = np.clip(probs, 0, None)
-        if probs.sum() > 0:
-            probs /= probs.sum()
-        else:
-            probs = np.ones_like(probs) / len(probs)
-
-        # 2) POS ve vektörleri bir kerede çıkar
-        docs = [nlp(w) for w in words]
-        pos_tags = [doc[0].pos_ if doc and doc[0].pos_ else None for doc in docs]
-        vector_dim = nlp.vocab.vectors_length
-        vectors = np.array([
-            doc[0].vector if doc and doc[0].has_vector else np.zeros((vector_dim,))
-            for doc in docs
-        ])
-
-        # 3) Şablon bazlı filtreleme (structure_template)
-        if structure_template:
-            target_pos = structure_template[position_index % len(structure_template)]
-            mask = [pos == target_pos for pos in pos_tags]
-            if any(mask):
-                words      = [w for w, m in zip(words, mask) if m]
-                probs      = np.array([p for p, m in zip(probs, mask) if m])
-                vectors    = np.array([v for v, m in zip(vectors, mask) if m])
-                pos_tags   = [pos for pos, m in zip(pos_tags, mask) if m]
-            else:
-                self.log(f"[WARN] No words match POS '{target_pos}', skipping template filter.")
-
-        # 4) Anlamsal benzerlik
-        if context_word:
-            ctx_doc = nlp(str(context_word))
-            if ctx_doc and ctx_doc[0].has_vector:
-                ctx_vec = ctx_doc[0].vector.reshape(1, -1)
-                sim_scores = cosine_similarity(ctx_vec, vectors).flatten()
-                sim_scores = np.clip(sim_scores, 0, None)
-                sim_scores[sim_scores < semantic_threshold] = 0
-            else:
-                sim_scores = np.ones_like(probs)
-        else:
-            sim_scores = np.ones_like(probs)
-
-        # 5) POS-bigram geçiş skoru
-        if prev_pos and pos_bigrams:
-            trans_scores = np.array([
-                pos_bigrams.get((prev_pos, pos), 0.01)
-                for pos in pos_tags
-            ])
-        else:
-            trans_scores = np.ones_like(probs)
-
-        # 6) Collocation bonus
-        if context_word and hasattr(self, 'collocations'):
-            coll_map    = self.collocations.get(str(context_word), {})
-            coll_bonus  = np.array([coll_map.get(w, 0.0) for w in words])
-            coll_factor = 1 + coll_bonus
-        else:
-            coll_factor = np.ones_like(probs)
-
-        # 7) Puanları birleştir, normalize et
-        combined = probs * sim_scores * trans_scores * coll_factor
-        total = combined.sum()
-        if total <= 0:
-            self.log("[WARN] Combined scores zero; using uniform distribution.")
-            combined = np.ones_like(combined) / len(combined)
-        else:
-            combined /= total
-
-        # 8) Seçim
-        choice = np.random.choice(words, p=combined).item()
-        chosen_pos = nlp(choice)[0].pos_
-        self.log(f"[LOG] ➡️ Chosen: '{choice}' | POS: {chosen_pos}")
-        return choice
-
-
-
-
-    def clean_text(self, text):
-        if not text:
-            return ""
-        text = ' '.join(text.split())
-        text = re.sub(r'\s([?.!,:;])', r'\1', text)
-        text = re.sub(r'([.,!?])\1+', r'\1', text)
-        text = text.strip("'\"")
-        text = text[0].capitalize() + text[1:] if text else ""
-        if text and text[-1] not in ['.', '!', '?']:
-            text += '.'
-        text = re.sub(r'(\w)([.,!?;])', r'\1 \2', text)
-        text = re.sub(r'([,.!?;])(\w)', r'\1 \2', text)
-        text = re.sub(r'\s+', ' ', text)
-        text = re.sub(r'(\s)([.,!?;])', r'\2', text)
-        text = re.sub(r'([.,!?;])(\s)', r'\1', text)
-        return text
-
-    def reorder_sentence(self, sentence):
-        """Reorder the sentence structure based on dependency parsing: Subject-Verb-Object(+Modifiers)."""
-        # 1. Hızlı parse: sadece parser’ı çalıştır, NER’i kapat
-        doc = nlp(sentence, disable=["ner"])
-
-        # 2. Gerçek zamanlı (streaming) kategori toplama
-        subjects, verbs, objects, modifiers = [], [], [], []
-        for tok in doc:
-            if tok.dep_ in ('nsubj', 'nsubjpass'):
-                subjects.append(tok)
-            elif tok.pos_ == 'VERB' or tok.dep_ == 'ROOT':
-                verbs.append(tok)
-            elif tok.dep_ in ('dobj', 'pobj', 'iobj'):
-                objects.append(tok)
-            elif tok.dep_ in ('amod', 'advmod', 'npadvmod', 'acomp'):
-                modifiers.append(tok)
-
-        # 3. Orijinal SVO mantığı
-        reordered_tokens = []
-        if subjects and verbs:
-            # a) Özne: en büyük subtree’a sahip olanı al
-            subj = max(subjects, key=lambda x: len(list(x.subtree)))
-            reordered_tokens.extend(sorted(subj.subtree, key=lambda x: x.i))
-
-            # b) Uyumlu yüklem
-            sel_verb = None
-            for verb in verbs:
-                # basit özne-yüklem uyumsuzluklarını es geç
-                if (subj.tag_ == 'NNS' and verb.tag_ == 'VBZ') or \
-                (subj.tag_ == 'NN' and verb.tag_ == 'VBP'):
-                    continue
-                sel_verb = verb
-                reordered_tokens.append(verb)
-                break
-
-            if sel_verb:
-                # c) Yardımcı fiiller
-                auxs = [t for t in doc if t.dep_ in ('aux', 'auxpass') and t.head == sel_verb]
-                reordered_tokens.extend(sorted(auxs, key=lambda x: x.i))
-
-                # d) Nesne cümlecikleri
-                for obj in objects:
-                    if obj.head == sel_verb:
-                        reordered_tokens.extend(sorted(obj.subtree, key=lambda x: x.i))
-
-                # e) Modifiers (özne veya yükleme bağlı)
-                for mod in modifiers:
-                    if mod.head in (subj, sel_verb):
-                        reordered_tokens.append(mod)
-
-        # 4. Yeterli öğe yoksa orijinaline dön
-        key_toks = set(subjects + verbs + objects)
-        if len([t for t in reordered_tokens if t in key_toks]) < 3:
-            return sentence
-
-        # 5. Tekilleştir ve orijinal sıraya göre sırala
-        seen = set(); unique = []
-        for t in reordered_tokens:
-            if t.i not in seen:
-                seen.add(t.i); unique.append(t)
-        unique = sorted(unique, key=lambda x: x.i)
-
-        # 6. Metni kur ve noktalama ekle
-        out = " ".join(t.text for t in unique)
-        if out and out[-1] not in '.!?':
-            out += sentence.strip()[-1] if sentence.strip()[-1] in '.!?' else '.'
-        return out
     
-    def get_dynamic_pronoun(self, token):
-        """
-        Token'ın türüne, sayısına ve morfolojik özelliklerine göre uygun zamiri döndürür.
-        Erkek/kadın/şirket/nesne/çoğul ayrımı otomatik!
-        """
-        # Çoğulsa "they"
-        if token.tag_ in ("NNS", "NNPS") or token.morph.get("Number") == ["Plur"]:
+    def _get_dynamic_pronoun(self, token) -> str:
+        """Get appropriate pronoun for token"""
+        if not hasattr(token, 'tag_'):
+            return "it"
+        
+        if token.tag_ in ("NNS", "NNPS") or (hasattr(token, 'morph') and 
+                                           token.morph.get("Number") == ["Plur"]):
             return "they"
         
-        # İnsan mı? (PERSON entity veya muhtemel isim, özel isim)
-        if token.ent_type_ == "PERSON" or (token.pos_ == "PROPN" and token.morph.get("Gender")):
-            gender = token.morph.get("Gender")
+        if (hasattr(token, 'ent_type_') and token.ent_type_ == "PERSON" or 
+            (token.pos_ == "PROPN" and hasattr(token, 'morph') and token.morph.get("Gender"))):
+            
+            gender = token.morph.get("Gender") if hasattr(token, 'morph') else []
             if "Masc" in gender:
                 return "he"
             elif "Fem" in gender:
                 return "she"
             else:
-                return "they"  # cinsiyetsiz için
+                return "they"
         
-        # Kurum/organizasyon mu?
-        if token.ent_type_ == "ORG":
+        if hasattr(token, 'ent_type_') and token.ent_type_ == "ORG":
             return "it"
         
-        # Hayvan ya da cinsiyeti olmayan nesne, soyut kavram
-        if token.ent_type_ in ("PRODUCT", "GPE", "LOC", "EVENT") or token.pos_ == "NOUN":
-            return "it"
-        
-        # Hiçbiri değilse de default olarak "it"
         return "it"
-
-    @cache
-    def generate_and_post_process(self, num_sentences=10, input_words=None, length=15):
-        generated_sentences = []
-        max_attempts = 5
-        context_word = None  # İlk center
-        last_entity_token = None 
-
-        for i in tqdm(range(num_sentences), desc="Generating sentences", position=1, leave=False, dynamic_ncols=True, mininterval=0.05, maxinterval=0.3):
-            attempts = 0
-            coherent_sentence = False
-            corrected_sentence = ""
-            prev_sentence = generated_sentences[-1] if generated_sentences else None
-
-            # 1) İlk cümlede input_words kullan, diğerlerinde context_word (center)
-            if i == 0 and input_words:
-                start_words = input_words
-            elif context_word:
-                start_words = [context_word]
-            else:
-                start_words = None
-
-            # 2) Cümleyi üret, center ile başlamasını ZORUNLU tut
-            while attempts < max_attempts and not coherent_sentence:
-                raw_sentence = self.generate_sentence(start_words=start_words, length=length)
-                # Eğer center ile başlamıyorsa brute-force başa ekle
-                if start_words and not raw_sentence.lower().startswith(str(start_words[0]).lower()):
-                    raw_sentence = str(start_words[0]) + " " + raw_sentence
-
-                corrected_sentence = self.correct_grammar(raw_sentence)
-                # Noktalama zorunluluğu
-                if corrected_sentence and not corrected_sentence.endswith(('.', '!', '?')):
-                    corrected_sentence += '.'
-
-                # (İstersen coherence check ekleyebilirsin)
-                #if self.is_sentence_coherent(corrected_sentence, generated_sentences):
-                coherent_sentence = True
-                attempts += 1
-
-            # 3) Cümleyi ekle
-            generated_sentences.append(corrected_sentence)
-
-            # 4) Yeni center'ı bul (yeni cümleyle analiz)
-            if prev_sentence:
-                analyzer = TransitionAnalyzer(prev_sentence + " " + corrected_sentence)
-                context_word = self.get_center_from_sentence(prev_sentence, corrected_sentence, analyzer)
-                # Sonraki cümlelerde zamirleştir
-                if last_entity_token is not None:
-                    context_word = self.get_dynamic_pronoun(last_entity_token)
-            else:
-                # İlk cümlede context_word = ilk özne olsun
-                doc = nlp(corrected_sentence)
-                for tok in doc:
-                    if tok.dep_ in ('nsubj', 'nsubjpass', 'expl'):
-                        context_word = tok.text
-                        last_entity_token = tok  # Entityyi sakla!
-                        break
-
-        # 5) Sonuçları birleştir, post-process et
-        final_text = " ".join(generated_sentences)
-        return self.post_process_text(final_text)
-
-
-
-    def advanced_length_adjustment(self, last_sentence, base_length):
-        last_words = last_sentence.split()
-        last_length = len(last_words)
-        clause_count = sum(last_sentence.count(conj) for conj in [',', 'and', 'but', 'or', 'yet']) + 1
-        doc = nlp(last_sentence)
-        noun_count = sum(1 for token in doc if token.pos_ == "NOUN")
-        verb_count = sum(1 for token in doc if token.pos_ == "VERB")
-        adjective_count = sum(1 for token in doc if token.pos_ == "ADJ")
-        adverb_count = sum(1 for token in doc if token.pos_ == "ADV")
-        complexity_factor = ((noun_count + verb_count + adjective_count + adverb_count) +
-                            sum(1 for token in doc if token.dep_ in {"conj", "advcl", "relcl"})) // 2
-        length_variability = ((last_length - base_length) + complexity_factor) // 3
-        adjusted_length = max(5, min(base_length + random.randint(-3, 3) + clause_count + complexity_factor + length_variability, 13))
-        return adjusted_length
-
-    def rewrite_ill_formed_sentence(self, sentence):
-        """
-        Basitçe biçimsiz cümleleri iyileştirir: eksik yüklem ekler,
-        uzun ve karışık cümleleri bölerek ilk anlamlı kısmı döner.
-        """
-        import re
-
-        # 1. İlk analiz
-        doc = nlp(sentence)
-        tokens = list(doc)
-        has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
-        has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
-
-        # 2. Yüklem eksikse ve özne varsa ekle
-        if has_subject and not has_verb:
-            sentence = sentence.rstrip('.!?') + ' is.'
-
-        # 3. Yeniden analiz (güncellenmiş cümle üzerinde)
-        doc = nlp(sentence)
-        tokens = list(doc)
-        has_subject = any(tok.dep_ in ('nsubj', 'nsubjpass', 'expl') for tok in tokens)
-        has_verb = any(tok.pos_ in ('VERB', 'AUX') for tok in tokens)
-        num_conj = sum(1 for tok in tokens if tok.dep_ == 'cc')
-
-        # 4. Çok fazla bağlaç veya özne-yüklem yoksa ilk anlamlı kısmı al
-        if not has_subject or num_conj > 2:
-            split_pattern = r"\b(?:and|or|if|because|but|so|although|though|since|when|while)\b"
-            parts = re.split(split_pattern, sentence, flags=re.IGNORECASE)
-            # En az 3 kelime barındıran ilk parçayı seç
-            valid = [p.strip() for p in parts if len(p.strip().split()) >= 3]
-            if valid:
-                first = valid[0].strip()
-                first = first[0].upper() + first[1:].rstrip(' .!?') + '.'
-                return first
-            # Fallback: tek kelime varsa eklemeli bir cümle kur
-            if tokens:
-                return tokens[0].text.capitalize() + ' exists.'
-            return 'Something exists.'
-
-        # 5. Çok kısa ve yüklemsizse destek ekle
-        if len(tokens) <= 3 and not has_verb:
-            core = sentence.rstrip('.!?')
-            return core + ' exists.'
-
-        # 6. Zaten iyi formdaysa olduğu gibi dön
-        return sentence
-
-
-
-    def post_process_text(self, text):
-        # === ENCODING düzeltmesi ===
-        text = text.replace('â€ ™', "'").replace('â€"', '"').replace('â€™', "'").replace('â€œ', '"').replace('â€', '"')
-        text = re.sub(r'[^\x00-\x7F]+', '', text)  # Non-ASCII karakterleri sil
-
+    
+    def _post_process_text(self, text: str) -> str:
+        """Post-process generated text for better quality"""
+        if not text:
+            return ""
+        
+        # Fix encoding issues
+        text = (text.replace('â€ ™', "'")
+                   .replace('â€"', '"')
+                   .replace('â€™', "'")
+                   .replace('â€œ', '"')
+                   .replace('â€', '"'))
+        
+        # Remove non-ASCII characters
+        text = re.sub(r'[^\x00-\x7F]+', '', text)
+        
+        # Split into sentences
         sentences = re.split(r'(?<=[.!?]) +', text.strip())
         cleaned_sentences = []
         buffer_sentence = ""
         min_words_for_sentence = 4
-
+        
         for sentence in sentences:
             cleaned_sentence = sentence.strip()
-
+            
             if cleaned_sentence:
-                # Baş harf düzeltmesi
+                # Capitalize first letter
                 cleaned_sentence = cleaned_sentence[0].upper() + cleaned_sentence[1:]
-
-                # Bozuk boşluk ve noktalama düzeltmesi
+                
+                # Fix spacing and punctuation
                 cleaned_sentence = re.sub(r'\s+([,.!?])', r'\1', cleaned_sentence)
                 cleaned_sentence = re.sub(r'([,.!?])\s+', r'\1 ', cleaned_sentence)
                 cleaned_sentence = re.sub(r'\s{2,}', ' ', cleaned_sentence)
                 cleaned_sentence = cleaned_sentence.rstrip(",")
                 cleaned_sentence = re.sub(r'([.!?])\1+', r'\1', cleaned_sentence)
-                cleaned_sentence = re.sub(r'^(And|But|Or)\b,?\s+', '', cleaned_sentence, flags=re.IGNORECASE)
-                cleaned_sentence = re.sub(r'"(.*?)"', r'“\1”', cleaned_sentence)
-
-                # === Cümle sonu bağlaç kontrolü ===
+                
+                # Remove conjunctions at beginning
+                cleaned_sentence = re.sub(r'^(And|But|Or)\b,?\s+', '', 
+                                        cleaned_sentence, flags=re.IGNORECASE)
+                
+                # Fix quotes
+                cleaned_sentence = re.sub(r'"(.*?)"', r'"\1"', cleaned_sentence)
+                
+                # Handle sentence-ending conjunctions
                 if re.search(r'\b(and|but|or|if|because)\.$', cleaned_sentence, flags=re.IGNORECASE):
-                    cleaned_sentence = re.sub(r'\b(and|but|or|if|because)\.$', '', cleaned_sentence, flags=re.IGNORECASE).strip()
+                    cleaned_sentence = re.sub(r'\b(and|but|or|if|because)\.$', '', 
+                                            cleaned_sentence, flags=re.IGNORECASE).strip()
                     if not cleaned_sentence.endswith('.'):
                         cleaned_sentence += '.'
-
-                # Named Entity düzeltmesi
-                doc = nlp(cleaned_sentence)
-                for entity in doc.ents:
-                    if entity.label_ in ["PERSON", "ORG", "GPE"]:
-                        cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b', entity.text, cleaned_sentence)
-
-                # === Duplicate sözcükleri kaldırma ===
+                
+                # Named entity fixing with SpaCy
+                if NLP:
+                    doc = NLP(cleaned_sentence)
+                    for entity in doc.ents:
+                        if entity.label_ in ["PERSON", "ORG", "GPE"]:
+                            cleaned_sentence = re.sub(r'\b' + re.escape(entity.text.lower()) + r'\b',
+                                                    entity.text, cleaned_sentence)
+                
+                # Remove duplicate words
                 words = cleaned_sentence.split()
                 deduplicated_words = []
                 previous_word = None
+                
                 for word in words:
                     if word.lower() != previous_word:
                         deduplicated_words.append(word)
                     previous_word = word.lower()
+                
                 cleaned_sentence = ' '.join(deduplicated_words)
-
-                # === Kısa cümleleri birleştirme ===
+                
+                # Handle short sentences
                 word_count = len(cleaned_sentence.split())
                 if word_count < min_words_for_sentence:
                     buffer_sentence += " " + cleaned_sentence.lower()
@@ -694,79 +806,23 @@ class EnhancedLanguageModel:
                         buffer_sentence = ""
                     else:
                         cleaned_sentences.append(cleaned_sentence)
-
+        
         if buffer_sentence.strip():
             cleaned_sentences.append(buffer_sentence.strip().capitalize())
-
-        # Final düzeltmeler
+        
+        # Final output
         final_output = ' '.join(cleaned_sentences).strip()
         if final_output and not final_output.endswith('.'):
             final_output += '.'
-
-        # final_output = self.correct_grammar(final_output)
+        
         return final_output
-
-
-
-    def is_sentence_coherent(self, sentence, previous_sentences=None):
-        if not sentence or len(sentence.split()) < 4 or sentence[-1] not in ['.', '!', '?']:
-            return False
-
-        current_doc = nlp(sentence)
-        current_embedding = current_doc.vector
-
-        if previous_sentences is None or len(previous_sentences) == 0:
-            return True
-
-        previous_embeddings = [nlp(prev).vector for prev in previous_sentences if prev.strip()]
-        if not previous_embeddings:
-            return True
-
-        # ✨ Son 2 cümleye daha fazla ağırlık ver
-        weights = np.linspace(1.7, 1.2, num=len(previous_embeddings))  # Yakın cümleler daha etkili
-        similarities = []
-        for emb, weight in zip(previous_embeddings, weights):
-            sim = np.dot(current_embedding, emb) / (np.linalg.norm(current_embedding) * np.linalg.norm(emb) + 1e-8)
-            similarities.append(sim * weight)
-
-        avg_similarity = np.mean(similarities)
-
-        # ✨ Sentence complexity
-        noun_count = sum(1 for token in current_doc if token.pos_ == "NOUN")
-        verb_count = sum(1 for token in current_doc if token.pos_ == "VERB")
-        adj_count = sum(1 for token in current_doc if token.pos_ == "ADJ")
-        adv_count = sum(1 for token in current_doc if token.pos_ == "ADV")
-        clause_count = sum(1 for token in current_doc if token.dep_ in ("advcl", "relcl", "ccomp", "xcomp"))
-        complexity_factor = (noun_count + verb_count + adj_count + adv_count + clause_count) / 4.0
-
-        avg_len = np.mean([len(prev.split()) for prev in previous_sentences])
-        var_len = np.var([len(prev.split()) for prev in previous_sentences])
-
-        # ✨ Dinamik threshold
-        threshold = 0.85  # biraz daha insaflı başlıyoruz
-        if avg_len > 15:
-            threshold += 0.075
-        elif avg_len < 8:
-            threshold -= 0.075
-        if var_len > 5:
-            threshold += 0.065
-        if complexity_factor > 2.5:
-            threshold += 0.065
-        elif complexity_factor < 1.5:
-            threshold -= 0.065
-
-        # ✨ Ekstra ufak düzen: Eğer cümlede çok az özgün lemma varsa thresholdu hafif artır
-        unique_lemmas = set(token.lemma_ for token in current_doc if token.pos_ in {"NOUN", "VERB"})
-        if len(unique_lemmas) < 3:
-            threshold += 0.05
-
-        return avg_similarity > threshold
-
-
-    def save_model(self, filename, compress=False):
+    
+    def save_model(self, filename: str, compress: bool = False) -> None:
+        """Save model to file"""
         try:
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             model_data = (self.model, self.total_counts)
+            
             if compress:
                 import gzip
                 with gzip.open(filename, 'wb') as f:
@@ -774,146 +830,111 @@ class EnhancedLanguageModel:
             else:
                 with open(filename, 'wb') as f:
                     pickle.dump(model_data, f)
+            
+            logger.info(f"Model saved successfully to {filename}")
             self.log(f"Model saved successfully to {filename}")
-        except IOError as e:
-            self.log(f"Error saving model to {filename}: {e}")
+            
         except Exception as e:
-            self.log(f"An unexpected error occurred: {e}")
-
+            logger.error(f"Error saving model to {filename}: {e}")
+            self.log(f"Error saving model to {filename}: {e}")
+    
     @classmethod
-    def load_model(cls, filename):
-        with open(filename, 'rb') as f:
-            model, total_counts = pickle.load(f)
-        instance = cls("dummy text")
-        instance.model = defaultdict(lambda: defaultdict(int), model)
-        instance.total_counts = total_counts
-        return instance
+    def load_model(cls, filename: str) -> 'EnhancedLanguageModel':
+        """Load model from file"""
+        try:
+            with open(filename, 'rb') as f:
+                model, total_counts = pickle.load(f)
+            
+            instance = cls()
+            instance.model = defaultdict(lambda: defaultdict(int), model)
+            instance.total_counts = total_counts
+            
+            logger.info(f"Model loaded successfully from {filename}")
+            return instance
+            
+        except Exception as e:
+            logger.error(f"Error loading model from {filename}: {e}")
+            raise
 
-def load_text_from_file(file_path):
+
+class TextLoader:
+    """Utility class for loading and preprocessing text data"""
+    
+    @staticmethod
+    def load_text_from_file(file_path: str) -> Optional[str]:
+        """Load and preprocess text from file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                text = file.read()
+                text = ' '.join(text.split()).strip()
+                
+                if NLP:
+                    doc = NLP(text)
+                    cleaned_tokens = [token.text for token in doc 
+                                    if not token.is_punct and not token.is_space]
+                    return ' '.join(cleaned_tokens)
+                
+                return text
+                
+        except FileNotFoundError:
+            logger.error(f"File not found: {file_path}")
+            return None
+        except Exception as e:
+            logger.error(f"Error reading file {file_path}: {e}")
+            return None
+
+
+# Django-compatible factory function
+def create_language_model(model_file: str = Config.MODEL_FILE, 
+                         text_file: str = Config.TEXT_PATH) -> EnhancedLanguageModel:
+    """
+    Factory function to create or load language model
+    Django-compatible initialization
+    """
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            text = file.read()
-            text = ' '.join(text.split())
-            text = text.strip()
-            doc = nlp(text)
-            cleaned_tokens = [token.text for token in doc if not token.is_punct and not token.is_space]
-            cleaned_text = ' '.join(cleaned_tokens)
-            return nlp(cleaned_text)
-    except FileNotFoundError:
-        print(f"Error: The file at {file_path} was not found.")
+        # Try to load existing model
+        language_model = EnhancedLanguageModel.load_model(model_file)
+        logger.info("Loaded existing model")
+        
+    except (FileNotFoundError, EOFError):
+        # Create new model if not exists
+        text = TextLoader.load_text_from_file(text_file)
+        
+        if not text:
+            raise RuntimeError(f"Could not load text from {text_file}")
+        
+        language_model = EnhancedLanguageModel(text, n=2)
+        language_model.save_model(model_file)
+        logger.info("Created and saved new model")
+    
+    return language_model
+
+
+# Example usage (can be removed in production)
+if __name__ == "__main__":
+    # This block won't run when imported as a module
+    try:
+        model = create_language_model()
+        
+        # Generate text
+        input_sentence = "She founded a number of schools."
+        input_words = input_sentence.strip().rstrip('.').split()
+        
+        generated_text = model.generate_text(
+            num_sentences=5,
+            input_words=input_words,
+            length=13,
+            use_progress_bar=True
+        )
+        
+        print("Generated Text:")
+        print(generated_text)
+        
+        # Apply T5 correction
+        corrected_text = model.correct_grammar_t5(generated_text)
+        print("\nCorrected Text:")
+        print(corrected_text)
+        
     except Exception as e:
-        print(f"An error occurred while reading the file: {e}")
-    return None
-
-# --- Ana Akış ---
-file_path = text_path
-text = load_text_from_file(file_path)
-model_file = 'C:\\Users\\user\\OneDrive\\Belgeler\\GitHub\\Lgram\\ngrams\\language_model.pkl'
-
-try:
-    language_model = EnhancedLanguageModel.load_model(model_file)
-    language_model.log("Loaded existing model.")
-except (FileNotFoundError, EOFError):
-    language_model = EnhancedLanguageModel(text, n=2)
-    language_model.save_model(model_file)
-    language_model.log("Created and saved new model.")
-
-num_sentences = 5
-# I am going to kill you too.
-input_sentence = "The truth "
-input_words = tuple(token.lower() for token in input_sentence.split())
-generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
-language_model.log("Generated Text:\n" + generated_text)
-print("Generated Text:\n" + generated_text)
-def correct_grammar_t5(text: str) -> str:
-    """
-    FLAN-T5 ile:
-      • Gramer ve noktalama düzeltmesi
-      • Sadece düzeltilmiş metni döndürme
-      • Prompt echo'larını tamamen kaldırma
-    """
-    # 1. Daha basit ve net prompt
-    prompt = f"grammar: {text}"
-
-    # 2. Tokenize et
-    inputs = tokenizer(
-        prompt,
-        return_tensors="pt",
-        truncation=True,
-        max_length=512
-    )
-
-    # 3. Conservative generation parameters
-    outputs = model.generate(
-        input_ids=inputs["input_ids"],
-        attention_mask=inputs["attention_mask"],
-        max_new_tokens=min(200, len(text.split()) * 2),
-        num_beams=2,
-        no_repeat_ngram_size=3,
-        repetition_penalty=1.2,
-        early_stopping=True,
-        do_sample=False,
-        temperature=0.1,
-        use_cache=True
-    )
-
-    # 4. Decode
-    generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-
-    # 5. Agresif prompt echo temizleme
-    corrected = generated
-    
-    # Prompt başlangıçları kaldır
-    prompt_prefixes = [
-        "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.",
-        "Correct grammar and punctuation in the text below",
-        "grammar:",
-        "Grammar:",
-        "correct:",
-        "Correct:",
-        "fix:",
-        "Fix:",
-        prompt,
-        text  # Orijinal metni de kaldır
-    ]
-    
-    for prefix in prompt_prefixes:
-        if corrected.startswith(prefix):
-            corrected = corrected[len(prefix):].strip()
-    
-    # Prompt delimiter'ları kaldır
-    corrected = corrected.replace('"""', '').strip()
-    corrected = re.sub(r'^[\"\'\`\n\r\s]+', '', corrected)
-    corrected = re.sub(r'[\"\'\`\n\r\s]+$', '', corrected)
-    
-    # Prompt kelimelerini ortadan kaldır
-    prompt_words = ["grammar", "punctuation", "correct", "coherence", "stylistic", "choices", "ambiguity"]
-    for word in prompt_words:
-        # Başta tek başına duran prompt kelimelerini kaldır
-        corrected = re.sub(rf'^\b{word}\b\s*:?\s*', '', corrected, flags=re.IGNORECASE)
-    
-    # Boş satırları ve gereksiz boşlukları temizle
-    corrected = re.sub(r'\n+', ' ', corrected)
-    corrected = re.sub(r'\s+', ' ', corrected)
-    corrected = corrected.strip()
-    
-    # Eğer düzeltilmiş metin orijinalden çok farklıysa veya çok kısaysa, orijinali döndür
-    if (not corrected or 
-        len(corrected.split()) < max(2, len(text.split()) // 3) or
-        corrected.lower() == text.lower()):
-        return text
-    
-    # Noktalama düzelt
-    if corrected and not corrected.endswith(('.', '!', '?')):
-        corrected += '.'
-    
-    # İlk harf büyük
-    if corrected:
-        corrected = corrected[0].upper() + corrected[1:] if len(corrected) > 1 else corrected.upper()
-
-    return corrected
-
-
-corrected_text = correct_grammar_t5(generated_text)
-language_model.log("\nCorrected Text:\n" + corrected_text)
-print("\nCorrected Text:\n" + corrected_text)
+        logger.error(f"Example execution failed: {e}")
+        print(f"Error: {e}")
