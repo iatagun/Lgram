@@ -27,7 +27,7 @@ requirements = [
 
 setup(
     name='centering-lgram',
-    version='1.0.8',
+    version='1.0.38',
     author='İlker Atagün',
     author_email='ilker.atagun@gmail.com',
     description='Advanced Language Model with Centering Theory for Coherent Text Generation',
@@ -85,6 +85,9 @@ setup(
             'data/*.json',
             'data/*.pkl',
             'models/data/*.pkl',
+        ],
+        'ngrams': [
+            '*.txt', '*.json', '*.pkl', '*.pt'
         ],
     },
     keywords=[

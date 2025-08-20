@@ -14,24 +14,19 @@ Key Features:
 """
 
 # --- Package Metadata ---
-__version__ = "1.0.8"
+__version__ = "1.0.38"
 __author__ = "İlker Atagün"
 __email__ = "ilker.atagun@gmail.com"
 __license__ = "MIT"
 __url__ = "https://github.com/iatagun/Lgram"
 
-Example usage:
-    >>> from lgram import EnhancedLanguageModel, create_language_model
-    >>> 
-    >>> # Create or load a language model
-    >>> model = create_language_model()
-    >>> 
-    >>> # Generate coherent text
-    >>> text = model.generate_text(
-    ...     num_sentences=3,
-    ...     input_words=["The", "weather"],
+import os
+import sys
+import logging
+from typing import Optional
 
-    # Import all main classes and functions from core.py for PyPI compatibility
+# Import all main classes and functions from core.py for PyPI compatibility
+try:
     from .core import (
         EnhancedLanguageModel,
         Config,
@@ -40,47 +35,26 @@ Example usage:
         create_language_model
     )
     _import_success = True
+except ImportError as e:
+    _import_success = False
+    import warnings
+    warnings.warn(
+        f"Could not import core Lgram components. Original error: {e}. "
+        "Some functionality may not be available.",
+        ImportWarning
     )
-    _import_success = True
-except ImportError as e1:
-    try:
-        # Alternative import path
-        sys.path.insert(0, _parent_dir)
-        from models.simple_language_model import (
-            EnhancedLanguageModel,
-            Config,
-            ModelInitializer,
-            TextLoader,
-            create_language_model
-        )
-        _import_success = True
-    except ImportError as e2:
-        # Last resort - create dummy classes
-        _import_success = False
-        import warnings
-        warnings.warn(
-            f"Could not import core Lgram components. "
-            f"Original errors: {e1}, {e2}. "
-            "Some functionality may not be available.",
-            ImportWarning
-        )
-        
-        # Create minimal dummy classes
-        class EnhancedLanguageModel:
-            def __init__(self, *args, **kwargs):
-                raise ImportError("EnhancedLanguageModel not available")
-        
-        class Config:
-            pass
-        
-        class ModelInitializer:
-            pass
-        
-        class TextLoader:
-            pass
-        
-        def create_language_model(*args, **kwargs):
-            raise ImportError("create_language_model not available")
+    # Create minimal dummy classes
+    class EnhancedLanguageModel:
+        def __init__(self, *args, **kwargs):
+            raise ImportError("EnhancedLanguageModel not available")
+    class Config:
+        pass
+    class ModelInitializer:
+        pass
+    class TextLoader:
+        pass
+    def create_language_model(*args, **kwargs):
+        raise ImportError("create_language_model not available")
 
 # Import utility functions
 def setup_logging(level: str = "INFO", log_file: Optional[str] = None) -> None:
