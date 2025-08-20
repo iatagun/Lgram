@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: centering-lgram
-Version: 1.0.42
+Version: 1.0.47
 Summary: Advanced Language Model with Centering Theory for Coherent Text Generation
 Home-page: https://github.com/iatagun/Lgram
 Author: İlker Atagün
@@ -88,15 +88,16 @@ pip install centering-lgram[full]
 pip install centering-lgram[django]
 ```
 
+
 ### Basic Usage
 
 ```python
-from lgram import create_language_model
+from lgram.models.simple_language_model import create_default_language_model
 
-# Create or load a language model
-model = create_language_model()
+# Eğitilmiş model ve veriyle doğrudan başlat
+model = create_default_language_model()
 
-# Generate coherent text
+# Metin üret
 text = model.generate_text(
     num_sentences=3,
     input_words=["The", "weather"],
@@ -106,24 +107,22 @@ text = model.generate_text(
 print(text)
 ```
 
-### Advanced Usage with Centering Theory
+### Kendi Verinizle Model Başlatmak
 
 ```python
-from lgram import EnhancedLanguageModel
+from lgram import create_language_model
 
-# Initialize with custom settings
-model = EnhancedLanguageModel(n=3)  # Use 3-gram model
+model = create_language_model(model_file="ngrams/bigram_model.pkl", text_file="ngrams/text_data.txt")
+```
 
-# Generate with centering theory for better coherence
-coherent_text = model.generate_text_with_centering(
-    num_sentences=5,
-    input_words=["She", "founded"],
-    length=15
-)
+### Gelişmiş Kullanım
 
-# Apply grammar correction
-corrected_text = model.correct_grammar_t5(coherent_text)
-print(corrected_text)
+```python
+from lgram.models.simple_language_model import EnhancedLanguageModel
+
+model = EnhancedLanguageModel("Some training text.")
+sentence = model.generate_sentence(start_words=["The", "man"], length=12)
+print("Generated:", sentence)
 ```
 
 ### Command Line Interface

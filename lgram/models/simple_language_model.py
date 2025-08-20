@@ -1,35 +1,3 @@
-# PyPI ve paket içi dosya erişimi için
-import importlib.resources as pkg_resources
-
-# Paketle gelen varsayılan text_data.txt dosyasını kullanarak model oluşturur.
-def create_default_language_model() -> 'EnhancedLanguageModel':
-    """
-    Paketle gelen varsayılan text_data.txt ve bigram_model.pkl dosyasını kullanarak model oluşturur.
-    PyPI'dan kurulumda da çalışır.
-    """
-    # Paket içinden dosya yollarını bul
-    import importlib.util
-    import sys
-    # ngrams dizini, lgram ile aynı seviyede olmalı
-    try:
-        ngrams_path = pkg_resources.files('ngrams')
-        model_file = str(ngrams_path / 'bigram_model.pkl')
-        text_file = str(ngrams_path / 'text_data.txt')
-    except Exception:
-        # fallback: Config kullan
-        model_file = Config.BIGRAM_PATH
-        text_file = Config.TEXT_PATH
-    return create_language_model(model_file=model_file, text_file=text_file)
-
-# En sona ekle
-__all__ = [
-    'EnhancedLanguageModel',
-    'Config',
-    'ModelInitializer',
-    'TextLoader',
-    'create_language_model',
-    'create_default_language_model',
-]
 import os
 import re
 import json
@@ -474,7 +442,7 @@ class EnhancedLanguageModel:
             return self.correct_grammar(text)
         
         try:
-            prompt = f"grammar, coherence, ambiguity, story, novel: {text}"
+            prompt = f"grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical: {text}"
             
             inputs = TOKENIZER(
                 prompt,
@@ -511,9 +479,7 @@ class EnhancedLanguageModel:
         
         # Remove prompt echoes
         prompt_prefixes = [
-            "grammar, coherence, ambiguity:",
-            "grammar, coherence, ambiguity, story:",
-            "grammar, coherence, ambiguity, story, novel:",
+            "grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical:",
             "grammar:",
             "Grammar:",
             "correct:",

@@ -442,7 +442,7 @@ class EnhancedLanguageModel:
             return self.correct_grammar(text)
         
         try:
-            prompt = f"grammar, coherence, ambiguity, story, novel: {text}"
+            prompt = f"grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical: {text}"
             
             inputs = TOKENIZER(
                 prompt,
@@ -479,9 +479,7 @@ class EnhancedLanguageModel:
         
         # Remove prompt echoes
         prompt_prefixes = [
-            "grammar, coherence, ambiguity:",
-            "grammar, coherence, ambiguity, story:",
-            "grammar, coherence, ambiguity, story, novel:",
+            "grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical:",
             "grammar:",
             "Grammar:",
             "correct:",
@@ -626,11 +624,29 @@ class EnhancedLanguageModel:
     
     def generate_text_with_centering(self, num_sentences: int = 5,
                                    input_words: Optional[List[str]] = None,
-                                   length: int = 13) -> str:
+                                   length: int = 13,
+                                   use_progress_bar: bool = False) -> str:
         """Generate text using enhanced centering theory"""
         generated_sentences = []
-        
-        for i in range(num_sentences):
+
+        # Progress bar setup
+        if use_progress_bar:
+            try:
+                terminal_width = shutil.get_terminal_size().columns
+                bar_width = min(terminal_width - 20, 120)
+                pbar = tqdm(
+                    range(num_sentences),
+                    desc="✨ Centering Generation",
+                    unit=" sent",
+                    ncols=bar_width,
+                    colour='magenta'
+                )
+            except:
+                pbar = range(num_sentences)
+        else:
+            pbar = range(num_sentences)
+
+        for i in pbar:
             if i == 0 and input_words:
                 # First sentence with input words
                 sentence = self.generate_sentence(input_words, length)
@@ -639,21 +655,21 @@ class EnhancedLanguageModel:
                 center = self.centering.get_coherent_next_center() if self.centering else None
                 start_words = [center] if center else None
                 sentence = self.generate_sentence(start_words, length)
-            
+
             # Update centering state
             if self.centering:
                 self.centering.update_discourse(sentence)
-            
+
             generated_sentences.append(sentence)
-        
+
         final_text = " ".join(generated_sentences)
-        
+
         # Evaluate coherence
         if self.centering:
             coherence_info = self.centering.evaluate_coherence(generated_sentences)
             logger.info(f"Coherence score: {coherence_info['coherence_score']:.3f}")
             logger.info(f"Transitions: {coherence_info['transition_distribution']}")
-        
+
         return self._post_process_text(final_text)
     
     def _get_center_from_sentence(self, prev_sentence: str, current_sentence: str, 

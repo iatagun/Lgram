@@ -7,6 +7,5 @@ from .simple_language_model import (
 	Config,
 	ModelInitializer,
 	TextLoader,
-	create_language_model,
-    create_default_language_model
+	create_language_model
 )

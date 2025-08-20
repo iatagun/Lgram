@@ -442,7 +442,7 @@ class EnhancedLanguageModel:
             return self.correct_grammar(text)
         
         try:
-            prompt = f"grammar, coherence, ambiguity, story, novel: {text}"
+            prompt = f"grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical: {text}"
             
             inputs = TOKENIZER(
                 prompt,
@@ -479,9 +479,7 @@ class EnhancedLanguageModel:
         
         # Remove prompt echoes
         prompt_prefixes = [
-            "grammar, coherence, ambiguity:",
-            "grammar, coherence, ambiguity, story:",
-            "grammar, coherence, ambiguity, story, novel:",
+            "grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical:",
             "grammar:",
             "Grammar:",
             "correct:",
