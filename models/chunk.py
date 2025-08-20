@@ -973,7 +973,7 @@ except (FileNotFoundError, EOFError):
 
 num_sentences = 5
 # I am going to kill you too.
-input_sentence = "The truth "
+input_sentence = "She founded a number of schools. "
 input_words = tuple(token.lower() for token in input_sentence.split())
 generated_text = language_model.generate_and_post_process(num_sentences=num_sentences, input_words=input_words, length=13)
 language_model.log("Generated Text:\n" + generated_text)
@@ -986,7 +986,7 @@ def correct_grammar_t5(text: str) -> str:
       • Prompt echo'larını tamamen kaldırma
     """
     # 1. Daha basit ve net prompt
-    prompt = f"grammar: {text}"
+    prompt = f"grammar, coherence, ambiguity: {text}"
 
     # 2. Tokenize et
     inputs = tokenizer(
@@ -1020,7 +1020,10 @@ def correct_grammar_t5(text: str) -> str:
     prompt_prefixes = [
         "Correct grammar and punctuation in the text below and Make it coherence, Keep all stylistic choices, fix ambiguity.",
         "Correct grammar and punctuation in the text below",
+        "grammar and about storytelling",
         "grammar:",
+        "grammar, ambiguity:",
+        "grammar, coherence, ambiguity:",
         "Grammar:",
         "correct:",
         "Correct:",
