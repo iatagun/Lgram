@@ -49,7 +49,7 @@ class Config:
     # Model paths
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # ngrams klasörü proje kökünde
-    NGRAMS_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'ngrams'))
+    NGRAMS_DIR = os.path.abspath(os.path.join(BASE_DIR, 'ngrams'))
 
     TEXT_PATH = os.path.join(NGRAMS_DIR, "text_data.txt")
     BIGRAM_PATH = os.path.join(NGRAMS_DIR, "bigram_model.pkl")
@@ -159,6 +159,10 @@ class EnhancedLanguageModel:
         """
         self.n = n
         self.collocations = self._load_collocations(colloc_path)
+        
+        # Initialize T5 correction cache
+        self._correction_cache = {}
+        self._cache_max_size = 1000
         
         if text:
             self.model, self.total_counts = self.build_model(text)
@@ -436,89 +440,200 @@ class EnhancedLanguageModel:
         return text
     
     def correct_grammar_t5(self, text: str) -> str:
-        """Correct grammar using T5 model"""
+        """Correct grammar using T5 model with optimized parameters and caching"""
         if not all([TOKENIZER, T5_MODEL]):
             logger.warning("T5 model not available, using rule-based correction")
             return self.correct_grammar(text)
         
+        # Early return for very short or empty text
+        if not text or len(text.strip()) < 5:
+            return text
+            
+        # Check cache first
+        text_hash = hash(text.strip().lower())
+        if text_hash in self._correction_cache:
+            logger.debug("Using cached T5 correction")
+            return self._correction_cache[text_hash]
+        
         try:
-            prompt = f"grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical: {text}"
+            prompt = f"fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical: {text}"
             
             inputs = TOKENIZER(
                 prompt,
                 return_tensors="pt",
                 truncation=True,
-                max_length=512
+                max_length=512,
+                padding=True
             )
             
-            outputs = T5_MODEL.generate(
-                input_ids=inputs["input_ids"],
-                attention_mask=inputs["attention_mask"],
-                max_new_tokens=min(200, len(text.split()) * 2),
-                num_beams=2,
-                no_repeat_ngram_size=3,
-                repetition_penalty=1.2,
-                early_stopping=True,
-                do_sample=False,
-                temperature=0.1,
-                use_cache=True
-            )
+            # Optimized generation parameters for better quality
+            with torch.no_grad():
+                outputs = T5_MODEL.generate(
+                    input_ids=inputs["input_ids"],
+                    attention_mask=inputs["attention_mask"],
+                    max_new_tokens=min(300, len(text.split()) * 3),  # Increased for better output
+                    num_beams=4,  # Increased beam size for better quality
+                    no_repeat_ngram_size=2,  # Reduced for more natural text
+                    repetition_penalty=1.1,  # Reduced for better flow
+                    early_stopping=True,
+                    do_sample=True,  # Enable sampling for variety
+                    temperature=0.7,  # Slightly increased for more natural output
+                    top_k=50,  # Add top-k filtering
+                    top_p=0.95,  # Add nucleus sampling
+                    use_cache=True,
+                    pad_token_id=TOKENIZER.pad_token_id
+                )
             
             generated = TOKENIZER.decode(outputs[0], skip_special_tokens=True).strip()
             corrected = self._clean_t5_output(generated, text, prompt)
             
-            return corrected
+            # Additional validation and fallback
+            if self._is_valid_correction(corrected, text):
+                # Cache the successful correction
+                self._cache_correction(text_hash, corrected)
+                return corrected
+            else:
+                logger.warning("T5 correction validation failed, using rule-based correction")
+                fallback = self.correct_grammar(text)
+                self._cache_correction(text_hash, fallback)
+                return fallback
             
         except Exception as e:
             logger.error(f"T5 grammar correction failed: {e}")
-            return self.correct_grammar(text)
+            fallback = self.correct_grammar(text)
+            self._cache_correction(text_hash, fallback)
+            return fallback
     
-    def _clean_t5_output(self, generated: str, original: str, prompt: str) -> str:
-        """Clean T5 model output"""
-        corrected = generated
+    def _cache_correction(self, text_hash: int, correction: str) -> None:
+        """Cache correction result with size management"""
+        if len(self._correction_cache) >= self._cache_max_size:
+            # Remove oldest entries (simple FIFO)
+            oldest_key = next(iter(self._correction_cache))
+            del self._correction_cache[oldest_key]
         
-        # Remove prompt echoes
-        prompt_prefixes = [
-            "grammar, coherence, cohesion, ambiguity, storytelling, novel, respectful, appropriate, ethical:",
-            "grammar:",
-            "Grammar:",
-            "correct:",
-            "Correct:",
-            prompt,
-            original
+        self._correction_cache[text_hash] = correction
+    
+    def _is_valid_correction(self, corrected: str, original: str) -> bool:
+        """Validate if the correction is acceptable"""
+        if not corrected or corrected.strip() == "":
+            return False
+            
+        # Check minimum word count (should be at least 1/3 of original)
+        original_words = len(original.split())
+        corrected_words = len(corrected.split())
+        
+        if corrected_words < max(3, original_words // 3):
+            return False
+            
+        # Check if output is too similar to input (no improvement)
+        if corrected.lower().strip() == original.lower().strip():
+            return False
+            
+        # Check for repeated patterns that indicate model failure
+        words = corrected.split()
+        if len(words) > 4:
+            # Check for excessive repetition
+            for i in range(len(words) - 2):
+                if words[i] == words[i+1] == words[i+2]:
+                    return False
+                    
+        # Check if correction contains prompt remnants
+        prompt_indicators = [
+            "fluency", "coherence", "semantic", "accuracy", 
+            "clarity", "completeness", "cohesion", "style",
+            "contextual", "relevance", "respectful", "appropriate", "ethical"
         ]
         
-        for prefix in prompt_prefixes:
-            if corrected.startswith(prefix):
-                corrected = corrected[len(prefix):].strip()
+        corrected_lower = corrected.lower()
+        prompt_word_count = sum(1 for word in prompt_indicators if word in corrected_lower)
         
-        # Clean delimiters and unwanted characters
-        corrected = corrected.replace('"""', '').strip()
-        corrected = re.sub(r'^[\"\'\`\n\r\s]+', '', corrected)
+        # If more than 2 prompt words appear, it's likely contaminated
+        if prompt_word_count > 2:
+            return False
+            
+        return True
+    
+    def _clean_t5_output(self, generated: str, original: str, prompt: str) -> str:
+        """Clean T5 model output with enhanced cleaning"""
+        corrected = generated.strip()
+        
+        # Step 1: Remove the full prompt if it appears at the beginning
+        if corrected.startswith(prompt):
+            corrected = corrected[len(prompt):].strip()
+        
+        # Step 2: Remove prompt patterns with more aggressive matching
+        prompt_patterns = [
+            r'^.*?fluency[^:]*:',
+            r'^.*?coherence[^:]*:',
+            r'^.*?semantic[^:]*:',
+            r'^.*?clarity[^:]*:',
+            r'^.*?sentence[^:]*:',
+            r'^.*?cohesion[^:]*:',
+            r'^.*?style[^:]*:',
+            r'^.*?contextual?[^:]*:',
+            r'^.*?respectful[^:]*:',
+            r'^.*?appropriate[^:]*:',
+            r'^.*?ethical[^:]*:',
+            r'^.*?grammar[^:]*:',
+            r'^.*?correct[^:]*:',
+        ]
+        
+        for pattern in prompt_patterns:
+            corrected = re.sub(pattern, '', corrected, flags=re.IGNORECASE | re.DOTALL).strip()
+        
+        # Step 3: Remove any colon-separated prefixes more aggressively
+        corrected = re.sub(r'^[^.!?]*?:', '', corrected).strip()
+        
+        # Step 4: Remove the exact long prompt prefix
+        long_prefix = "fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical"
+        if corrected.lower().startswith(long_prefix.lower()):
+            corrected = corrected[len(long_prefix):].strip()
+            if corrected.startswith(':'):
+                corrected = corrected[1:].strip()
+        
+        # Step 5: Clean delimiters and unwanted characters
+        corrected = corrected.replace('"""', '').replace('``', '').replace('`', '')
+        corrected = re.sub(r'^[\"\'\`\n\r\s\-\—\–]+', '', corrected)
         corrected = re.sub(r'[\"\'\`\n\r\s]+$', '', corrected)
         
-        # Remove prompt words
-        prompt_words = ["grammar", "punctuation", "correct", "coherence", "ambiguity"]
-        for word in prompt_words:
-            corrected = re.sub(rf'^\b{word}\b\s*:?\s*', '', corrected, flags=re.IGNORECASE)
+        # Step 6: Remove individual prompt words at the beginning (more comprehensive)
+        prompt_words = [
+            "fluency", "coherence", "semantic", "accuracy", "clarity", 
+            "sentence", "completeness", "cohesion", "style", "control", 
+            "contextual", "relevance", "respectful", "appropriate", 
+            "ethical", "grammar", "punctuation", "correct"
+        ]
         
-        # Clean whitespace
+        # Remove prompt words iteratively until none remain
+        changed = True
+        while changed:
+            old_corrected = corrected
+            for word in prompt_words:
+                corrected = re.sub(rf'^\b{word}\b\s*[,:;]?\s*', '', corrected, flags=re.IGNORECASE)
+            changed = (old_corrected != corrected)
+        
+        # Step 7: Clean whitespace and formatting
         corrected = re.sub(r'\n+', ' ', corrected)
-        corrected = re.sub(r'\s+', ' ', corrected)
+        corrected = re.sub(r'\s{2,}', ' ', corrected)
         corrected = corrected.strip()
         
-        # Validation
-        if (not corrected or 
-            len(corrected.split()) < max(2, len(original.split()) // 3) or
-            corrected.lower() == original.lower()):
-            return original
+        # Step 8: Final cleanup - remove leading punctuation and comma sequences
+        corrected = re.sub(r'^[,\s\-\—\–:;]+', '', corrected).strip()
+        corrected = re.sub(r'^(and|but|or|so|then|also|additionally|furthermore|moreover|however|therefore|thus|hence|consequently)\b[,\s]*', '', corrected, flags=re.IGNORECASE).strip()
         
-        # Final formatting
-        if corrected and not corrected.endswith(('.', '!', '?')):
-            corrected += '.'
-        
-        if corrected:
+        # Step 9: Handle incomplete sentences at the start
+        if corrected and not corrected[0].isupper():
             corrected = corrected[0].upper() + corrected[1:] if len(corrected) > 1 else corrected.upper()
+            
+        # Step 10: Final validation and formatting
+        if not corrected or len(corrected.split()) < 2:
+            return original
+            
+        # Add proper ending punctuation if missing
+        if corrected and not corrected.endswith(('.', '!', '?')):
+            # Check if it's a complete sentence
+            if len(corrected.split()) >= 3:
+                corrected += '.'
         
         return corrected
     
