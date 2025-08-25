@@ -739,19 +739,47 @@ class EnhancedLanguageModel:
     
     def generate_text_with_centering(self, num_sentences: int = 5,
                                    input_words: Optional[List[str]] = None,
-                                   length: int = 13) -> str:
-        """Generate text using enhanced centering theory"""
+                                   length: int = 13,
+                                   use_progress_bar: bool = False) -> str:
+        """Generate text using enhanced centering theory with progress bar and T5 correction"""
         generated_sentences = []
         
-        for i in range(num_sentences):
+        # Progress bar setup
+        if use_progress_bar:
+            try:
+                terminal_width = shutil.get_terminal_size().columns
+                bar_width = min(terminal_width - 20, 120)
+                pbar = tqdm(
+                    range(num_sentences),
+                    desc="🎯 Centering Generation",
+                    unit=" sent",
+                    ncols=bar_width,
+                    colour='green'
+                )
+            except:
+                pbar = range(num_sentences)
+        else:
+            pbar = range(num_sentences)
+        
+        for i in pbar:
             if i == 0 and input_words:
                 # First sentence with input words
                 sentence = self.generate_sentence(input_words, length)
             else:
                 # Use centering theory for subsequent sentences
-                center = self.centering.get_coherent_next_center() if self.centering else None
-                start_words = [center] if center else None
+                if self.centering and generated_sentences:
+                    # Analyze previous sentence to get next center
+                    prev_sentence = generated_sentences[-1]
+                    center = self._extract_center_from_sentence(prev_sentence)
+                    start_words = [center] if center else None
+                else:
+                    start_words = None
+                    
                 sentence = self.generate_sentence(start_words, length)
+            
+            # Ensure sentence ends properly
+            if sentence and not sentence.endswith(('.', '!', '?')):
+                sentence += '.'
             
             # Update centering state
             if self.centering:
@@ -759,7 +787,11 @@ class EnhancedLanguageModel:
             
             generated_sentences.append(sentence)
         
+        # Join sentences properly with spaces
         final_text = " ".join(generated_sentences)
+        
+        # Apply T5 correction to the entire text
+        corrected_text = self.correct_grammar_t5(final_text)
         
         # Evaluate coherence
         if self.centering:
@@ -767,7 +799,48 @@ class EnhancedLanguageModel:
             logger.info(f"Coherence score: {coherence_info['coherence_score']:.3f}")
             logger.info(f"Transitions: {coherence_info['transition_distribution']}")
         
-        return self._post_process_text(final_text)
+        return corrected_text
+    
+    def _extract_center_from_sentence(self, sentence: str) -> Optional[str]:
+        """Extract center/focus from a sentence for next sentence generation"""
+        if not sentence or not NLP:
+            return None
+            
+        try:
+            doc = NLP(sentence)
+            
+            # Priority order for center extraction
+            center_candidates = []
+            
+            # 1. Subject (highest priority)
+            for token in doc:
+                if token.dep_ in ('nsubj', 'nsubjpass'):
+                    center_candidates.append((token.text, 3))
+            
+            # 2. Direct object
+            for token in doc:
+                if token.dep_ in ('dobj', 'pobj'):
+                    center_candidates.append((token.text, 2))
+            
+            # 3. Proper nouns (names, places)
+            for token in doc:
+                if token.pos_ == 'PROPN':
+                    center_candidates.append((token.text, 2))
+            
+            # 4. Regular nouns
+            for token in doc:
+                if token.pos_ == 'NOUN' and token.text not in [c[0] for c in center_candidates]:
+                    center_candidates.append((token.text, 1))
+            
+            if center_candidates:
+                # Sort by priority and return the highest
+                center_candidates.sort(key=lambda x: x[1], reverse=True)
+                return center_candidates[0][0]
+                
+        except Exception as e:
+            logger.debug(f"Center extraction failed: {e}")
+            
+        return None
     
     def _get_center_from_sentence(self, prev_sentence: str, current_sentence: str, 
                                  transition_analyzer, p_alt: float = 0.8) -> Optional[str]:
