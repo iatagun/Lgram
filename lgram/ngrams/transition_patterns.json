@@ -1,0 +1,153 @@
+{
+  "patterns": {
+    "pattern_3_1657824130305745846": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 9,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.666666666666666
+    },
+    "pattern_4_-6981059003021296752": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 6,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.25
+    },
+    "pattern_5_3919497059954243714": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 3,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 11.0
+    },
+    "pattern_3_8754135352057704273": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 9,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.666666666666666
+    },
+    "pattern_4_-4190455129548995775": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 6,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.25
+    },
+    "pattern_5_7879248871727471653": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 3,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 11.0
+    },
+    "pattern_3_-8871720865987077872": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 2,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "learning",
+        "data",
+        "insights",
+        "algorithms",
+        "humans"
+      ],
+      "sentence_length_avg": 6.333333333333333
+    },
+    "pattern_4_2665264586549956491": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 1,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "learning",
+        "data",
+        "insights",
+        "algorithms",
+        "humans"
+      ],
+      "sentence_length_avg": 6.5
+    }
+  },
+  "bigram_transitions": {
+    "Continue,Continue": 27
+  },
+  "trigram_transitions": {
+    "Continue,Continue,Continue": 20
+  }
+}
