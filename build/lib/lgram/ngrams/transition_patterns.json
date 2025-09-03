@@ -1,0 +1,2510 @@
+{
+  "patterns": {
+    "pattern_3_1657824130305745846": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 9,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.666666666666666
+    },
+    "pattern_4_-6981059003021296752": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 6,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.25
+    },
+    "pattern_5_3919497059954243714": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 3,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 11.0
+    },
+    "pattern_3_8754135352057704273": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 9,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.666666666666666
+    },
+    "pattern_4_-4190455129548995775": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 6,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 10.25
+    },
+    "pattern_5_7879248871727471653": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 3,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "intelligence",
+        "society",
+        "ways",
+        "systems",
+        "amounts"
+      ],
+      "sentence_length_avg": 11.0
+    },
+    "pattern_3_-8871720865987077872": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 2,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "learning",
+        "data",
+        "insights",
+        "algorithms",
+        "humans"
+      ],
+      "sentence_length_avg": 6.333333333333333
+    },
+    "pattern_4_2665264586549956491": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 1,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "learning",
+        "data",
+        "insights",
+        "algorithms",
+        "humans"
+      ],
+      "sentence_length_avg": 6.5
+    },
+    "pattern_3_7588281743914048384": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 4,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "learning",
+        "data",
+        "insights",
+        "algorithms",
+        "humans"
+      ],
+      "sentence_length_avg": 6.333333333333333
+    },
+    "pattern_3_-1763811816729272506": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-3970099889831266208": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_5068065586413158089": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_1823224065708394735": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_7382678214736947286": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-6632928364283352137": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_3423096352369684570": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44464,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-9121528829540185095": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44362,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-7631869851145604740": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44260,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-5711225928170431537": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44158,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_1750409286702272500": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44056,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_9192454604644312688": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43954,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_6507510120781174483": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 132306,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-6740800017827849094": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 132030,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_4772064298493554411": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 131754,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_8094917797453339836": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 131478,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_6015557555950473865": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 131202,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_7691655735058963878": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 130926,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_9223115874124731648": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 308714,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-7619714240302215195": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 308070,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_6491750234905443654": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 307426,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_3517969011436346845": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 306782,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_3742608645247401712": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 306138,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_637161434165178478": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 305494,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-7745102193664549337": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 308714,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-3079961567566639839": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 308070,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_3211564921497982858": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 307426,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-4015889662681326834": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 306782,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_1343775269726938179": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 306138,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-7496399950880332462": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 305494,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-7750160084792282096": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44105,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-1515850248824020511": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_5343453624886159888": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-939797292856658967": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-3054560436914410768": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_3845219221843627629": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "syrens",
+        "achilles",
+        "song",
+        "browne",
+        "analytical"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_9182237364931436769": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_2364816809060275549": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_2666619339208427982": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_726220493261932188": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-3303994234479596039": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-1935114451184466633": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-5195339936591188129": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 88204,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-191410503639020803": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 88020,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-7236627861167194609": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 87836,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_8496497847291788682": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 87652,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-4944991215325543754": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 87468,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-7769377320490212234": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 87284,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-3644655207859008537": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-222358383467929956": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-6570645574277086589": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_3436234859034168072": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_7301670835611741851": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_1857354249537930379": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_848741822544981132": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-6748361763411131670": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-6594030461786985394": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_7999134445499850514": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_7891082048948529446": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-5638756914416623130": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-4573818097389147279": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44115,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_6556761440260307299": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44022,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-7408407075127721523": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43929,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_4514687525813409429": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43836,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_1483954291152745951": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43743,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_6500497758155440653": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43650,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-4595497536393258793": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44115,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_1056135249004683855": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44022,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_2995334075269593103": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43929,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-2912112120093850940": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43836,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-7940872729600078537": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43743,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-5697314619091812915": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43650,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_8030208948424119513": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44115,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-6631436044871274217": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44022,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_6468526978202577161": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43929,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_7176190084718127843": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43836,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-3061703818995215649": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43743,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-7911345789830177794": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43650,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-1808435922352074233": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44115,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_6037974545160599432": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44022,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_7432342252921506210": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43929,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-5854281501030954039": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43836,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-7453837168581326050": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43743,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_1401836580190338367": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43650,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-3354657785444848361": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44106,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-5221406610350451430": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44013,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_7998891981195466881": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43920,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-5764183517580973862": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43827,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-621287995792856581": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_5256664416846064979": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-2069970328091302109": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-429155545034843626": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-2818129605653534766": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-4315606597782559121": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-944807482996360814": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_3389565209128078560": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-816585301116708230": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_7981925437164780740": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-5725776718024080278": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-710713108801986756": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-6066661566581439111": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_5911897882349014502": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_3621765056622595927": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44106,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_-6333321884418764064": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44013,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-6257309417933883397": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43920,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_-4636473091662327488": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43827,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_-168309667192252053": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_778300151853220693": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_6874124306224764431": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_6827901252093673072": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-3430142586423200831": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_3016877028158313577": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_2616793848573770123": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_8776639806374206012": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    },
+    "pattern_3_-8522254352807097452": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44102,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "syrens",
+        "achilles",
+        "browne",
+        "themselves"
+      ],
+      "sentence_length_avg": 16.666666666666668
+    },
+    "pattern_4_8130250205624198559": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 44010,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 18.25
+    },
+    "pattern_5_-4216300372695747334": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43918,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "we",
+        "them",
+        "he",
+        "syrens",
+        "achilles"
+      ],
+      "sentence_length_avg": 20.4
+    },
+    "pattern_6_6491849115424966986": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43826,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "we",
+        "them",
+        "his",
+        "syrens"
+      ],
+      "sentence_length_avg": 19.333333333333332
+    },
+    "pattern_7_1016747260831821846": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43734,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "he",
+        "his",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.142857142857142
+    },
+    "pattern_8_-8251496557305865940": {
+      "sequence": [
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue",
+        "Continue"
+      ],
+      "frequency": 43642,
+      "coherence_score": 1.0,
+      "context_centers": [
+        "his",
+        "he",
+        "we",
+        "them",
+        "which"
+      ],
+      "sentence_length_avg": 20.125
+    }
+  },
+  "bigram_transitions": {
+    "Continue,Continue": 1547269
+  },
+  "trigram_transitions": {
+    "Continue,Continue,Continue": 1544019
+  }
+}

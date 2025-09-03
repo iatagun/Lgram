@@ -59,7 +59,7 @@ class TransitionPatternLearner:
         
         for sentence in sentences:
             if sentence:
-                state = self.centering.analyze_utterance(sentence + ".")
+                state = self.centering.update_discourse(sentence + ".")
                 centering_states.append(state)
         
         # Extract transition sequence

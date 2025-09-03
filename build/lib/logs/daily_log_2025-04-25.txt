@@ -1,0 +1,17 @@
+Loaded existing model.
+[LOG] ➡️ Chosen Word: 'flame' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'color' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'of' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'a' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'matter' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'in' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'suppose' | Target POS: N/A | Chosen POS: VERB
+[LOG] ➡️ Chosen Word: 'at' | Target POS: N/A | Chosen POS: ADP
+[LOG] ➡️ Chosen Word: 'some' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'bright' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'little' | Target POS: N/A | Chosen POS: ADJ
+[LOG] ➡️ Chosen Word: 'back' | Target POS: N/A | Chosen POS: ADV
+[SKIP] Not a complete thought: Smith with flame color of a matter in suppose at some bright little back.
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON
+[LOG] ➡️ Chosen Word: 'crime' | Target POS: N/A | Chosen POS: NOUN
+[LOG] ➡️ Chosen Word: 'the' | Target POS: N/A | Chosen POS: PRON

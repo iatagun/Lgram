@@ -77,13 +77,28 @@ class EnhancedCenteringTheory:
     
     def _is_center_candidate(self, token) -> bool:
         """Determine if token can be a discourse center"""
-        return (
-            token.pos_ in ['NOUN', 'PROPN', 'PRON'] and
-            not token.is_stop and
-            not token.is_punct and
-            len(token.text) > 1 and
-            token.dep_ not in ['det', 'aux', 'auxpass', 'cop']
-        )
+        # Basic eligibility checks
+        if (not token.pos_ in ['NOUN', 'PROPN', 'PRON'] or
+            token.is_stop and token.pos_ != 'PRON' or  # Allow pronoun stop words
+            token.is_punct or
+            token.dep_ in ['det', 'aux', 'auxpass', 'cop']):
+            return False
+        
+        # Length check - allow short pronouns
+        if token.pos_ == 'PRON':
+            # Allow important pronouns regardless of length
+            important_pronouns = {'he', 'she', 'it', 'i', 'we', 'they', 'you', 'him', 'her', 'them', 'us', 'me'}
+            if token.text.lower() in important_pronouns:
+                return True
+            # Exclude demonstrative and generic pronouns
+            if token.text.lower() in ['this', 'that', 'these', 'those', 'some', 'any', 'all', 'none']:
+                return False
+        else:
+            # For nouns and proper nouns, require length > 1
+            if len(token.text) <= 1:
+                return False
+        
+        return True
     
     def _calculate_salience(self, token, utterance: str) -> float:
         """Calculate salience score for a token"""
@@ -125,7 +140,7 @@ class EnhancedCenteringTheory:
     
     def compute_backward_center(self, current_cf: List[str]) -> Optional[str]:
         """
-        Compute Cb (Backward-looking Center)
+        Compute Cb (Backward-looking Center) with improved pronoun resolution
         Cb(Ui) = highest ranked element of Cf(Ui-1) that is realized in Ui
         """
         if not self.discourse_history or not current_cf:
@@ -133,35 +148,142 @@ class EnhancedCenteringTheory:
         
         previous_cf = self.discourse_history[-1].forward_centers
         
-        # Find highest-ranked element from previous Cf that appears in current Cf
+        # Direct match first - find highest-ranked element from previous Cf in current Cf
         for prev_center in previous_cf:
             if prev_center in current_cf:
                 return prev_center
         
+        # Pronoun resolution - check if current Cf contains pronouns referring to previous centers
+        pronoun_map = {
+            'he': ['PERSON'],
+            'him': ['PERSON'],
+            'his': ['PERSON'],
+            'she': ['PERSON'],
+            'her': ['PERSON'],
+            'hers': ['PERSON'],
+            'it': ['OBJECT', 'CONCEPT'],
+            'its': ['OBJECT', 'CONCEPT'],
+            'they': ['PLURAL'],
+            'them': ['PLURAL'],
+            'their': ['PLURAL'],
+            'theirs': ['PLURAL']
+        }
+        
+        # Check if current CF contains pronouns that could refer to previous centers
+        for current_center in current_cf:
+            if current_center.lower() in pronoun_map:
+                # Look for matching antecedents in previous CF based on entity type
+                for prev_center in previous_cf:
+                    # Simple heuristic: assume first matching type is the antecedent
+                    prev_doc = self.nlp(prev_center)
+                    if prev_doc and prev_doc[0].ent_type_ == 'PERSON':
+                        if current_center.lower() in ['he', 'him', 'his', 'she', 'her', 'hers']:
+                            return prev_center
+                    elif prev_doc and prev_doc[0].pos_ in ['NOUN', 'PROPN']:
+                        if current_center.lower() in ['it', 'its', 'they', 'them', 'their', 'theirs']:
+                            return prev_center
+        
+        # Enhanced entity matching - check for semantic similarity
+        for prev_center in previous_cf:
+            for current_center in current_cf:
+                if self._are_coreferent(prev_center, current_center):
+                    return prev_center
+        
         return None
     
-    def determine_transition(self, current_state: CenteringState) -> TransitionType:
-        """Determine transition type based on centering theory rules"""
-        if not self.discourse_history:
-            return TransitionType.CONTINUE  # First utterance
+    def _are_coreferent(self, entity1: str, entity2: str) -> bool:
+        """Check if two entities are coreferent (refer to same thing)"""
+        # Simple coreference rules
+        entity1_lower = entity1.lower()
+        entity2_lower = entity2.lower()
         
-        prev_state = self.discourse_history[-1]
+        # Same entity
+        if entity1_lower == entity2_lower:
+            return True
+        
+        # Pronoun reference patterns
+        person_pronouns = ['he', 'him', 'his', 'she', 'her', 'hers']
+        object_pronouns = ['it', 'its']
+        plural_pronouns = ['they', 'them', 'their', 'theirs']
+        
+        # Check entity types
+        try:
+            doc1 = self.nlp(entity1)
+            doc2 = self.nlp(entity2)
+            
+            if doc1 and doc2:
+                token1, token2 = doc1[0], doc2[0]
+                
+                # Person name + person pronoun
+                if (token1.ent_type_ == 'PERSON' and entity2_lower in person_pronouns) or \
+                   (token2.ent_type_ == 'PERSON' and entity1_lower in person_pronouns):
+                    return True
+                
+                # Object/concept + object pronoun
+                if (token1.pos_ in ['NOUN', 'PROPN'] and token1.ent_type_ != 'PERSON' and 
+                    entity2_lower in object_pronouns) or \
+                   (token2.pos_ in ['NOUN', 'PROPN'] and token2.ent_type_ != 'PERSON' and 
+                    entity1_lower in object_pronouns):
+                    return True
+                
+                # Plural entities + plural pronouns
+                if ((token1.tag_ in ['NNS', 'NNPS'] or 'and' in entity1) and entity2_lower in plural_pronouns) or \
+                   ((token2.tag_ in ['NNS', 'NNPS'] or 'and' in entity2) and entity1_lower in plural_pronouns):
+                    return True
+                    
+        except Exception:
+            pass
+        
+        return False
+    
+    def determine_transition(self, current_state: CenteringState) -> TransitionType:
+        """Determine transition type based on centering theory rules with improved logic"""
+        if len(self.discourse_history) < 2:
+            return TransitionType.CONTINUE  # First utterance or not enough history
+        
+        # Get previous state - discourse_history[-1] is current, [-2] is previous
+        prev_state = self.discourse_history[-2]
         
         current_cb = current_state.backward_center
         prev_cb = prev_state.backward_center
         current_cp = current_state.preferred_center
         
-        # Apply centering theory transition rules
-        if current_cb == prev_cb:
-            if current_cb == current_cp:
-                return TransitionType.CONTINUE
-            else:
-                return TransitionType.RETAIN
+        # Debug logging
+        logger.debug(f"Transition analysis - Current CB: {current_cb}, Prev CB: {prev_cb}, Current CP: {current_cp}")
+        
+        # Apply centering theory transition rules with null handling
+        if current_cb is None and prev_cb is None:
+            # No backward centers - check if we're maintaining topic focus
+            if current_cp and prev_state.preferred_center:
+                if self._are_coreferent(current_cp, prev_state.preferred_center):
+                    return TransitionType.CONTINUE
+                else:
+                    return TransitionType.ROUGH_SHIFT
+            return TransitionType.RETAIN
+        
+        elif current_cb is None and prev_cb is not None:
+            # Lost backward center - topic shift
+            return TransitionType.ROUGH_SHIFT
+        
+        elif current_cb is not None and prev_cb is None:
+            # Gained backward center - establishing continuity
+            return TransitionType.SMOOTH_SHIFT
+        
         else:
-            if prev_cb == current_cp:
-                return TransitionType.SMOOTH_SHIFT
+            # Both have backward centers - classic centering rules
+            cb_same = self._are_coreferent(current_cb, prev_cb) if current_cb and prev_cb else current_cb == prev_cb
+            cp_same_as_cb = self._are_coreferent(current_cb, current_cp) if current_cb and current_cp else current_cb == current_cp
+            
+            if cb_same:
+                if cp_same_as_cb:
+                    return TransitionType.CONTINUE
+                else:
+                    return TransitionType.RETAIN
             else:
-                return TransitionType.ROUGH_SHIFT
+                if prev_cb and current_cp and self._are_coreferent(prev_cb, current_cp):
+                    return TransitionType.SMOOTH_SHIFT
+                else:
+                    return TransitionType.ROUGH_SHIFT
     
     def analyze_utterance(self, utterance: str) -> CenteringState:
         """Analyze utterance and compute centering information"""
@@ -181,8 +303,23 @@ class EnhancedCenteringTheory:
     
     def update_discourse(self, utterance: str) -> CenteringState:
         """Update discourse history with new utterance"""
-        state = self.analyze_utterance(utterance)
+        # First create state without transition
+        cf = self.compute_forward_centers(utterance)
+        cb = self.compute_backward_center(cf)
+        cp = cf[0] if cf else None
+        
+        state = CenteringState(
+            utterance=utterance,
+            forward_centers=cf,
+            backward_center=cb,
+            preferred_center=cp
+        )
+        
+        # Add to history FIRST
         self.discourse_history.append(state)
+        
+        # THEN compute transition with full history
+        state.transition = self.determine_transition(state)
         
         # Keep only recent history to avoid memory issues
         if len(self.discourse_history) > 10:

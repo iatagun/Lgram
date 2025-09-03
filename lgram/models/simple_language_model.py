@@ -331,6 +331,9 @@ class EnhancedLanguageModel:
             self.pattern_learner = TransitionPatternLearner(self.centering)
             self.pattern_file = os.path.join(Config.NGRAMS_DIR, "transition_patterns.json")
             self._load_transition_patterns()
+            
+            # Learn from text_data.txt on initialization
+            self._learn_patterns_from_text_data()
         else:
             self.pattern_learner = None
         
@@ -922,6 +925,85 @@ class EnhancedLanguageModel:
             except Exception as e:
                 logger.warning(f"Could not load transition patterns: {e}")
     
+    def _learn_patterns_from_text_data(self) -> None:
+        """Learn transition patterns from text_data.txt file"""
+        if not self.pattern_learner:
+            return
+        
+        text_data_path = Config.TEXT_PATH
+        if not os.path.exists(text_data_path):
+            logger.warning(f"text_data.txt not found at {text_data_path}")
+            return
+        
+        try:
+            logger.info("Learning transition patterns from text_data.txt...")
+            
+            # Read text_data.txt in chunks to avoid memory issues
+            chunk_size = 50000  # 50KB chunks
+            total_patterns_learned = 0
+            chunk_count = 0
+            
+            with open(text_data_path, 'r', encoding='utf-8', errors='ignore') as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    
+                    chunk_count += 1
+                    
+                    # Process chunk for complete sentences
+                    # Find last complete sentence to avoid cutting mid-sentence
+                    last_period = chunk.rfind('.')
+                    last_exclamation = chunk.rfind('!')
+                    last_question = chunk.rfind('?')
+                    
+                    last_sentence_end = max(last_period, last_exclamation, last_question)
+                    
+                    if last_sentence_end > 0:
+                        # Only process up to the last complete sentence
+                        processed_chunk = chunk[:last_sentence_end + 1]
+                        
+                        # Skip very short chunks
+                        if len(processed_chunk.split()) < 20:
+                            continue
+                        
+                        # Learn patterns from this chunk
+                        result = self.pattern_learner.learn_from_text(
+                            processed_chunk, 
+                            quality_score=0.8  # Classic literature is high quality
+                        )
+                        
+                        patterns_in_chunk = result.get('patterns_learned', 0)
+                        total_patterns_learned += patterns_in_chunk
+                        
+                        # Log progress every 10 chunks
+                        if chunk_count % 10 == 0:
+                            logger.info(f"Processed chunk {chunk_count}, patterns learned: {patterns_in_chunk}")
+                        
+                        # Seek back to continue from last sentence
+                        f.seek(f.tell() - (len(chunk) - last_sentence_end - 1))
+                    
+                    # Limit processing to avoid too much computation
+                    if chunk_count >= 100:  # Process max 100 chunks (~5MB)
+                        logger.info("Reached maximum chunk limit, stopping text_data processing")
+                        break
+            
+            # Save learned patterns
+            if total_patterns_learned > 0:
+                self.pattern_learner.save_patterns(self.pattern_file)
+                logger.info(f"Successfully learned {total_patterns_learned} patterns from text_data.txt")
+                logger.info(f"Processed {chunk_count} chunks from text_data.txt")
+                
+                # Log pattern statistics
+                stats = self.pattern_learner.get_pattern_statistics()
+                logger.info(f"Total patterns in system: {stats.get('total_patterns', 0)}")
+            else:
+                logger.warning("No patterns learned from text_data.txt")
+                
+        except Exception as e:
+            logger.error(f"Error learning from text_data.txt: {e}")
+    
+    
     def learn_from_quality_text(self, text: str, quality_score: float = 1.0) -> Dict[str, Any]:
         """Learn transition patterns from high-quality reference text"""
         if not self.pattern_learner:
@@ -1053,7 +1135,7 @@ class EnhancedLanguageModel:
             
             for sentence in sentences:
                 if sentence:
-                    state = self.centering.analyze_utterance(sentence + ".")
+                    state = self.centering.update_discourse(sentence + ".")
                     centering_states.append(state)
             
             # Calculate coherence metrics
