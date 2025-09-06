@@ -6,7 +6,9 @@ import pickle
 import random
 import shutil
 import datetime
-from collections import defaultdict, Counter
+import gc
+import hashlib
+from collections import defaultdict, Counter, OrderedDict
 from functools import cache, lru_cache
 from typing import Optional, List, Tuple, Dict, Any
 import logging
@@ -23,10 +25,12 @@ from tqdm import tqdm
 try:
     from .centering_theory import EnhancedCenteringTheory, TransitionType
     from .transition_analyzer import TransitionAnalyzer
+    from .transition_pattern_learner import TransitionPatternLearner
 except ImportError:
     try:
         from centering_theory import EnhancedCenteringTheory, TransitionType
         from transition_analyzer import TransitionAnalyzer
+        from transition_pattern_learner import TransitionPatternLearner
     except ImportError:
         # Create dummy classes if not available
         class TransitionType:
@@ -39,9 +43,151 @@ except ImportError:
                 pass
             def analyze(self):
                 return []
+        class TransitionPatternLearner:
+            def __init__(self, *args, **kwargs):
+                pass
 
 # Configure logging
 logger = logging.getLogger(__name__)
+
+
+class SmartCacheSystem:
+    """Multi-level intelligent cache system for Centering Theory optimization"""
+    
+    def __init__(self, max_sizes: Dict[str, int] = None):
+        if max_sizes is None:
+            max_sizes = {
+                'centers': 2000,     # Center extraction cache (increased)
+                'transitions': 1500, # Transition analysis cache (increased) 
+                'corrections': 3000, # T5 corrections cache (increased)
+                'sentences': 1000,   # Generated sentences cache (increased)
+                'patterns': 800      # Centering patterns cache (increased)
+            }
+        
+        self.max_sizes = max_sizes
+        self.caches = {}
+        self.hit_counts = {}
+        self.miss_counts = {}
+        
+        # Initialize all cache levels
+        for cache_name, size in max_sizes.items():
+            self.caches[cache_name] = OrderedDict()
+            self.hit_counts[cache_name] = 0
+            self.miss_counts[cache_name] = 0
+        
+        logger.info(f"SmartCacheSystem initialized with sizes: {max_sizes}")
+    
+    def _make_key(self, data) -> str:
+        """Create consistent hash key from data"""
+        if isinstance(data, str):
+            return hashlib.md5(data.encode('utf-8')).hexdigest()
+        elif isinstance(data, (list, tuple)):
+            return hashlib.md5(str(sorted(data)).encode('utf-8')).hexdigest()
+        elif isinstance(data, dict):
+            return hashlib.md5(str(sorted(data.items())).encode('utf-8')).hexdigest()
+        else:
+            return hashlib.md5(str(data).encode('utf-8')).hexdigest()
+    
+    def get(self, cache_name: str, key: str) -> Optional[Any]:
+        """Get item from cache with LRU update"""
+        if cache_name not in self.caches:
+            return None
+        
+        cache = self.caches[cache_name]
+        
+        if key in cache:
+            # Move to end (most recently used)
+            value = cache.pop(key)
+            cache[key] = value
+            self.hit_counts[cache_name] += 1
+            logger.debug(f"Cache HIT: {cache_name}[{key[:8]}...]")
+            return value
+        
+        self.miss_counts[cache_name] += 1
+        logger.debug(f"Cache MISS: {cache_name}[{key[:8]}...]")
+        return None
+    
+    def put(self, cache_name: str, key: str, value: Any) -> None:
+        """Put item in cache with size management"""
+        if cache_name not in self.caches:
+            return
+        
+        cache = self.caches[cache_name]
+        max_size = self.max_sizes[cache_name]
+        
+        # Remove oldest if at capacity
+        if len(cache) >= max_size and key not in cache:
+            oldest_key = next(iter(cache))
+            del cache[oldest_key]
+            logger.debug(f"Cache EVICT: {cache_name}[{oldest_key[:8]}...]")
+        
+        cache[key] = value
+        logger.debug(f"Cache PUT: {cache_name}[{key[:8]}...]")
+    
+    def get_or_compute(self, cache_name: str, key_data: Any, compute_func, *args, **kwargs):
+        """Get from cache or compute and store"""
+        key = self._make_key(key_data)
+        result = self.get(cache_name, key)
+        
+        if result is None:
+            result = compute_func(*args, **kwargs)
+            self.put(cache_name, key, result)
+        
+        return result
+    
+    def clear_cache(self, cache_name: str = None) -> None:
+        """Clear specific cache or all caches"""
+        if cache_name:
+            if cache_name in self.caches:
+                self.caches[cache_name].clear()
+                self.hit_counts[cache_name] = 0
+                self.miss_counts[cache_name] = 0
+                logger.info(f"Cleared cache: {cache_name}")
+        else:
+            for cache_name in self.caches:
+                self.caches[cache_name].clear()
+                self.hit_counts[cache_name] = 0
+                self.miss_counts[cache_name] = 0
+            logger.info("Cleared all caches")
+    
+    def get_stats(self) -> Dict[str, Dict[str, float]]:
+        """Get cache performance statistics"""
+        stats = {}
+        for cache_name in self.caches:
+            hits = self.hit_counts[cache_name]
+            misses = self.miss_counts[cache_name]
+            total = hits + misses
+            hit_rate = hits / total if total > 0 else 0
+            
+            stats[cache_name] = {
+                'size': len(self.caches[cache_name]),
+                'max_size': self.max_sizes[cache_name],
+                'hits': hits,
+                'misses': misses,
+                'hit_rate': hit_rate,
+                'utilization': len(self.caches[cache_name]) / self.max_sizes[cache_name]
+            }
+        
+        return stats
+    
+    def optimize_memory(self) -> None:
+        """Optimize memory usage by cleaning up low-value cache entries"""
+        for cache_name, cache in self.caches.items():
+            if len(cache) > self.max_sizes[cache_name] * 0.8:  # If > 80% full
+                # Keep only the most recent 60% of entries
+                keep_count = int(self.max_sizes[cache_name] * 0.6)
+                items = list(cache.items())[-keep_count:]
+                cache.clear()
+                cache.update(items)
+                logger.info(f"Optimized {cache_name} cache: kept {keep_count} entries")
+        
+        # Force garbage collection
+        gc.collect()
+
+
+# Global cache instance
+SMART_CACHE = SmartCacheSystem()
+
 
 class Config:
     """Configuration class for Enhanced Language Model"""
@@ -160,7 +306,10 @@ class EnhancedLanguageModel:
         self.n = n
         self.collocations = self._load_collocations(colloc_path)
         
-        # Initialize T5 correction cache
+        # Initialize smart cache system
+        self.cache = SMART_CACHE
+        
+        # Legacy cache for backward compatibility
         self._correction_cache = {}
         self._cache_max_size = 1000
         
@@ -177,9 +326,22 @@ class EnhancedLanguageModel:
         else:
             self.centering = None
         
+        # Initialize pattern learning system
+        if self.centering:
+            self.pattern_learner = TransitionPatternLearner(self.centering)
+            self.pattern_file = os.path.join(Config.NGRAMS_DIR, "transition_patterns.json")
+            self._load_transition_patterns()
+            
+            # Learn from text_data.txt on initialization
+            self._learn_patterns_from_text_data()
+        else:
+            self.pattern_learner = None
+        
         # Ensure models are available
         if not all([NLP, TOKENIZER, T5_MODEL]):
             raise RuntimeError("Required models not initialized")
+        
+        logger.info("EnhancedLanguageModel initialized with SmartCache and Pattern Learning")
     
     @cache
     def _load_collocations(self, path: str) -> Dict:
@@ -366,7 +528,26 @@ class EnhancedLanguageModel:
     
     def generate_sentence(self, start_words: Optional[List[str]] = None, 
                          base_length: int = Config.DEFAULT_SENTENCE_LENGTH) -> str:
-        """Generate a single sentence"""
+        """Generate a single sentence with smart caching"""
+        # Create cache key for sentence generation
+        cache_key_data = {
+            'start_words': start_words,
+            'base_length': base_length,
+            'n': self.n
+        }
+        
+        # Use smart cache for sentence generation
+        return self.cache.get_or_compute(
+            'sentences',
+            cache_key_data,
+            self._compute_sentence_generation,
+            start_words,
+            base_length
+        )
+    
+    def _compute_sentence_generation(self, start_words: Optional[List[str]] = None, 
+                                   base_length: int = Config.DEFAULT_SENTENCE_LENGTH) -> str:
+        """Actual sentence generation computation (cached)"""
         target_length = self._get_dynamic_sentence_length(base_length)
         
         if start_words is None:
@@ -440,7 +621,7 @@ class EnhancedLanguageModel:
         return text
     
     def correct_grammar_t5(self, text: str) -> str:
-        """Correct grammar using T5 model with optimized parameters and caching"""
+        """Correct grammar using T5 model with optimized parameters and smart caching"""
         if not all([TOKENIZER, T5_MODEL]):
             logger.warning("T5 model not available, using rule-based correction")
             return self.correct_grammar(text)
@@ -448,13 +629,17 @@ class EnhancedLanguageModel:
         # Early return for very short or empty text
         if not text or len(text.strip()) < 5:
             return text
-            
-        # Check cache first
-        text_hash = hash(text.strip().lower())
-        if text_hash in self._correction_cache:
-            logger.debug("Using cached T5 correction")
-            return self._correction_cache[text_hash]
         
+        # Use smart cache for T5 corrections
+        return self.cache.get_or_compute(
+            'corrections',
+            text.strip().lower(),
+            self._compute_t5_correction,
+            text
+        )
+    
+    def _compute_t5_correction(self, text: str) -> str:
+        """Actual T5 correction computation (cached)"""
         try:
             prompt = f"fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical: {text}"
             
@@ -489,20 +674,14 @@ class EnhancedLanguageModel:
             
             # Additional validation and fallback
             if self._is_valid_correction(corrected, text):
-                # Cache the successful correction
-                self._cache_correction(text_hash, corrected)
                 return corrected
             else:
                 logger.warning("T5 correction validation failed, using rule-based correction")
-                fallback = self.correct_grammar(text)
-                self._cache_correction(text_hash, fallback)
-                return fallback
+                return self.correct_grammar(text)
             
         except Exception as e:
             logger.error(f"T5 grammar correction failed: {e}")
-            fallback = self.correct_grammar(text)
-            self._cache_correction(text_hash, fallback)
-            return fallback
+            return self.correct_grammar(text)
     
     def _cache_correction(self, text_hash: int, correction: str) -> None:
         """Cache correction result with size management"""
@@ -737,6 +916,322 @@ class EnhancedLanguageModel:
         final_text = " ".join(generated_sentences)
         return self._post_process_text(final_text)
     
+    def _load_transition_patterns(self) -> None:
+        """Load saved transition patterns"""
+        if self.pattern_learner and os.path.exists(self.pattern_file):
+            try:
+                self.pattern_learner.load_patterns(self.pattern_file)
+                logger.info(f"Loaded transition patterns from {self.pattern_file}")
+            except Exception as e:
+                logger.warning(f"Could not load transition patterns: {e}")
+    
+    def _learn_patterns_from_text_data(self) -> None:
+        """Learn transition patterns from text_data.txt file"""
+        if not self.pattern_learner:
+            return
+        
+        text_data_path = Config.TEXT_PATH
+        if not os.path.exists(text_data_path):
+            logger.warning(f"text_data.txt not found at {text_data_path}")
+            return
+        
+        try:
+            logger.info("Learning transition patterns from text_data.txt...")
+            
+            # Read text_data.txt in chunks to avoid memory issues
+            chunk_size = 50000  # 50KB chunks
+            total_patterns_learned = 0
+            chunk_count = 0
+            
+            with open(text_data_path, 'r', encoding='utf-8', errors='ignore') as f:
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    
+                    chunk_count += 1
+                    
+                    # Process chunk for complete sentences
+                    # Find last complete sentence to avoid cutting mid-sentence
+                    last_period = chunk.rfind('.')
+                    last_exclamation = chunk.rfind('!')
+                    last_question = chunk.rfind('?')
+                    
+                    last_sentence_end = max(last_period, last_exclamation, last_question)
+                    
+                    if last_sentence_end > 0:
+                        # Only process up to the last complete sentence
+                        processed_chunk = chunk[:last_sentence_end + 1]
+                        
+                        # Skip very short chunks
+                        if len(processed_chunk.split()) < 20:
+                            continue
+                        
+                        # Learn patterns from this chunk
+                        result = self.pattern_learner.learn_from_text(
+                            processed_chunk, 
+                            quality_score=0.8  # Classic literature is high quality
+                        )
+                        
+                        patterns_in_chunk = result.get('patterns_learned', 0)
+                        total_patterns_learned += patterns_in_chunk
+                        
+                        # Log progress every 10 chunks
+                        if chunk_count % 10 == 0:
+                            logger.info(f"Processed chunk {chunk_count}, patterns learned: {patterns_in_chunk}")
+                        
+                        # Seek back to continue from last sentence
+                        f.seek(f.tell() - (len(chunk) - last_sentence_end - 1))
+                    
+                    # Limit processing to avoid too much computation
+                    if chunk_count >= 100:  # Process max 100 chunks (~5MB)
+                        logger.info("Reached maximum chunk limit, stopping text_data processing")
+                        break
+            
+            # Save learned patterns
+            if total_patterns_learned > 0:
+                self.pattern_learner.save_patterns(self.pattern_file)
+                logger.info(f"Successfully learned {total_patterns_learned} patterns from text_data.txt")
+                logger.info(f"Processed {chunk_count} chunks from text_data.txt")
+                
+                # Log pattern statistics
+                stats = self.pattern_learner.get_pattern_statistics()
+                logger.info(f"Total patterns in system: {stats.get('total_patterns', 0)}")
+            else:
+                logger.warning("No patterns learned from text_data.txt")
+                
+        except Exception as e:
+            logger.error(f"Error learning from text_data.txt: {e}")
+    
+    
+    def learn_from_quality_text(self, text: str, quality_score: float = 1.0) -> Dict[str, Any]:
+        """Learn transition patterns from high-quality reference text"""
+        if not self.pattern_learner:
+            return {"error": "Pattern learner not initialized"}
+        
+        try:
+            result = self.pattern_learner.learn_from_text(text, quality_score)
+            
+            # Save learned patterns
+            self.pattern_learner.save_patterns(self.pattern_file)
+            
+            # Log learning results
+            stats = self.pattern_learner.get_pattern_statistics()
+            logger.info(f"Learned patterns from text - Total patterns: {stats.get('total_patterns', 0)}")
+            
+            return {
+                **result,
+                "pattern_statistics": stats
+            }
+            
+        except Exception as e:
+            logger.error(f"Error learning from text: {e}")
+            return {"error": str(e)}
+    
+    def generate_coherent_text(self, target_length: int, 
+                              input_words: Optional[List[str]] = None,
+                              quality_level: str = "high") -> str:
+        """Generate coherent text using learned transition patterns"""
+        
+        if not self.pattern_learner:
+            # Fallback to regular centering-based generation
+            return self.generate_text_with_centering(
+                num_sentences=target_length,
+                input_words=input_words,
+                length=10
+            )
+        
+        try:
+            # Generate optimal transition sequence
+            transition_sequence = self.pattern_learner.generate_coherent_transition_sequence(target_length)
+            
+            # Generate text following the transition pattern
+            generated_sentences = []
+            current_words = input_words[:] if input_words else ["The"]
+            
+            for i, target_transition in enumerate(transition_sequence):
+                # Generate sentence with improved length and context
+                base_length = 12 if quality_level == "high" else 8
+                sentence = self.generate_sentence(current_words, base_length=base_length)
+                
+                if sentence:
+                    # Clean and validate sentence
+                    clean_sentence = sentence.strip()
+                    if not clean_sentence.endswith('.'):
+                        clean_sentence += '.'
+                    
+                    generated_sentences.append(clean_sentence)
+                    
+                    # Update context for next sentence
+                    center = self._extract_center_from_sentence(clean_sentence)
+                    if center and len(center) > 1:
+                        current_words = [center]
+                    else:
+                        # Use meaningful words from current sentence
+                        words = clean_sentence.replace('.', '').split()
+                        # Filter out common words and take last meaningful words
+                        meaningful_words = [w for w in words[-3:] if len(w) > 2 and w.lower() not in ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'man', 'use', 'way']]
+                        current_words = meaningful_words[-2:] if len(meaningful_words) >= 2 else meaningful_words[-1:] if meaningful_words else ["The"]
+                else:
+                    # Fallback sentence if generation fails
+                    generated_sentences.append("This continues the narrative.")
+                    current_words = ["This"]
+                
+                # Update context for next sentence
+                if sentence:
+                    # Extract subject/center for continuity
+                    center = self._extract_center_from_sentence(sentence)
+                    if center:
+                        current_words = [center]
+                    else:
+                        # Use last words as context
+                        words = sentence.strip().rstrip('.').split()
+                        current_words = words[-2:] if len(words) >= 2 else words[-1:]
+            
+            # Join and post-process
+            full_text = " ".join(generated_sentences)
+            
+            # Apply T5 correction for final polish
+            corrected_text = self.correct_grammar_t5(full_text)
+            
+            return self._post_process_text(corrected_text)
+            
+        except Exception as e:
+            logger.error(f"Error in coherent text generation: {e}")
+            # Fallback to regular generation
+            return self.generate_text_with_centering(
+                num_sentences=target_length,
+                input_words=input_words,
+                length=10
+            )
+    
+    def analyze_text_coherence(self, text: str) -> Dict[str, Any]:
+        """Analyze the coherence of a given text using centering theory"""
+        
+        if not self.centering:
+            return {"error": "Centering theory not available"}
+        
+        try:
+            # Better sentence splitting using spaCy if available
+            if NLP:
+                doc = NLP(text)
+                sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+            else:
+                # Fallback sentence splitting
+                import re
+                sentences = re.split(r'[.!?]+', text)
+                sentences = [s.strip() for s in sentences if s.strip()]
+            
+            if len(sentences) < 2:
+                return {
+                    "error": "Text too short for coherence analysis",
+                    "sentences_found": len(sentences),
+                    "text_preview": text[:100] + "..." if len(text) > 100 else text
+                }
+            
+            # Analyze centering for each sentence
+            centering_states = []
+            self.centering.discourse_history = []  # Reset
+            
+            for sentence in sentences:
+                if sentence:
+                    state = self.centering.update_discourse(sentence + ".")
+                    centering_states.append(state)
+            
+            # Calculate coherence metrics
+            transitions = [state.transition for state in centering_states if state.transition]
+            
+            if not transitions:
+                return {"error": "Could not extract transitions"}
+            
+            # Transition quality scoring
+            transition_scores = {
+                TransitionType.CONTINUE: 1.0,
+                TransitionType.RETAIN: 0.8,
+                TransitionType.SMOOTH_SHIFT: 0.6,
+                TransitionType.ROUGH_SHIFT: 0.3
+            }
+            
+            # Calculate overall coherence
+            scores = [transition_scores.get(t, 0.3) for t in transitions]
+            avg_coherence = sum(scores) / len(scores) if scores else 0.0
+            
+            # Transition distribution
+            transition_counts = Counter(transitions)
+            transition_dist = {t.value: count for t, count in transition_counts.items()}
+            
+            # Center consistency
+            all_centers = []
+            for state in centering_states:
+                if state.forward_centers:
+                    all_centers.extend(state.forward_centers)
+            
+            center_counts = Counter(all_centers)
+            most_common_centers = center_counts.most_common(5)
+            
+            return {
+                "coherence_score": avg_coherence,
+                "total_sentences": len(sentences),
+                "transitions": [t.value for t in transitions],
+                "transition_distribution": transition_dist,
+                "most_common_centers": most_common_centers,
+                "quality_assessment": self._assess_text_quality(avg_coherence, transition_dist)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing text coherence: {e}")
+            return {"error": str(e)}
+    
+    def _assess_text_quality(self, coherence_score: float, transition_dist: Dict[str, int]) -> Dict[str, Any]:
+        """Assess text quality based on coherence metrics"""
+        
+        # Quality thresholds
+        if coherence_score >= 0.8:
+            quality = "Excellent"
+        elif coherence_score >= 0.7:
+            quality = "Good"
+        elif coherence_score >= 0.5:
+            quality = "Fair"
+        else:
+            quality = "Poor"
+        
+        # Specific recommendations
+        recommendations = []
+        total_transitions = sum(transition_dist.values())
+        
+        if total_transitions > 0:
+            rough_ratio = transition_dist.get("Rough-Shift", 0) / total_transitions
+            if rough_ratio > 0.3:
+                recommendations.append("Reduce abrupt topic changes")
+            
+            continue_ratio = transition_dist.get("Continue", 0) / total_transitions
+            if continue_ratio < 0.4:
+                recommendations.append("Improve topic continuity")
+            
+            if continue_ratio > 0.8:
+                recommendations.append("Add some topic variation to avoid monotony")
+        
+        return {
+            "overall_quality": quality,
+            "coherence_score": coherence_score,
+            "recommendations": recommendations
+        }
+    
+    def get_pattern_learning_stats(self) -> Dict[str, Any]:
+        """Get statistics about learned transition patterns"""
+        if not self.pattern_learner:
+            return {"error": "Pattern learner not initialized"}
+        
+        try:
+            stats = self.pattern_learner.get_pattern_statistics()
+            return {
+                "pattern_learning_enabled": True,
+                "patterns_file": self.pattern_file,
+                **stats
+            }
+        except Exception as e:
+            return {"error": str(e)}
+    
     def generate_text_with_centering(self, num_sentences: int = 5,
                                    input_words: Optional[List[str]] = None,
                                    length: int = 13,
@@ -805,7 +1300,17 @@ class EnhancedLanguageModel:
         """Extract center/focus from a sentence for next sentence generation"""
         if not sentence or not NLP:
             return None
-            
+        
+        # Use smart cache for center extraction
+        return self.cache.get_or_compute(
+            'centers',
+            sentence,
+            self._compute_center_extraction,
+            sentence
+        )
+    
+    def _compute_center_extraction(self, sentence: str) -> Optional[str]:
+        """Actual center extraction computation (cached)"""
         try:
             doc = NLP(sentence)
             
@@ -848,6 +1353,21 @@ class EnhancedLanguageModel:
         if not NLP:
             return None
         
+        # Use smart cache for transition analysis
+        transition_key = f"{prev_sentence}||{current_sentence}"
+        return self.cache.get_or_compute(
+            'transitions',
+            transition_key,
+            self._compute_transition_center,
+            prev_sentence,
+            current_sentence,
+            transition_analyzer,
+            p_alt
+        )
+    
+    def _compute_transition_center(self, prev_sentence: str, current_sentence: str, 
+                                  transition_analyzer, p_alt: float = 0.8) -> Optional[str]:
+        """Actual transition center computation (cached)"""
         def compute_Fc(sent):
             doc = NLP(sent)
             sal = []
@@ -1027,6 +1547,62 @@ class EnhancedLanguageModel:
             logger.error(f"Error saving model to {filename}: {e}")
             self.log(f"Error saving model to {filename}: {e}")
     
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get detailed cache performance statistics"""
+        stats = self.cache.get_stats()
+        
+        # Add summary statistics
+        total_hits = sum(s['hits'] for s in stats.values())
+        total_misses = sum(s['misses'] for s in stats.values())
+        total_requests = total_hits + total_misses
+        overall_hit_rate = total_hits / total_requests if total_requests > 0 else 0
+        
+        summary = {
+            'cache_details': stats,
+            'overall_performance': {
+                'total_hits': total_hits,
+                'total_misses': total_misses,
+                'total_requests': total_requests,
+                'overall_hit_rate': overall_hit_rate,
+                'memory_efficiency': sum(s['utilization'] for s in stats.values()) / len(stats)
+            },
+            'recommendations': self._get_cache_recommendations(stats)
+        }
+        
+        return summary
+    
+    def _get_cache_recommendations(self, stats: Dict) -> List[str]:
+        """Get cache optimization recommendations"""
+        recommendations = []
+        
+        for cache_name, cache_stats in stats.items():
+            hit_rate = cache_stats['hit_rate']
+            utilization = cache_stats['utilization']
+            
+            if hit_rate < 0.5:
+                recommendations.append(f"Consider increasing {cache_name} cache size (low hit rate: {hit_rate:.1%})")
+            
+            if utilization > 0.9:
+                recommendations.append(f"Consider increasing {cache_name} cache size (high utilization: {utilization:.1%})")
+            elif utilization < 0.3:
+                recommendations.append(f"Consider decreasing {cache_name} cache size (low utilization: {utilization:.1%})")
+        
+        if not recommendations:
+            recommendations.append("Cache system is well-optimized!")
+        
+        return recommendations
+    
+    def optimize_cache_memory(self) -> None:
+        """Optimize cache memory usage"""
+        self.cache.optimize_memory()
+        logger.info("Cache memory optimization completed")
+    
+    def clear_all_caches(self) -> None:
+        """Clear all caches"""
+        self.cache.clear_cache()
+        self._correction_cache.clear()  # Clear legacy cache too
+        logger.info("All caches cleared")
+    
     @classmethod
     def load_model(cls, filename: str) -> 'EnhancedLanguageModel':
         """Load model from file"""
@@ -1106,10 +1682,10 @@ if __name__ == "__main__":
         model = create_language_model()
         
         # Generate text
-        input_sentence = "The truth "
+        input_sentence = "Tell me the true story."
         input_words = input_sentence.strip().rstrip('.').split()
         
-        generated_text = model.generate_text(
+        generated_text = model.generate_text_with_centering(
             num_sentences=5,
             input_words=input_words,
             length=13,

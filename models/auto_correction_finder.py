@@ -95,7 +95,7 @@ def main(logs_folder, corrections_file):
     with open(corrections_file, "w", encoding="utf-8") as f:
         json.dump(merged, f, indent=4, ensure_ascii=False)
 
-    print(f"✅ Toplam {len(auto_corrections)} yeni correction bulundu ve '{corrections_file}' dosyasına yazıldı.")
+    print(f"\u2705 Toplam {len(auto_corrections)} yeni correction bulundu ve '{corrections_file}' dosyasına yazıldı.")
 
 
 if __name__ == "__main__":
@@ -104,3 +104,4 @@ if __name__ == "__main__":
     parser.add_argument('--output', default=DEFAULT_CORRECTIONS_FILE, help='Corrections JSON file')
     args = parser.parse_args()
     main(args.logs, args.output)
+

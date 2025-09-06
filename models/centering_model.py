@@ -1,4 +1,4 @@
-from transition_analyzer import TransitionAnalyzer
+from .transition_analyzer import TransitionAnalyzer
 
 class TransitionScorer:
     def __init__(self, weights=None):
@@ -57,3 +57,4 @@ class CenteringModel:
         # Geçiş türünü bul ve skoru al, eşleşme yoksa varsayılan olarak 'NTT' kullan
         mapped_type = transition_mapping.get(transition_type, "NTT")
         return self.scorer.score_transition(mapped_type)
+
