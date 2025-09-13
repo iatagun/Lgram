@@ -221,51 +221,87 @@ class Config:
 
 
 class ModelInitializer:
-    """Handles model initialization and loading"""
+    """Handles model initialization and loading with lazy loading"""
+    
+    _spacy_model = None
+    _t5_model = None
+    _tokenizer = None
     
     @staticmethod
     def initialize_t5_model():
-        """Initialize T5 model for grammar correction"""
-        try:
-            tokenizer = AutoTokenizer.from_pretrained(
-                Config.T5_MODEL_NAME,
-                use_fast=True,
-                padding_side="left"
-            )
-            
-            model = AutoModelForSeq2SeqLM.from_pretrained(
-                Config.T5_MODEL_NAME,
-                torch_dtype=torch.float16,
-                device_map="auto",
-                low_cpu_mem_usage=True
-            )
-            
-            model.eval()
-            model = torch.compile(model)
-            
-            logger.info("T5 model initialized successfully")
-            return tokenizer, model
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize T5 model: {e}")
-            return None, None
+        """Initialize T5 model for grammar correction (lazy loading)"""
+        if ModelInitializer._t5_model is None:
+            try:
+                logger.info("Loading T5 model (first time)...")
+                start_time = time.time()
+                
+                tokenizer = AutoTokenizer.from_pretrained(
+                    Config.T5_MODEL_NAME,
+                    use_fast=True,
+                    padding_side="left"
+                )
+                
+                model = AutoModelForSeq2SeqLM.from_pretrained(
+                    Config.T5_MODEL_NAME,
+                    torch_dtype=torch.float16,
+                    device_map="auto",
+                    low_cpu_mem_usage=True
+                )
+                
+                model.eval()
+                model = torch.compile(model)
+                
+                ModelInitializer._tokenizer = tokenizer
+                ModelInitializer._t5_model = model
+                
+                load_time = time.time() - start_time
+                logger.info(f"T5 model loaded successfully in {load_time:.2f}s")
+                
+            except Exception as e:
+                logger.error(f"Failed to initialize T5 model: {e}")
+                ModelInitializer._tokenizer = None
+                ModelInitializer._t5_model = None
+        
+        return ModelInitializer._tokenizer, ModelInitializer._t5_model
     
     @staticmethod
     def initialize_spacy_model():
-        """Initialize SpaCy model"""
-        try:
-            nlp = spacy.load(
-                Config.SPACY_MODEL_NAME, 
-                disable=["ner", "textcat", "lemmatizer"]
-            )
-            nlp.max_length = Config.SPACY_MAX_LENGTH
-            
-            logger.info("SpaCy model initialized successfully")
-            return nlp
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize SpaCy model: {e}")
-            return None
+        """Initialize SpaCy model (lazy loading)"""
+        if ModelInitializer._spacy_model is None:
+            try:
+                logger.info("Loading SpaCy model (first time)...")
+                start_time = time.time()
+                
+                nlp = spacy.load(
+                    Config.SPACY_MODEL_NAME, 
+                    disable=["ner", "textcat", "lemmatizer"]  # Disable unnecessary components
+                )
+                nlp.max_length = Config.SPACY_MAX_LENGTH
+                
+                ModelInitializer._spacy_model = nlp
+                
+                load_time = time.time() - start_time
+                logger.info(f"SpaCy model loaded successfully in {load_time:.2f}s")
+                
+            except Exception as e:
+                logger.error(f"Failed to initialize SpaCy model: {e}")
+                ModelInitializer._spacy_model = None
+        
+        return ModelInitializer._spacy_model
+    
+    @staticmethod
+    def get_spacy_model():
+        """Get SpaCy model (lazy load if needed)"""
+        if ModelInitializer._spacy_model is None:
+            return ModelInitializer.initialize_spacy_model()
+        return ModelInitializer._spacy_model
+    
+    @staticmethod
+    def get_t5_model():
+        """Get T5 model (lazy load if needed)"""
+        if ModelInitializer._t5_model is None:
+            return ModelInitializer.initialize_t5_model()
+        return ModelInitializer._tokenizer, ModelInitializer._t5_model
     
     @staticmethod
     def load_corrections():
@@ -280,13 +316,28 @@ class ModelInitializer:
             return {}
 
 
-# Initialize models globally (Django compatible)
+# Initialize models globally with lazy loading (Django compatible)
 try:
-    TOKENIZER, T5_MODEL = ModelInitializer.initialize_t5_model()
-    NLP = ModelInitializer.initialize_spacy_model()
+    # Don't load models immediately, use lazy loading
+    TOKENIZER, T5_MODEL = None, None  # Will be loaded on first use
+    NLP = None  # Will be loaded on first use
     CORRECTIONS = ModelInitializer.load_corrections()
+    
+    # Helper functions for lazy loading
+    def get_nlp():
+        global NLP
+        if NLP is None:
+            NLP = ModelInitializer.get_spacy_model()
+        return NLP
+    
+    def get_t5_models():
+        global TOKENIZER, T5_MODEL
+        if TOKENIZER is None or T5_MODEL is None:
+            TOKENIZER, T5_MODEL = ModelInitializer.get_t5_model()
+        return TOKENIZER, T5_MODEL
+    
 except Exception as e:
-    logger.error(f"Model initialization failed: {e}")
+    logger.error(f"Model initialization setup failed: {e}")
     TOKENIZER, T5_MODEL, NLP, CORRECTIONS = None, None, None, {}
 
 
@@ -320,28 +371,34 @@ class EnhancedLanguageModel:
         
         self._load_ngram_models()
         
-        # Initialize centering theory
-        if NLP:
-            self.centering = EnhancedCenteringTheory(NLP)
-        else:
-            self.centering = None
+        # Initialize centering theory (lazy loading)
+        self._centering = None
         
-        # Initialize pattern learning system
-        if self.centering:
-            self.pattern_learner = TransitionPatternLearner(self.centering)
-            self.pattern_file = os.path.join(Config.NGRAMS_DIR, "transition_patterns.json")
+        # Initialize pattern learning system (lazy)
+        self._pattern_learner = None
+        self.pattern_file = os.path.join(Config.NGRAMS_DIR, "transition_patterns.json")
+        
+        # Don't check models immediately - check when needed
+        logger.info("EnhancedLanguageModel initialized with SmartCache and Lazy Loading")
+    
+    @property 
+    def centering(self):
+        """Lazy load centering theory"""
+        if self._centering is None:
+            nlp = get_nlp()
+            if nlp:
+                self._centering = EnhancedCenteringTheory(nlp)
+        return self._centering
+    
+    @property
+    def pattern_learner(self):
+        """Lazy load pattern learner"""
+        if self._pattern_learner is None and self.centering:
+            self._pattern_learner = TransitionPatternLearner(self.centering)
             self._load_transition_patterns()
-            
-            # Learn from text_data.txt on initialization
+            # Learn patterns only on first access
             self._learn_patterns_from_text_data()
-        else:
-            self.pattern_learner = None
-        
-        # Ensure models are available
-        if not all([NLP, TOKENIZER, T5_MODEL]):
-            raise RuntimeError("Required models not initialized")
-        
-        logger.info("EnhancedLanguageModel initialized with SmartCache and Pattern Learning")
+        return self._pattern_learner
     
     @cache
     def _load_collocations(self, path: str) -> Dict:
@@ -375,11 +432,12 @@ class EnhancedLanguageModel:
     
     def build_model(self, text: str) -> Tuple[Dict, Dict]:
         """Build n-gram model from text"""
-        if not NLP:
+        nlp = get_nlp()  # Use lazy loading
+        if not nlp:
             raise RuntimeError("SpaCy model not available")
         
         model = defaultdict(lambda: defaultdict(int))
-        doc = NLP(text.lower())
+        doc = nlp(text.lower())
         tokens = [token.text for token in doc if token.is_alpha]
         
         n_grams = [tuple(tokens[i:i+self.n]) for i in range(len(tokens)-self.n+1)]
@@ -404,8 +462,9 @@ class EnhancedLanguageModel:
         return dict(model), dict(total_counts)
     
     def _load_ngram_models(self) -> None:
-        """Load all n-gram models"""
-        model_paths = {
+        """Load all n-gram models (lazy loading)"""
+        self._ngram_models = {}  # Cache for loaded models
+        self._model_paths = {
             'bigram_model': Config.BIGRAM_PATH,
             'trigram_model': Config.TRIGRAM_PATH,
             'fourgram_model': Config.FOURGRAM_PATH,
@@ -413,14 +472,47 @@ class EnhancedLanguageModel:
             'sixgram_model': Config.SIXGRAM_PATH
         }
         
-        for model_name, path in model_paths.items():
-            try:
-                with open(path, 'rb') as f:
-                    setattr(self, model_name, pickle.load(f))
-                logger.debug(f"Loaded {model_name}")
-            except Exception as e:
-                logger.error(f"Failed to load {model_name}: {e}")
-                setattr(self, model_name, {})
+        # Don't load models immediately, load on demand
+        logger.info("N-gram models configured for lazy loading")
+    
+    def _get_ngram_model(self, model_name: str):
+        """Get n-gram model with lazy loading"""
+        if model_name not in self._ngram_models:
+            if model_name in self._model_paths:
+                try:
+                    path = self._model_paths[model_name]
+                    logger.info(f"Loading {model_name} (first time)...")
+                    with open(path, 'rb') as f:
+                        self._ngram_models[model_name] = pickle.load(f)
+                    logger.debug(f"Loaded {model_name}")
+                except Exception as e:
+                    logger.error(f"Failed to load {model_name}: {e}")
+                    self._ngram_models[model_name] = {}
+            else:
+                self._ngram_models[model_name] = {}
+        
+        return self._ngram_models[model_name]
+    
+    # Properties for backward compatibility
+    @property
+    def bigram_model(self):
+        return self._get_ngram_model('bigram_model')
+    
+    @property
+    def trigram_model(self):
+        return self._get_ngram_model('trigram_model')
+    
+    @property
+    def fourgram_model(self):
+        return self._get_ngram_model('fourgram_model')
+    
+    @property
+    def fivegram_model(self):
+        return self._get_ngram_model('fivegram_model')
+    
+    @property
+    def sixgram_model(self):
+        return self._get_ngram_model('sixgram_model')
     
     def is_semantically_related(self, prefix: Tuple[str], word: str) -> bool:
         """Check semantic relationship between prefix and word"""
@@ -622,7 +714,8 @@ class EnhancedLanguageModel:
     
     def correct_grammar_t5(self, text: str) -> str:
         """Correct grammar using T5 model with optimized parameters and smart caching"""
-        if not all([TOKENIZER, T5_MODEL]):
+        tokenizer, t5_model = get_t5_models()  # Use lazy loading
+        if not all([tokenizer, t5_model]):
             logger.warning("T5 model not available, using rule-based correction")
             return self.correct_grammar(text)
         
@@ -641,9 +734,11 @@ class EnhancedLanguageModel:
     def _compute_t5_correction(self, text: str) -> str:
         """Actual T5 correction computation (cached)"""
         try:
+            tokenizer, t5_model = get_t5_models()  # Use lazy loading
+            
             prompt = f"fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical: {text}"
             
-            inputs = TOKENIZER(
+            inputs = tokenizer(
                 prompt,
                 return_tensors="pt",
                 truncation=True,
@@ -653,7 +748,7 @@ class EnhancedLanguageModel:
             
             # Optimized generation parameters for better quality
             with torch.no_grad():
-                outputs = T5_MODEL.generate(
+                outputs = t5_model.generate(
                     input_ids=inputs["input_ids"],
                     attention_mask=inputs["attention_mask"],
                     max_new_tokens=min(300, len(text.split()) * 3),  # Increased for better output
@@ -666,10 +761,10 @@ class EnhancedLanguageModel:
                     top_k=50,  # Add top-k filtering
                     top_p=0.95,  # Add nucleus sampling
                     use_cache=True,
-                    pad_token_id=TOKENIZER.pad_token_id
+                    pad_token_id=tokenizer.pad_token_id
                 )
             
-            generated = TOKENIZER.decode(outputs[0], skip_special_tokens=True).strip()
+            generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
             corrected = self._clean_t5_output(generated, text, prompt)
             
             # Additional validation and fallback
@@ -926,9 +1021,21 @@ class EnhancedLanguageModel:
                 logger.warning(f"Could not load transition patterns: {e}")
     
     def _learn_patterns_from_text_data(self) -> None:
-        """Learn transition patterns from text_data.txt file"""
+        """Learn transition patterns from text_data.txt file (only if not already cached)"""
         if not self.pattern_learner:
             return
+        
+        # Check if patterns already exist and are recent
+        if os.path.exists(self.pattern_file):
+            try:
+                file_time = os.path.getmtime(self.pattern_file)
+                current_time = time.time()
+                # If patterns file is less than 7 days old, skip learning
+                if (current_time - file_time) < (7 * 24 * 3600):
+                    logger.info("Using existing transition patterns (cached)")
+                    return
+            except:
+                pass
         
         text_data_path = Config.TEXT_PATH
         if not os.path.exists(text_data_path):
@@ -936,7 +1043,7 @@ class EnhancedLanguageModel:
             return
         
         try:
-            logger.info("Learning transition patterns from text_data.txt...")
+            logger.info("Learning transition patterns from text_data.txt (first time/cache expired)...")
             
             # Read text_data.txt in chunks to avoid memory issues
             chunk_size = 50000  # 50KB chunks

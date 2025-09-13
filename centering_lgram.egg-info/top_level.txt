@@ -1,4 +1,5 @@
 dist
 lgram
 logs
+models
 tests

@@ -14,7 +14,7 @@ Key Features:
 """
 
 # --- Package Metadata ---
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 __author__ = "İlker Atagün"
 __email__ = "ilker.atagun@gmail.com"
 __license__ = "MIT"
