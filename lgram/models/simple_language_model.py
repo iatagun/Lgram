@@ -235,18 +235,25 @@ class ModelInitializer:
                 logger.info("Loading T5 model (first time)...")
                 start_time = time.time()
                 
-                tokenizer = AutoTokenizer.from_pretrained(
-                    Config.T5_MODEL_NAME,
-                    use_fast=True,
-                    padding_side="left"
-                )
-                
-                model = AutoModelForSeq2SeqLM.from_pretrained(
-                    Config.T5_MODEL_NAME,
-                    torch_dtype=torch.float16,
-                    device_map="auto",
-                    low_cpu_mem_usage=True
-                )
+                # Suppress accelerate warnings during T5 loading
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", module="accelerate")
+                    warnings.filterwarnings("ignore", message=".*device_map.*")
+                    warnings.filterwarnings("ignore", message=".*meta device.*")
+                    
+                    tokenizer = AutoTokenizer.from_pretrained(
+                        Config.T5_MODEL_NAME,
+                        use_fast=True,
+                        padding_side="left"
+                    )
+                    
+                    model = AutoModelForSeq2SeqLM.from_pretrained(
+                        Config.T5_MODEL_NAME,
+                        torch_dtype=torch.float16,
+                        device_map="auto",
+                        low_cpu_mem_usage=True
+                    )
                 
                 model.eval()
                 model = torch.compile(model)
@@ -712,31 +719,103 @@ class EnhancedLanguageModel:
         
         return text
     
-    def correct_grammar_t5(self, text: str) -> str:
-        """Correct grammar using T5 model with optimized parameters and smart caching"""
+    def correct_grammar_t5(self, text: str, prompt_style: str = "comprehensive") -> str:
+        """Correct grammar using T5 model with optimized parameters and smart caching
+        
+        Args:
+            text: Text to correct
+            prompt_style: "comprehensive" for detailed prompt, "simple" for basic prompt
+        """
         tokenizer, t5_model = get_t5_models()  # Use lazy loading
         if not all([tokenizer, t5_model]):
             logger.warning("T5 model not available, using rule-based correction")
             return self.correct_grammar(text)
-        
+
         # Early return for very short or empty text
         if not text or len(text.strip()) < 5:
             return text
-        
-        # Use smart cache for T5 corrections
+
+        # Use smart cache for T5 corrections (include prompt style in cache key)
+        cache_key = f"{text.strip().lower()}_{prompt_style}"
         return self.cache.get_or_compute(
             'corrections',
-            text.strip().lower(),
+            cache_key,
             self._compute_t5_correction,
-            text
+            text,
+            prompt_style
         )
     
-    def _compute_t5_correction(self, text: str) -> str:
+    def correct_grammar_t5_preserve_sentences(self, text: str, prompt_style: str = "comprehensive") -> str:
+        """Correct grammar using T5 while preserving sentence count"""
+        import re
+        
+        # Split into sentences
+        sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+        sentences = [s.strip() for s in sentences if s.strip()]
+        
+        # Correct each sentence individually
+        corrected_sentences = []
+        for sentence in sentences:
+            if sentence:
+                # Ensure sentence has proper ending
+                if not sentence.endswith(('.', '!', '?')):
+                    sentence += '.'
+                
+                # If input sentence already contaminated, use rule-based directly
+                if self._has_prompt_contamination(sentence):
+                    logger.debug(f"Input sentence contaminated, using rule-based directly")
+                    corrected_sentences.append(self.correct_grammar(sentence))
+                    continue
+                
+                # Correct the individual sentence with fallback to rule-based if validation fails
+                try:
+                    corrected = self._compute_t5_correction(sentence, prompt_style)
+                    # Enhanced validation for contamination
+                    if (corrected and len(corrected.strip()) > 0 and len(corrected.split()) >= 2 
+                        and not self._has_prompt_contamination(corrected)):
+                        corrected_sentences.append(corrected)
+                    else:
+                        # Fallback to rule-based correction for this sentence
+                        logger.debug(f"T5 sentence rejected due to contamination or validation, using rule-based")
+                        corrected_sentences.append(self.correct_grammar(sentence))
+                except Exception as e:
+                    logger.warning(f"T5 correction failed for sentence, using rule-based: {e}")
+                    corrected_sentences.append(self.correct_grammar(sentence))
+        
+        # Join back with spaces
+        return ' '.join(corrected_sentences)
+    
+    def _has_prompt_contamination(self, text: str) -> bool:
+        """Check if text contains prompt contamination"""
+        if not text:
+            return False
+        
+        text_lower = text.lower()
+        
+        # Check for specific contamination phrases
+        contamination_phrases = [
+            "improve grammar", "sentence structure", "word choice", 
+            "clarity", "flow while", "while preserving", "while maintaining",
+            "structure, word choice", "choice, clarity", "clarity, and flow",
+            "grammar, sentence", "improve", "correct"
+        ]
+        
+        for phrase in contamination_phrases:
+            if phrase in text_lower:
+                return True
+        
+        return False
+    
+    def _compute_t5_correction(self, text: str, prompt_style: str = "comprehensive") -> str:
         """Actual T5 correction computation (cached)"""
         try:
             tokenizer, t5_model = get_t5_models()  # Use lazy loading
             
-            prompt = f"fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical: {text}"
+            # Choose prompt based on style - improved prompts for better grammar
+            if prompt_style == "simple":
+                prompt = f"Rewrite this text with proper grammar: {text}"  # Simplified prompt
+            else:  # comprehensive
+                prompt = f"Improve grammar, sentence structure, word choice, clarity, and flow while maintaining meaning: {text}"
             
             inputs = tokenizer(
                 prompt,
@@ -746,26 +825,34 @@ class EnhancedLanguageModel:
                 padding=True
             )
             
-            # Optimized generation parameters for better quality
+            # Optimized generation parameters for better grammar correction
+            input_length = inputs["input_ids"].shape[1]
+            max_output_length = max(50, input_length + min(200, len(text.split()) * 3))
+            
             with torch.no_grad():
                 outputs = t5_model.generate(
                     input_ids=inputs["input_ids"],
                     attention_mask=inputs["attention_mask"],
-                    max_new_tokens=min(300, len(text.split()) * 3),  # Increased for better output
-                    num_beams=4,  # Increased beam size for better quality
-                    no_repeat_ngram_size=2,  # Reduced for more natural text
-                    repetition_penalty=1.1,  # Reduced for better flow
+                    max_length=max_output_length,  # Set explicit max_length
+                    min_new_tokens=5,  # Minimum tokens to generate
+                    num_beams=6,  # Higher beam size for better quality
+                    no_repeat_ngram_size=3,  # Prevent repetition
+                    repetition_penalty=1.2,  # Higher penalty for repetition
                     early_stopping=True,
-                    do_sample=True,  # Enable sampling for variety
-                    temperature=0.7,  # Slightly increased for more natural output
-                    top_k=50,  # Add top-k filtering
-                    top_p=0.95,  # Add nucleus sampling
+                    do_sample=False,  # Disable sampling for more consistent results
+                    length_penalty=1.0,  # Neutral length penalty
                     use_cache=True,
                     pad_token_id=tokenizer.pad_token_id
                 )
             
             generated = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-            corrected = self._clean_t5_output(generated, text, prompt)
+            corrected = self._clean_t5_output(generated, text, prompt, prompt_style)
+            
+            # Aggressive contamination removal for our specific prompts
+            corrected = self._remove_prompt_contamination(corrected, prompt_style)
+            
+            # Additional post-processing for better results
+            corrected = self._additional_post_processing(corrected, text)
             
             # Additional validation and fallback
             if self._is_valid_correction(corrected, text):
@@ -777,6 +864,111 @@ class EnhancedLanguageModel:
         except Exception as e:
             logger.error(f"T5 grammar correction failed: {e}")
             return self.correct_grammar(text)
+    
+    def _remove_prompt_contamination(self, text: str, prompt_style: str) -> str:
+        """Aggressively remove prompt contamination from T5 output"""
+        if not text:
+            return text
+        
+        # Define exact prompt patterns that contaminate output
+        if prompt_style == "simple":
+            contamination_patterns = [
+                r'\b(correct|improve|fix|grammar|sentence\s+structure|clarity)\b[,\s]*',
+                r'\bcorrect\s+grammar[,\s]*',
+                r'\bimprove\s+clarity[,\s]*',
+                r'\bfix\s+sentence\s+structure[,\s]*'
+            ]
+        else:  # comprehensive
+            contamination_patterns = [
+                r'\b(improve|grammar|sentence\s+structure|word\s+choice|clarity|flow\s+while\s+maintaining|meaning)\b[,\s]*',
+                r'\bimprove\s+grammar[,\s]*',
+                r'\bsentence\s+structure[,\s]*',
+                r'\bword\s+choice[,\s]*',
+                r'\bclarity[,\s]*',
+                r'\bflow\s+while\s+maintaining[,\s]*',
+                r'\bflow\s+while\s+preserving[,\s]*',
+                r'\bmaintaining\s+meaning[,\s]*'
+            ]
+        
+        # Remove contamination patterns
+        cleaned = text
+        for pattern in contamination_patterns:
+            cleaned = re.sub(pattern, ' ', cleaned, flags=re.IGNORECASE)
+        
+        # Remove leftover fragments like "and flow while preserving"
+        fragment_patterns = [
+            r'\band\s+(flow\s+while\s+preserving|flow\s+while\s+maintaining)\b[^.]*',
+            r'\band\s+(word\s+choice|clarity|structure)\b[,\s]*',
+            r'\b(structure|choice|clarity|flow)\s*[,.]?\s*$',
+            r'^\s*(structure|choice|clarity|flow|and)[,\s]*',
+            r'\b(word\s+choice|sentence\s+structure)\s*[,.]?\s*$'  # Additional cleanup
+        ]
+        
+        for pattern in fragment_patterns:
+            cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+        
+        # Clean up resulting text
+        cleaned = re.sub(r'\s{2,}', ' ', cleaned)
+        cleaned = re.sub(r'^[,\s\.]+', '', cleaned)
+        cleaned = re.sub(r'[,\s]+$', '', cleaned)
+        cleaned = cleaned.strip()
+        
+        # Additional validation: if result starts with prompt words, it's contaminated
+        contaminated_starts = [
+            "structure", "word choice", "clarity", "flow while", "improve", 
+            "grammar", "sentence structure", "correct", "fix"
+        ]
+        
+        first_words = ' '.join(cleaned.split()[:3]).lower()
+        for contaminated_start in contaminated_starts:
+            if first_words.startswith(contaminated_start.lower()):
+                # Return fallback or try to find clean part
+                sentences = cleaned.split('.')
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    if sentence and len(sentence.split()) >= 4:
+                        clean_first = ' '.join(sentence.split()[:3]).lower()
+                        if not any(clean_first.startswith(cs.lower()) for cs in contaminated_starts):
+                            return sentence + '.'
+                # If no clean sentence found, return original
+                return text
+        
+        # If we removed too much and left fragment, return original
+        if len(cleaned.split()) < 3:
+            return text
+        
+        return cleaned
+    
+    def _additional_post_processing(self, corrected: str, original: str) -> str:
+        """Additional post-processing for T5 corrected text"""
+        if not corrected:
+            return original
+        
+        # Split into sentences for better processing
+        sentences = re.split(r'(?<=[.!?])\s+', corrected.strip())
+        processed_sentences = []
+        
+        for sentence in sentences:
+            if not sentence.strip():
+                continue
+            
+            # Ensure proper capitalization at start
+            sentence = sentence.strip()
+            if sentence and not sentence[0].isupper():
+                sentence = sentence[0].upper() + sentence[1:]
+            
+            # Fix common issues
+            sentence = re.sub(r'\bi\b', 'I', sentence)  # Fix lowercase 'i'
+            sentence = re.sub(r'(\w)\s*\.', r'\1.', sentence)  # Fix spacing before period
+            sentence = re.sub(r'\s+', ' ', sentence)  # Normalize spaces
+            
+            # Ensure sentence ends with punctuation
+            if sentence and not sentence.endswith(('.', '!', '?')):
+                sentence += '.'
+            
+            processed_sentences.append(sentence)
+        
+        return ' '.join(processed_sentences)
     
     def _cache_correction(self, text_hash: int, correction: str) -> None:
         """Cache correction result with size management"""
@@ -811,72 +1003,114 @@ class EnhancedLanguageModel:
                 if words[i] == words[i+1] == words[i+2]:
                     return False
                     
-        # Check if correction contains prompt remnants
+        # Check if correction contains prompt remnants - STRICT validation
         prompt_indicators = [
             "fluency", "coherence", "semantic", "accuracy", 
             "clarity", "completeness", "cohesion", "style",
-            "contextual", "relevance", "respectful", "appropriate", "ethical"
+            "contextual", "relevance", "respectful", "appropriate", "ethical",
+            "improve", "grammar", "sentence", "structure", "word", "choice",
+            "flow", "while", "preserving", "maintaining", "meaning"
         ]
         
         corrected_lower = corrected.lower()
+        
+        # STRICT: If ANY of these specific prompt phrases appear, reject
+        strict_contamination_phrases = [
+            "improve grammar", "sentence structure", "word choice", 
+            "clarity", "flow while", "while preserving", "while maintaining",
+            "structure, word choice", "choice, clarity", "clarity, and flow"
+        ]
+        
+        for phrase in strict_contamination_phrases:
+            if phrase in corrected_lower:
+                return False
+        
+        # Check for isolated prompt words
         prompt_word_count = sum(1 for word in prompt_indicators if word in corrected_lower)
         
-        # If more than 2 prompt words appear, it's likely contaminated
-        if prompt_word_count > 2:
+        # If more than 1 prompt word appears, it's likely contaminated (more strict)
+        if prompt_word_count > 1:
             return False
             
         return True
     
-    def _clean_t5_output(self, generated: str, original: str, prompt: str) -> str:
-        """Clean T5 model output with enhanced cleaning"""
+    def _clean_t5_output(self, generated: str, original: str, prompt: str, prompt_style: str = "comprehensive") -> str:
+        """Clean T5 model output with enhanced cleaning for different prompt styles"""
         corrected = generated.strip()
         
-        # Step 1: Remove the full prompt if it appears at the beginning
+        # Step 1: Remove the prompt if it appears at the beginning
         if corrected.startswith(prompt):
             corrected = corrected[len(prompt):].strip()
         
-        # Step 2: Remove prompt patterns with more aggressive matching
-        prompt_patterns = [
-            r'^.*?fluency[^:]*:',
-            r'^.*?coherence[^:]*:',
-            r'^.*?semantic[^:]*:',
-            r'^.*?clarity[^:]*:',
-            r'^.*?sentence[^:]*:',
-            r'^.*?cohesion[^:]*:',
-            r'^.*?style[^:]*:',
-            r'^.*?contextual?[^:]*:',
-            r'^.*?respectful[^:]*:',
-            r'^.*?appropriate[^:]*:',
-            r'^.*?ethical[^:]*:',
-            r'^.*?grammar[^:]*:',
-            r'^.*?correct[^:]*:',
-        ]
+        # Step 2: Remove prompt patterns based on style
+        if prompt_style == "simple":
+            simple_patterns = [
+                r'^.*?fix grammar[^:]*:',
+                r'^.*?sentence structure[^:]*:',
+                r'^fix grammar and sentence structure[^:]*:',
+                r'^correct grammar[^:]*:',
+                r'^.*?improve clarity[^:]*:',
+                r'^.*?fix sentence structure[^:]*:',
+                r'^grammar correction[^:]*:',
+                r'^corrected:',
+                r'^correction:',
+            ]
+            for pattern in simple_patterns:
+                corrected = re.sub(pattern, '', corrected, flags=re.IGNORECASE | re.DOTALL).strip()
+        else:  # comprehensive
+            comprehensive_patterns = [
+                r'^.*?improve grammar[^:]*:',
+                r'^.*?sentence structure[^:]*:',
+                r'^.*?word choice[^:]*:',
+                r'^.*?clarity[^:]*:',
+                r'^.*?flow while maintaining meaning[^:]*:',
+                r'^.*?fluency[^:]*:',
+                r'^.*?coherence[^:]*:',
+                r'^.*?semantic[^:]*:',
+                r'^.*?accuracy[^:]*:',
+                r'^.*?sentence[^:]*:',
+                r'^.*?completeness[^:]*:',
+                r'^.*?cohesion[^:]*:',
+                r'^.*?style[^:]*:',
+                r'^.*?control[^:]*:',
+                r'^.*?contextual[^:]*:',
+                r'^.*?relevance[^:]*:',
+                r'^.*?respectful[^:]*:',
+                r'^.*?appropriate[^:]*:',
+                r'^.*?ethical[^:]*:',
+                r'^.*?grammar[^:]*:',
+                r'^.*?correct[^:]*:',
+            ]
+            for pattern in comprehensive_patterns:
+                corrected = re.sub(pattern, '', corrected, flags=re.IGNORECASE | re.DOTALL).strip()
         
-        for pattern in prompt_patterns:
-            corrected = re.sub(pattern, '', corrected, flags=re.IGNORECASE | re.DOTALL).strip()
-        
-        # Step 3: Remove any colon-separated prefixes more aggressively
+        # Step 3: Remove any colon-separated prefixes
         corrected = re.sub(r'^[^.!?]*?:', '', corrected).strip()
         
-        # Step 4: Remove the exact long prompt prefix
-        long_prefix = "fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical"
-        if corrected.lower().startswith(long_prefix.lower()):
-            corrected = corrected[len(long_prefix):].strip()
-            if corrected.startswith(':'):
-                corrected = corrected[1:].strip()
+        # Step 4: Remove specific prompt prefixes based on style
+        if prompt_style == "comprehensive":
+            long_prefix = "fluency, coherence, semantic accuracy, clarity, sentence completeness, cohesion, style control, contextual relevance, respectful, appropriate, ethical"
+            if corrected.lower().startswith(long_prefix.lower()):
+                corrected = corrected[len(long_prefix):].strip()
+                if corrected.startswith(':'):
+                    corrected = corrected[1:].strip()
         
         # Step 5: Clean delimiters and unwanted characters
         corrected = corrected.replace('"""', '').replace('``', '').replace('`', '')
         corrected = re.sub(r'^[\"\'\`\n\r\s\-\—\–]+', '', corrected)
         corrected = re.sub(r'[\"\'\`\n\r\s]+$', '', corrected)
         
-        # Step 6: Remove individual prompt words at the beginning (more comprehensive)
-        prompt_words = [
-            "fluency", "coherence", "semantic", "accuracy", "clarity", 
-            "sentence", "completeness", "cohesion", "style", "control", 
-            "contextual", "relevance", "respectful", "appropriate", 
-            "ethical", "grammar", "punctuation", "correct"
-        ]
+        # Step 6: Remove prompt words based on style
+        if prompt_style == "simple":
+            prompt_words = ["fix", "grammar", "sentence", "structure", "correction", "corrected", "correct", "improve", "clarity"]
+        else:  # comprehensive
+            prompt_words = [
+                "fluency", "coherence", "semantic", "accuracy", "clarity", 
+                "sentence", "completeness", "cohesion", "style", "control", 
+                "contextual", "relevance", "respectful", "appropriate", 
+                "ethical", "grammar", "punctuation", "correct", "improve",
+                "word", "choice", "flow", "while", "maintaining", "meaning"
+            ]
         
         # Remove prompt words iteratively until none remain
         changed = True
@@ -886,7 +1120,7 @@ class EnhancedLanguageModel:
                 corrected = re.sub(rf'^\b{word}\b\s*[,:;]?\s*', '', corrected, flags=re.IGNORECASE)
             changed = (old_corrected != corrected)
         
-        # Step 7: Clean whitespace and formatting
+        # Step 6: Clean whitespace and formatting
         corrected = re.sub(r'\n+', ' ', corrected)
         corrected = re.sub(r'\s{2,}', ' ', corrected)
         corrected = corrected.strip()
@@ -1342,8 +1576,17 @@ class EnhancedLanguageModel:
     def generate_text_with_centering(self, num_sentences: int = 5,
                                    input_words: Optional[List[str]] = None,
                                    length: int = 13,
-                                   use_progress_bar: bool = False) -> str:
-        """Generate text using enhanced centering theory with progress bar and T5 correction"""
+                                   use_progress_bar: bool = False,
+                                   t5_prompt_style: str = "comprehensive") -> str:
+        """Generate text using enhanced centering theory with progress bar and T5 correction
+        
+        Args:
+            num_sentences: Number of sentences to generate
+            input_words: Starting words for first sentence  
+            length: Base length for sentences
+            use_progress_bar: Whether to show progress bar
+            t5_prompt_style: "comprehensive" for detailed T5 prompt, "simple" for basic prompt
+        """
         generated_sentences = []
         
         # Progress bar setup
@@ -1383,6 +1626,32 @@ class EnhancedLanguageModel:
             if sentence and not sentence.endswith(('.', '!', '?')):
                 sentence += '.'
             
+            # Check for duplicates and regenerate if needed
+            max_attempts = 3
+            attempt = 0
+            while attempt < max_attempts and sentence and any(
+                self._sentences_too_similar(sentence, existing) for existing in generated_sentences
+            ):
+                attempt += 1
+                logger.info(f"Duplicate detected, regenerating sentence (attempt {attempt})")
+                
+                # Try different approach for regeneration
+                if attempt == 1:
+                    # Try with different length
+                    sentence = self.generate_sentence(start_words, length + 2)
+                elif attempt == 2:
+                    # Try with random words if available
+                    if hasattr(self, 'vocabulary') and self.vocabulary:
+                        import random
+                        random_word = random.choice(list(self.vocabulary.keys()))
+                        start_words = [random_word]
+                        sentence = self.generate_sentence(start_words, length)
+                    else:
+                        sentence = self.generate_sentence(None, length)
+                
+                if sentence and not sentence.endswith(('.', '!', '?')):
+                    sentence += '.'
+            
             # Update centering state
             if self.centering:
                 self.centering.update_discourse(sentence)
@@ -1392,8 +1661,8 @@ class EnhancedLanguageModel:
         # Join sentences properly with spaces
         final_text = " ".join(generated_sentences)
         
-        # Apply T5 correction to the entire text
-        corrected_text = self.correct_grammar_t5(final_text)
+        # Apply T5 correction while preserving sentence count
+        corrected_text = self.correct_grammar_t5_preserve_sentences(final_text, prompt_style=t5_prompt_style)
         
         # Evaluate coherence
         if self.centering:
@@ -1402,6 +1671,33 @@ class EnhancedLanguageModel:
             logger.info(f"Transitions: {coherence_info['transition_distribution']}")
         
         return corrected_text
+    
+    def _sentences_too_similar(self, sentence1: str, sentence2: str, threshold: float = 0.8) -> bool:
+        """Check if two sentences are too similar"""
+        if not sentence1 or not sentence2:
+            return False
+        
+        # Normalize sentences
+        s1 = sentence1.lower().strip().rstrip('.!?')
+        s2 = sentence2.lower().strip().rstrip('.!?')
+        
+        # Exact match
+        if s1 == s2:
+            return True
+        
+        # Word-based similarity
+        words1 = set(s1.split())
+        words2 = set(s2.split())
+        
+        if not words1 or not words2:
+            return False
+        
+        # Jaccard similarity
+        intersection = len(words1.intersection(words2))
+        union = len(words1.union(words2))
+        similarity = intersection / union if union > 0 else 0
+        
+        return similarity >= threshold
     
     def _extract_center_from_sentence(self, sentence: str) -> Optional[str]:
         """Extract center/focus from a sentence for next sentence generation"""
@@ -1561,7 +1857,7 @@ class EnhancedLanguageModel:
         sentences = re.split(r'(?<=[.!?]) +', text.strip())
         cleaned_sentences = []
         buffer_sentence = ""
-        min_words_for_sentence = 4
+        min_words_for_sentence = 2  # Reduced from 4 to 2 to preserve sentence count
         
         for sentence in sentences:
             cleaned_sentence = sentence.strip()
@@ -1789,11 +2085,11 @@ if __name__ == "__main__":
         model = create_language_model()
         
         # Generate text
-        input_sentence = "Tell me the true story."
+        input_sentence = "Tell me the true story "
         input_words = input_sentence.strip().rstrip('.').split()
         
         generated_text = model.generate_text_with_centering(
-            num_sentences=5,
+            num_sentences=7,
             input_words=input_words,
             length=13,
             use_progress_bar=True
@@ -1803,7 +2099,7 @@ if __name__ == "__main__":
         print(generated_text)
         
         # Apply T5 correction
-        corrected_text = model.correct_grammar_t5(generated_text)
+        corrected_text = model.correct_grammar_t5(generated_text, prompt_style="comprehensive")
         print("\nCorrected Text:")
         print(corrected_text)
         
