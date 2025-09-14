@@ -6,6 +6,7 @@ MANIFEST.in
 README.md
 RELEASE_NOTES_1.0.51.md
 RELEASE_NOTES_1.2.0.md
+RELEASE_NOTES_1.2.1.md
 USAGE_GUIDE.md
 __init__.py
 build_script.py
@@ -28,6 +29,8 @@ centering_lgram.egg-info/requires.txt
 centering_lgram.egg-info/top_level.txt
 dist/centering_lgram-1.1.3-py3-none-any.whl
 dist/centering_lgram-1.1.3.tar.gz
+dist/centering_lgram-1.2.0-py3-none-any.whl
+dist/centering_lgram-1.2.0.tar.gz
 lgram/__init__.py
 lgram/cli.py
 lgram/core.py
