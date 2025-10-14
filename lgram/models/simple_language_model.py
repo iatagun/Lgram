@@ -11,7 +11,6 @@ import hashlib
 from collections import defaultdict, Counter, OrderedDict
 from functools import cache, lru_cache
 from typing import Optional, List, Tuple, Dict, Any
-import logging
 
 import numpy as np
 import spacy
@@ -46,10 +45,6 @@ except ImportError:
         class TransitionPatternLearner:
             def __init__(self, *args, **kwargs):
                 pass
-
-# Configure logging - Production mode (warnings and errors only)
-logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
-logger = logging.getLogger(__name__)
 
 
 class SmartCacheSystem:
@@ -137,13 +132,13 @@ class SmartCacheSystem:
                 self.caches[cache_name].clear()
                 self.hit_counts[cache_name] = 0
                 self.miss_counts[cache_name] = 0
-                logger.info(f"Cleared cache: {cache_name}")
+                pass  # Cache cleared
         else:
             for cache_name in self.caches:
                 self.caches[cache_name].clear()
                 self.hit_counts[cache_name] = 0
                 self.miss_counts[cache_name] = 0
-            logger.info("Cleared all caches")
+            pass  # All caches cleared
     
     def get_stats(self) -> Dict[str, Dict[str, float]]:
         """Get cache performance statistics"""
@@ -174,7 +169,7 @@ class SmartCacheSystem:
                 items = list(cache.items())[-keep_count:]
                 cache.clear()
                 cache.update(items)
-                logger.info(f"Optimized {cache_name} cache: kept {keep_count} entries")
+                pass  # Cache optimized
         
         # Force garbage collection
         gc.collect()
@@ -258,7 +253,7 @@ class ModelInitializer:
                 load_time = time.time() - start_time
                 
             except Exception as e:
-                logger.error(f"Failed to initialize T5 model: {e}")
+                pass  # T5 model initialization failed
                 ModelInitializer._tokenizer = None
                 ModelInitializer._t5_model = None
         
@@ -282,7 +277,7 @@ class ModelInitializer:
                 load_time = time.time() - start_time
                 
             except Exception as e:
-                logger.error(f"Failed to initialize SpaCy model: {e}")
+                pass  # SpaCy model initialization failed
                 ModelInitializer._spacy_model = None
         
         return ModelInitializer._spacy_model
@@ -309,7 +304,7 @@ class ModelInitializer:
                 corrections = json.load(f)
             return corrections
         except Exception as e:
-            logger.error(f"Failed to load corrections: {e}")
+            pass  # Corrections loading failed
             return {}
 
 
@@ -334,7 +329,7 @@ try:
         return TOKENIZER, T5_MODEL
     
 except Exception as e:
-    logger.error(f"Model initialization setup failed: {e}")
+    pass  # Model initialization setup failed
     TOKENIZER, T5_MODEL, NLP, CORRECTIONS = None, None, None, {}
 
 
@@ -404,28 +399,9 @@ class EnhancedLanguageModel:
             with open(path, 'rb') as f:
                 return pickle.load(f)
         except FileNotFoundError:
-            logger.warning(f"Collocations file not found: {path}")
-            return {}
+            return {}  # Collocations file not found
         except Exception as e:
-            logger.error(f"Error loading collocations: {e}")
-            return {}
-    
-    def _get_log_file(self) -> str:
-        """Get log file path for current date"""
-        today = datetime.datetime.now().strftime("%Y-%m-%d")
-        logs_dir = os.path.join(Config.BASE_DIR, "logs")
-        os.makedirs(logs_dir, exist_ok=True)
-        return os.path.join(logs_dir, f"daily_log_{today}.txt")
-    
-    def log(self, message: str) -> None:
-        """Log message to file"""
-        try:
-            log_file = self._get_log_file()
-            with open(log_file, "a", encoding="utf-8") as f:
-                timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-                f.write(f"[{timestamp}] {message}\n")
-        except Exception as e:
-            logger.error(f"Logging failed: {e}")
+            return {}  # Error loading collocations
     
     def build_model(self, text: str) -> Tuple[Dict, Dict]:
         """Build n-gram model from text"""
@@ -481,7 +457,7 @@ class EnhancedLanguageModel:
                     with open(path, 'rb') as f:
                         self._ngram_models[model_name] = pickle.load(f)
                 except Exception as e:
-                    logger.error(f"Failed to load {model_name}: {e}")
+                    pass  # Failed to load model
                     self._ngram_models[model_name] = {}
             else:
                 self._ngram_models[model_name] = {}
@@ -536,7 +512,7 @@ class EnhancedLanguageModel:
                 return final_score > Config.SEMANTIC_THRESHOLD
                 
         except Exception as e:
-            logger.debug(f"Semantic relation check failed: {e}")
+            pass  # Semantic relation check failed
         
         return False
     
@@ -723,7 +699,7 @@ class EnhancedLanguageModel:
         """
         tokenizer, t5_model = get_t5_models()  # Use lazy loading
         if not all([tokenizer, t5_model]):
-            logger.warning("T5 model not available, using rule-based correction")
+            pass  # T5 model not available, using rule-based
             return self.correct_grammar(text)
 
         # Early return for very short or empty text
@@ -758,7 +734,7 @@ class EnhancedLanguageModel:
                 
                 # If input sentence already contaminated, use rule-based directly
                 if self._has_prompt_contamination(sentence):
-                    logger.debug(f"Input sentence contaminated, using rule-based directly")
+                    pass  # Input contaminated, using rule-based
                     corrected_sentences.append(self.correct_grammar(sentence))
                     continue
                 
@@ -771,10 +747,10 @@ class EnhancedLanguageModel:
                         corrected_sentences.append(corrected)
                     else:
                         # Fallback to rule-based correction for this sentence
-                        logger.debug(f"T5 sentence rejected due to contamination or validation, using rule-based")
+                        pass  # T5 sentence rejected, using rule-based
                         corrected_sentences.append(self.correct_grammar(sentence))
                 except Exception as e:
-                    logger.warning(f"T5 correction failed for sentence, using rule-based: {e}")
+                    pass  # T5 correction failed, using rule-based
                     corrected_sentences.append(self.correct_grammar(sentence))
         
         # Join back with spaces
@@ -1381,7 +1357,7 @@ class EnhancedLanguageModel:
                         context_word = self._get_dynamic_pronoun(last_entity_token)
                         
                 except Exception as e:
-                    logger.debug(f"Context analysis failed: {e}")
+                    pass  # Context analysis failed
                     context_word = None
             else:
                 # First sentence - find subject
@@ -1401,9 +1377,9 @@ class EnhancedLanguageModel:
         if self.pattern_learner and os.path.exists(self.pattern_file):
             try:
                 self.pattern_learner.load_patterns(self.pattern_file)
-                logger.info(f"Loaded transition patterns from {self.pattern_file}")
+                pass  # Loaded transition patterns
             except Exception as e:
-                logger.warning(f"Could not load transition patterns: {e}")
+                pass  # Could not load transition patterns
     
     def _learn_patterns_from_text_data(self) -> None:
         """Learn transition patterns from text_data.txt file (only if not already cached)"""
@@ -1417,18 +1393,18 @@ class EnhancedLanguageModel:
                 current_time = time.time()
                 # If patterns file is less than 7 days old, skip learning
                 if (current_time - file_time) < (7 * 24 * 3600):
-                    logger.info("Using existing transition patterns (cached)")
+                    pass  # Logging removed")
                     return
             except:
                 pass
         
         text_data_path = Config.TEXT_PATH
         if not os.path.exists(text_data_path):
-            logger.warning(f"text_data.txt not found at {text_data_path}")
+            pass  # Logging removed
             return
         
         try:
-            logger.info("Learning transition patterns from text_data.txt (first time/cache expired)...")
+            pass  # Logging removed...")
             
             # Read text_data.txt in chunks to avoid memory issues
             chunk_size = 50000  # 50KB chunks
@@ -1470,30 +1446,30 @@ class EnhancedLanguageModel:
                         
                         # Log progress every 10 chunks
                         if chunk_count % 10 == 0:
-                            logger.info(f"Processed chunk {chunk_count}, patterns learned: {patterns_in_chunk}")
+                            pass  # Logging removed
                         
                         # Seek back to continue from last sentence
                         f.seek(f.tell() - (len(chunk) - last_sentence_end - 1))
                     
                     # Limit processing to avoid too much computation
                     if chunk_count >= 100:  # Process max 100 chunks (~5MB)
-                        logger.info("Reached maximum chunk limit, stopping text_data processing")
+                        pass  # Logging removed
                         break
             
             # Save learned patterns
             if total_patterns_learned > 0:
                 self.pattern_learner.save_patterns(self.pattern_file)
-                logger.info(f"Successfully learned {total_patterns_learned} patterns from text_data.txt")
-                logger.info(f"Processed {chunk_count} chunks from text_data.txt")
+                pass  # Logging removed
+                pass  # Logging removed
                 
                 # Log pattern statistics
                 stats = self.pattern_learner.get_pattern_statistics()
-                logger.info(f"Total patterns in system: {stats.get('total_patterns', 0)}")
+                pass  # Logging removed}")
             else:
-                logger.warning("No patterns learned from text_data.txt")
+                pass  # Logging removed
                 
         except Exception as e:
-            logger.error(f"Error learning from text_data.txt: {e}")
+            pass  # Logging removed
     
     
     def learn_from_quality_text(self, text: str, quality_score: float = 1.0) -> Dict[str, Any]:
@@ -1509,7 +1485,7 @@ class EnhancedLanguageModel:
             
             # Log learning results
             stats = self.pattern_learner.get_pattern_statistics()
-            logger.info(f"Learned patterns from text - Total patterns: {stats.get('total_patterns', 0)}")
+            pass  # Logging removed}")
             
             return {
                 **result,
@@ -1517,7 +1493,7 @@ class EnhancedLanguageModel:
             }
             
         except Exception as e:
-            logger.error(f"Error learning from text: {e}")
+            pass  # Logging removed
             return {"error": str(e)}
     
     def generate_coherent_text(self, target_length: int, 
@@ -1589,7 +1565,7 @@ class EnhancedLanguageModel:
             return self._post_process_text(corrected_text)
             
         except Exception as e:
-            logger.error(f"Error in coherent text generation: {e}")
+            pass  # Logging removed
             # Fallback to regular generation
             return self.generate_text_with_centering(
                 num_sentences=target_length,
@@ -1671,7 +1647,7 @@ class EnhancedLanguageModel:
             }
             
         except Exception as e:
-            logger.error(f"Error analyzing text coherence: {e}")
+            pass  # Logging removed
             return {"error": str(e)}
     
     def _assess_text_quality(self, coherence_score: float, transition_dist: Dict[str, int]) -> Dict[str, Any]:
@@ -1784,7 +1760,7 @@ class EnhancedLanguageModel:
                 self._sentences_too_similar(sentence, existing) for existing in generated_sentences
             ):
                 attempt += 1
-                logger.info(f"Duplicate detected, regenerating sentence (attempt {attempt})")
+                pass  # Logging removed")
                 
                 # Try different approach for regeneration
                 if attempt == 1:
@@ -1818,8 +1794,8 @@ class EnhancedLanguageModel:
         # Evaluate coherence
         if self.centering:
             coherence_info = self.centering.evaluate_coherence(generated_sentences)
-            logger.info(f"Coherence score: {coherence_info['coherence_score']:.3f}")
-            logger.info(f"Transitions: {coherence_info['transition_distribution']}")
+            pass  # Logging removed
+            pass  # Logging removed
         
         return corrected_text
     
@@ -1897,7 +1873,7 @@ class EnhancedLanguageModel:
                 return center_candidates[0][0]
                 
         except Exception as e:
-            logger.debug(f"Center extraction failed: {e}")
+            pass  # Logging removed
             
         return None
     
@@ -1961,7 +1937,7 @@ class EnhancedLanguageModel:
                    (Cf_curr[0] if Cf_curr else None))
                
         except Exception as e:
-            logger.debug(f"Center finding failed: {e}")
+            pass  # Logging removed
             return None
     
     def _get_dynamic_pronoun(self, token) -> str:
@@ -2094,11 +2070,11 @@ class EnhancedLanguageModel:
                 with open(filename, 'wb') as f:
                     pickle.dump(model_data, f)
             
-            logger.info(f"Model saved successfully to {filename}")
+            pass  # Logging removed
             self.log(f"Model saved successfully to {filename}")
             
         except Exception as e:
-            logger.error(f"Error saving model to {filename}: {e}")
+            pass  # Logging removed
             self.log(f"Error saving model to {filename}: {e}")
     
     def get_cache_stats(self) -> Dict[str, Any]:
@@ -2149,13 +2125,13 @@ class EnhancedLanguageModel:
     def optimize_cache_memory(self) -> None:
         """Optimize cache memory usage"""
         self.cache.optimize_memory()
-        logger.info("Cache memory optimization completed")
+        pass  # Logging removed
     
     def clear_all_caches(self) -> None:
         """Clear all caches"""
         self.cache.clear_cache()
         self._correction_cache.clear()  # Clear legacy cache too
-        logger.info("All caches cleared")
+        pass  # Logging removed
     
     @classmethod
     def load_model(cls, filename: str) -> 'EnhancedLanguageModel':
@@ -2168,11 +2144,11 @@ class EnhancedLanguageModel:
             instance.model = defaultdict(lambda: defaultdict(int), model)
             instance.total_counts = total_counts
             
-            logger.info(f"Model loaded successfully from {filename}")
+            pass  # Logging removed
             return instance
             
         except Exception as e:
-            logger.error(f"Error loading model from {filename}: {e}")
+            pass  # Logging removed
             raise
 
 
@@ -2196,10 +2172,10 @@ class TextLoader:
                 return text
                 
         except FileNotFoundError:
-            logger.error(f"File not found: {file_path}")
+            pass  # Logging removed
             return None
         except Exception as e:
-            logger.error(f"Error reading file {file_path}: {e}")
+            pass  # Logging removed
             return None
 
 
@@ -2213,7 +2189,7 @@ def create_language_model(model_file: str = Config.MODEL_FILE,
     try:
         # Try to load existing model
         language_model = EnhancedLanguageModel.load_model(model_file)
-        logger.info("Loaded existing model")
+        pass  # Logging removed
         
     except (FileNotFoundError, EOFError):
         # Create new model if not exists
@@ -2224,7 +2200,7 @@ def create_language_model(model_file: str = Config.MODEL_FILE,
         
         language_model = EnhancedLanguageModel(text, n=2)
         language_model.save_model(model_file)
-        logger.info("Created and saved new model")
+        pass  # Logging removed
     
     return language_model
 
@@ -2255,5 +2231,5 @@ if __name__ == "__main__":
         print(corrected_text)
         
     except Exception as e:
-        logger.error(f"Example execution failed: {e}")
+        pass  # Logging removed
         print(f"Error: {e}")
