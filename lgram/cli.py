@@ -1,224 +1,238 @@
 #!/usr/bin/env python3
 """
-Command Line Interface for Lgram package.
+CLI for Centering-Lgram: Discourse coherence analysis with Centering Theory.
 """
 
 import argparse
 import sys
-import os
-import argparse
-import sys
-import os
-from typing import List, Optional
+from pathlib import Path
+from typing import Optional
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(
-def main():
+        description="Centering-Lgram: Discourse coherence analysis",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  centering-lgram generate --input "The weather today" --sentences 3
-  centering-lgram generate --input "She founded" --sentences 5 --length 15 --centering
+  centering-lgram analyze --text "John went to the store. He bought milk."
+  centering-lgram clauses --text "She left because she was tired."
+  centering-lgram full --text "John left. He was tired because he worked late."
+  centering-lgram score --text "Alice met Bob. She greeted him."
   centering-lgram info
   centering-lgram version
-        """
     )
-    
-    # Add subcommands
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
-    # Generate command
-    generate_parser = subparsers.add_parser('generate', help='Generate text')
-    generate_parser.add_argument(
-        '--input', '-i',
-        type=str,
-        required=True,
-        help='Input text to start generation'
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    analyze = subparsers.add_parser("analyze", help="Full centering analysis")
+    analyze.add_argument("--text", "-t", type=str, help="Text to analyze")
+    analyze.add_argument("--file", "-f", type=Path, help="File to analyze")
+    analyze.add_argument(
+        "--model", "-m", type=str, default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)"
     )
-    generate_parser.add_argument(
-        '--sentences', '-s',
-        type=int,
-        default=3,
-        help='Number of sentences to generate (default: 3)'
+    analyze.add_argument("--verbose", "-v", action="store_true")
+
+    score = subparsers.add_parser("score", help="Coherence score only")
+    score.add_argument("--text", "-t", type=str)
+    score.add_argument("--file", "-f", type=Path)
+    score.add_argument(
+        "--model", "-m", type=str, default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)"
     )
-    generate_parser.add_argument(
-        '--length', '-l',
-        type=int,
-        default=13,
-        help='Average sentence length (default: 13)'
+
+    clauses_parser = subparsers.add_parser(
+        "clauses", help="Intra-sentential clause-level analysis"
     )
-    generate_parser.add_argument(
-        '--centering', '-c',
-        action='store_true',
-        help='Use centering theory for coherent generation'
+    clauses_parser.add_argument("--text", "-t", type=str, help="Sentence to analyze")
+    clauses_parser.add_argument("--file", "-f", type=Path, help="File to analyze")
+    clauses_parser.add_argument(
+        "--model", "-m", type=str, default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)"
     )
-    generate_parser.add_argument(
-        '--correct', '-g',
-        action='store_true',
-        help='Apply T5 grammar correction'
+
+    full_parser = subparsers.add_parser(
+        "full", help="Full inter + intra-sentential analysis"
     )
-    generate_parser.add_argument(
-        '--progress', '-p',
-        action='store_true',
-        help='Show progress bar'
+    full_parser.add_argument("--text", "-t", type=str, help="Text to analyze")
+    full_parser.add_argument("--file", "-f", type=Path, help="File to analyze")
+    full_parser.add_argument(
+        "--model", "-m", type=str, default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)"
     )
-    generate_parser.add_argument(
-        '--output', '-o',
-        type=str,
-        help='Output file (default: print to console)'
-    )
-    
-    # Info command
-    info_parser = subparsers.add_parser('info', help='Show system information')
-    
-    # Version command
-    version_parser = subparsers.add_parser('version', help='Show version information')
-    
-    # Train command
-    train_parser = subparsers.add_parser('train', help='Train a new model')
-    train_parser.add_argument(
-        '--text-file', '-t',
-        type=str,
-        required=True,
-        help='Path to training text file'
-    )
-    train_parser.add_argument(
-        '--model-file', '-m',
-        type=str,
-        help='Output model file path'
-    )
-    train_parser.add_argument(
-        '--n-gram', '-n',
-        type=int,
-        default=2,
-        choices=[2, 3, 4, 5, 6],
-        help='N-gram size (default: 2)'
-    )
-    
-    # Parse arguments
+
+    subparsers.add_parser("info", help="Show package info")
+    subparsers.add_parser("version", help="Show version")
+
     args = parser.parse_args()
-    
+
     if not args.command:
         parser.print_help()
         return 1
-    
-    # Handle commands
-    if args.command == 'version':
-        return handle_version()
-    elif args.command == 'info':
-        return handle_info()
-    elif args.command == 'generate':
-        return handle_generate(args)
-    elif args.command == 'train':
-        return handle_train(args)
-    else:
+
+    handlers = {
+        "version": _version,
+        "info": _info,
+        "analyze": _analyze,
+        "score": _score,
+        "clauses": _clauses,
+        "full": _full,
+    }
+    handler = handlers.get(args.command)
+    if handler is None:
         parser.print_help()
         return 1
 
-def handle_version():
-    """Handle version command."""
-def handle_version():
-        from lgram import __version__, __author__, __url__
-        print(f"Centering-Lgram version {__version__}")
-        print(f"Author: {__author__}")
-        print(f"Homepage: {__url__}")
-        return 0
-    except ImportError:
-        print("Error: Could not import Centering-Lgram package")
+    return handler(args)
+
+
+def _read(args) -> str:
+    if args.text:
+        return args.text
+    if args.file:
+        path: Optional[Path] = args.file
+        if path and not path.exists():
+            raise FileNotFoundError(str(path))
+        return path.read_text(encoding="utf-8")
+    raise ValueError("Provide --text or --file")
+
+
+def _version(_args) -> int:
+    from lgram import __version__, __author__
+    print(f"v{__version__}  {__author__}")
+    return 0
+
+
+def _info(_args) -> int:
+    from lgram import show_info
+    show_info()
+    return 0
+
+
+def _centering_analysis(text: str, model_name: str, verbose: bool) -> int:
+    import spacy
+    from lgram import EnhancedCenteringTheory
+
+    nlp = spacy.load(model_name)
+    ct = EnhancedCenteringTheory(nlp)
+    doc = nlp(text)
+    sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+
+    if not sentences:
+        print("No sentences found.")
         return 1
 
-def handle_info():
-    """Handle info command."""
-def handle_info():
-        from lgram import show_info
-        from lgram.utils import print_system_info
-        
-        show_info()
-        print_system_info()
-        return 0
+    print(f"Sentences: {len(sentences)}")
+    print("=" * 60)
+
+    for i, sent in enumerate(sentences):
+        st = ct.update_discourse(sent)
+        t = st.transition.value if st.transition else "?"
+        print(f"\n[{i+1}] {sent}")
+        header = f"    {t}"
+        if st.preferred_center:
+            header += f"  |  Cp: {st.preferred_center}"
+        if st.backward_center:
+            header += f"  |  Cb: {st.backward_center}"
+        print(header)
+        if verbose and st.forward_centers:
+            print(f"    Cf: {st.forward_centers}")
+
+    result = ct.evaluate_coherence(sentences)
+    print(f"\n{'=' * 60}")
+    print(f"Coherence: {result['coherence_score']:.3f}")
+    for label, pct in result["transition_distribution"].items():
+        bar = "=" * int(pct * 30)
+        print(f"  {label:14s} {bar} {pct:.0%}")
+    return 0
+
+
+def _analyze(args) -> int:
+    return _centering_analysis(_read(args), args.model, args.verbose)
+
+
+def _score(args) -> int:
+    import spacy
+    from lgram import EnhancedCenteringTheory
+
+    text = _read(args)
+    nlp = spacy.load(args.model)
+    ct = EnhancedCenteringTheory(nlp)
+    doc = nlp(text)
+    sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+
+    result = ct.evaluate_coherence(sentences)
+    print(f"Coherence: {result['coherence_score']:.3f}  ({len(sentences)} sentences)")
+    for label, pct in result["transition_distribution"].items():
+        print(f"  {label}: {pct:.0%}")
+    return 0
+
+
+def _clauses(args) -> int:
+    import spacy
+    from lgram import EnhancedCenteringTheory
+
+    text = _read(args)
+    nlp = spacy.load(args.model)
+    ct = EnhancedCenteringTheory(nlp)
+
+    doc = nlp(text)
+    for sent in doc.sents:
+        sent_text = sent.text.strip()
+        if not sent_text:
+            continue
+        clauses_data = ct.extract_clauses(sent_text)
+        if len(clauses_data) < 2:
+            print(f"[1 clause, skipping] {sent_text}")
+            continue
+
+        print(f"Sentence: {sent_text}")
+        print(f"  Clauses found: {len(clauses_data)}")
+        for clause_text, ctype in clauses_data:
+            print(f"    [{ctype}] {clause_text}")
+
+        result = ct.analyze_intra_sentential(sent_text)
+        print(f"  Intra-sentential coherence: {result['coherence_score']:.3f}")
+        for t in result["transitions"]:
+            print(f"    {t['transition']:12s}  Cp={t['cp'] or '-':8s}  Cb={t['cb'] or '-'}  [{t['clause']}]")
+        print()
+    return 0
+
+
+def _full(args) -> int:
+    import spacy
+    from lgram import EnhancedCenteringTheory
+
+    text = _read(args)
+    nlp = spacy.load(args.model)
+    ct = EnhancedCenteringTheory(nlp)
+
+    result = ct.analyze_full(text)
+
+    print(f"Sentence count: {result['sentence_count']}")
+    print(f"Inter-sentential coherence: {result['inter_sentential']['coherence_score']:.3f}")
+    print(f"  {result['inter_sentential']['transition_distribution']}")
+    print()
+
+    for i, intra in enumerate(result["intra_sentential"]):
+        sent = intra["sentence"]
+        score = intra["coherence_score"]
+        clauses = intra["clause_count"]
+        if clauses >= 2:
+            print(f"  [{i+1}] {sent[:60]}{'...' if len(sent)>60 else ''}")
+            print(f"       clauses={clauses}  coherence={score:.3f}")
+            for t in intra["transitions"]:
+                print(f"         {t['transition']:12s}  {t['clause'][:40]}")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (ValueError, FileNotFoundError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
     except ImportError as e:
-        print(f"Error: Could not import Lgram package: {e}")
-        return 1
-
-def handle_generate(args):
-    """Handle generate command."""
-def handle_generate(args):
-        from lgram import create_language_model
-        
-        print("🚀 Initializing Centering-Lgram model...")
-        model = create_language_model()
-        
-        print(f"📝 Generating text from: '{args.input}'")
-        
-        input_words = args.input.strip().split()
-        
-        if args.centering:
-            text = model.generate_text_with_centering(
-                num_sentences=args.sentences,
-                input_words=input_words,
-                length=args.length
-            )
-        else:
-            text = model.generate_text(
-                num_sentences=args.sentences,
-                input_words=input_words,
-                length=args.length,
-                use_progress_bar=args.progress
-            )
-        
-        if args.correct:
-            print("🔧 Applying grammar correction...")
-            text = model.correct_grammar_t5(text)
-        
-        # Format output
-        from lgram.utils import format_generated_text
-        formatted_text = format_generated_text(text)
-        
-        if args.output:
-            with open(args.output, 'w', encoding='utf-8') as f:
-                f.write(formatted_text)
-            print(f"✅ Text saved to: {args.output}")
-        else:
-            print("\n" + "="*60)
-            print("📖 Generated Text:")
-            print("="*60)
-            print(formatted_text)
-            print("="*60)
-        
-        return 0
-        
-    except Exception as e:
-        print(f"❌ Error generating text: {e}")
-        return 1
-
-def handle_train(args):
-    """Handle train command."""
-def handle_train(args):
-        from lgram import EnhancedLanguageModel, TextLoader
-        
-        print(f"📚 Loading training text from: {args.text_file}")
-        
-        if not os.path.exists(args.text_file):
-            print(f"❌ Error: File not found: {args.text_file}")
-            return 1
-        
-        text = TextLoader.load_text_from_file(args.text_file)
-        if not text:
-            print("❌ Error: Could not load text from file")
-            return 1
-        
-        print(f"🧠 Training {args.n_gram}-gram model...")
-        model = EnhancedLanguageModel(text, n=args.n_gram)
-        
-        if args.model_file:
-            model.save_model(args.model_file)
-            print(f"✅ Model saved to: {args.model_file}")
-        else:
-            print("✅ Model trained successfully (not saved)")
-        
-        return 0
-        
-    except Exception as e:
-        print(f"❌ Error training model: {e}")
-        return 1
-
-if __name__ == '__main__':
-    sys.exit(main())
+        print(f"Dependency missing: {e}", file=sys.stderr)
+        sys.exit(1)

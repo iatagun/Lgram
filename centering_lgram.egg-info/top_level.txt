@@ -1,4 +1,0 @@
-dist
-lgram
-models
-tests

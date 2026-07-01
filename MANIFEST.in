@@ -1,2 +1,4 @@
-include *
-recursive-include * *
+include README.md LICENSE CHANGELOG.md
+recursive-include lgram *.py
+recursive-include tests *.py
+exclude setup.py
