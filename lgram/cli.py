@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CLI for Centering-Lgram: Discourse coherence analysis with Centering Theory.
+CLI for Centering-Lgram: Discourse cohesion analysis with Centering Theory.
 """
 
 import argparse
@@ -11,7 +11,7 @@ from typing import Optional
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Centering-Lgram: Discourse coherence analysis",
+        description="Centering-Lgram: Discourse cohesion analysis",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -139,9 +139,9 @@ def _centering_analysis(text: str, model_name: str, verbose: bool) -> int:
         if verbose and st.forward_centers:
             print(f"    Cf: {st.forward_centers}")
 
-    result = ct.evaluate_coherence(sentences)
+    result = ct.evaluate_cohesion(sentences)
     print(f"\n{'=' * 60}")
-    print(f"Coherence: {result['coherence_score']:.3f}")
+    print(f"Cohesion: {result['cohesion_score']:.3f}")
     for label, pct in result["transition_distribution"].items():
         bar = "=" * int(pct * 30)
         print(f"  {label:14s} {bar} {pct:.0%}")
@@ -162,8 +162,8 @@ def _score(args) -> int:
     doc = nlp(text)
     sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
 
-    result = ct.evaluate_coherence(sentences)
-    print(f"Coherence: {result['coherence_score']:.3f}  ({len(sentences)} sentences)")
+    result = ct.evaluate_cohesion(sentences)
+    print(f"Cohesion: {result['cohesion_score']:.3f}  ({len(sentences)} sentences)")
     for label, pct in result["transition_distribution"].items():
         print(f"  {label}: {pct:.0%}")
     return 0
@@ -193,7 +193,7 @@ def _clauses(args) -> int:
             print(f"    [{ctype}] {clause_text}")
 
         result = ct.analyze_intra_sentential(sent_text)
-        print(f"  Intra-sentential coherence: {result['coherence_score']:.3f}")
+        print(f"  Intra-sentential cohesion: {result['cohesion_score']:.3f}")
         for t in result["transitions"]:
             print(f"    {t['transition']:12s}  Cp={t['cp'] or '-':8s}  Cb={t['cb'] or '-'}  [{t['clause']}]")
         print()
@@ -211,7 +211,7 @@ def _full(args) -> int:
     result = ct.analyze_full(text)
 
     print(f"Sentence count: {result['sentence_count']}")
-    print(f"Inter-sentential coherence: {result['inter_sentential']['coherence_score']:.3f}")
+    print(f"Inter-sentential cohesion: {result['inter_sentential']['cohesion_score']:.3f}")
     print(f"  {result['inter_sentential']['transition_distribution']}")
     print()
 

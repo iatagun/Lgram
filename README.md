@@ -1,6 +1,8 @@
 # Centering-Lgram
 
-Discourse coherence analysis based on **Centering Theory** (Grosz, Joshi, and Weinstein, 1983). A specialized NLP library for analyzing how topics flow and shift across sentences and within complex clauses.
+Discourse cohesion analysis based on **Centering Theory** (Grosz, Joshi, and Weinstein, 1983). A specialized NLP library for analyzing how entities and topics are tracked across sentences via grammatical and lexical devices — pronouns, repetitions, and entity continuity.
+
+> **Note:** In linguistics, _cohesion_ (bağdaşıklık) refers to surface-level grammatical and lexical links within text, while _coherence_ (tutarlılık) refers to deeper semantic/conceptual unity. Centering Theory primarily models cohesion.
 
 [![PyPI](https://img.shields.io/badge/pypi-centering--lgram-blue)](https://pypi.org/project/centering-lgram/)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
@@ -47,7 +49,7 @@ from lgram import EnhancedCenteringTheory
 nlp = spacy.load("en_core_web_sm")
 ct = EnhancedCenteringTheory(nlp)
 
-# Analyze transitions between sentences
+# Analyze entity tracking between sentences
 s1 = ct.update_discourse("John went to the store.")
 s2 = ct.update_discourse("He bought milk.")
 s3 = ct.update_discourse("The milk was fresh.")
@@ -60,7 +62,7 @@ print(f"U2->U3: {s3.transition.value}")   # Retain
 
 ## Core Concepts
 
-Centering Theory models discourse coherence through three types of discourse centers:
+Centering Theory models discourse cohesion through three types of discourse centers:
 
 | Center | Notation | Definition |
 |--------|----------|------------|
@@ -70,13 +72,13 @@ Centering Theory models discourse coherence through three types of discourse cen
 
 The relationship between these centers defines five transition types:
 
-| Transition | Rule | Coherence |
-|------------|------|-----------|
+| Transition | Rule | Cohesion |
+|------------|------|----------|
 | **Establish** | First utterance, no previous center | — |
 | **Continue** | Cb(Ui) = Cb(Ui-1) = Cp(Ui) | Best |
-| **Retain** | Cb(Ui) = Cb(Ui-1) ≠ Cp(Ui) | Good |
-| **Smooth-Shift** | Cb(Ui) ≠ Cb(Ui-1) = Cp(Ui) | Acceptable |
-| **Rough-Shift** | Cb(Ui) ≠ Cb(Ui-1) ≠ Cp(Ui) | Poor |
+| **Retain** | Cb(Ui) = Cb(Ui-1) != Cp(Ui) | Good |
+| **Smooth-Shift** | Cb(Ui) != Cb(Ui-1) = Cp(Ui) | Acceptable |
+| **Rough-Shift** | Cb(Ui) != Cb(Ui-1) != Cp(Ui) | Poor |
 
 ---
 
@@ -115,18 +117,18 @@ print(state.backward_center)   # 'john'
 print(state.transition)        # TransitionType.CONTINUE
 ```
 
-#### `evaluate_coherence(utterances: List[str]) -> Dict[str, Any]`
+#### `evaluate_cohesion(utterances: List[str]) -> Dict[str, Any]`
 
 Batch-evaluate a sequence of utterances. Does NOT modify instance state.
 
 ```python
-result = ct.evaluate_coherence([
+result = ct.evaluate_cohesion([
     "John went to the store.",
     "He bought milk.",
     "The store was busy.",
     "Then John left.",
 ])
-print(result["coherence_score"])          # 0.0 – 1.0
+print(result["cohesion_score"])          # 0.0 - 1.0
 print(result["transition_distribution"])  # {Continue: 0.5, ...}
 print(result["total_transitions"])        # 4
 ```
@@ -142,7 +144,7 @@ print(centers)  # ['alice', 'bob', 'park']
 
 #### `get_coherent_next_center() -> Optional[str]`
 
-Suggest the most coherent center to continue with.
+Suggest the most cohesive center to continue with.
 
 ```python
 center = ct.get_coherent_next_center()
@@ -162,7 +164,7 @@ summary = ct.get_discourse_summary()
 
 ### Intra-sentential (Clause-Level)
 
-Analyze coherence within a single complex sentence by splitting it into clauses.
+Analyze cohesion within a single complex sentence by splitting it into clauses.
 
 ```python
 ct = EnhancedCenteringTheory(nlp)
@@ -185,14 +187,14 @@ Supported clause types: `main`, `conj` (coordinated), `advcl` (adverbial), `ccom
 
 #### `analyze_intra_sentential(sentence: str) -> Dict[str, Any]`
 
-Full clause-level analysis with transitions and coherence score.
+Full clause-level analysis with transitions and cohesion score.
 
 ```python
 result = ct.analyze_intra_sentential(
     "John went to the store because he needed milk."
 )
 print(result["clause_count"])     # 2
-print(result["coherence_score"])  # 0.0 – 1.0
+print(result["cohesion_score"])   # 0.0 - 1.0
 for t in result["transitions"]:
     print(f"{t['clause']} -> {t['transition']}")
 # John went to the store -> Establish
@@ -212,9 +214,9 @@ result = ct.analyze_full(
     "John went to the store. He bought milk because he was hungry."
 )
 print(result["sentence_count"])                 # 2
-print(result["inter_sentential"]["coherence_score"])  # sentence-level
-for intra in result["intra_sentential"]:        # per-sentence clause-level
-    print(f"  {intra['sentence']}: score={intra['coherence_score']}")
+print(result["inter_sentential"]["cohesion_score"])  # sentence-level
+for intra in result["intra_sentential"]:         # per-sentence clause-level
+    print(f"  {intra['sentence']}: score={intra['cohesion_score']}")
 ```
 
 ---
@@ -267,7 +269,7 @@ ct.discourse_history.clear()
 centering-lgram analyze --text "John went to the store. He bought milk."
 centering-lgram analyze --file document.txt --verbose
 
-# Coherence score only
+# Cohesion score only
 centering-lgram score --text "Alice met Bob. She greeted him."
 centering-lgram score --file essay.txt
 
@@ -296,14 +298,14 @@ cat document.txt | xargs centering-lgram score --text
 
 | Domain | Application |
 |--------|-------------|
-| **Linguistics Research** | Discourse analysis, coherence measurement, pronoun resolution studies |
+| **Linguistics Research** | Discourse analysis, cohesion measurement, pronoun resolution studies |
 | **Education** | Automated essay scoring, writing assistant feedback, readability analysis |
-| **LLM Evaluation** | Assess coherence of generated text from GPT, Claude, Llama etc. |
+| **LLM Evaluation** | Assess cohesion of generated text from GPT, Claude, Llama etc. |
 | **Machine Translation** | Quality control for translation discourse integrity |
-| **Summarization** | Evaluate summary-original coherence |
+| **Summarization** | Evaluate summary-original cohesion |
 | **Dialogue Systems** | Measure conversation flow naturalness |
 | **Content Quality** | Blog, news, academic writing fluency audits |
-| **Forensic Linguistics** | Statement coherence analysis |
+| **Forensic Linguistics** | Statement cohesion analysis |
 
 ---
 
@@ -378,4 +380,4 @@ Single dependency: `spacy>=3.4.0`. No PyTorch, no transformers, no NumPy.
 
 MIT License — see [LICENSE](LICENSE)
 
-Copyright (c) 2024 Ilker Atagun
+Copyright (c) 2025 Ilker Atagun

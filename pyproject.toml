@@ -8,7 +8,7 @@ version = "2.0.0"
 authors = [
     {name = "Ilker Atagun", email = "ilker.atagun@gmail.com"},
 ]
-description = "Discourse Coherence Analysis Library Based on Centering Theory"
+description = "Discourse Cohesion Analysis Library Based on Centering Theory"
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -28,13 +28,13 @@ classifiers = [
 ]
 keywords = [
     "centering theory",
-    "discourse coherence",
+    "discourse cohesion",
     "discourse analysis",
     "computational linguistics",
     "nlp",
     "natural language processing",
     "linguistics",
-    "coherence",
+    "cohesion",
 ]
 dependencies = [
     "spacy>=3.4.0",

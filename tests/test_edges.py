@@ -269,7 +269,7 @@ class TestStateIsolation(unittest.TestCase):
         ct.update_discourse("Alice went to the park.")
         ct.update_discourse("She saw Bob.")
         before = list(ct.discourse_history)
-        ct.evaluate_coherence(["Unrelated text.", "More text."])
+        ct.evaluate_cohesion(["Unrelated text.", "More text."])
         self.assertEqual(len(ct.discourse_history), len(before))
         self.assertEqual(ct.discourse_history[0].utterance, before[0].utterance)
 

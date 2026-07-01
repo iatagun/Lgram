@@ -1,14 +1,18 @@
 """
-Centering-Lgram: Discourse Coherence Analysis with Centering Theory
+Centering-Lgram: Discourse Cohesion Analysis with Centering Theory
 
 A library implementing Centering Theory (Merkezleme Kurami) by Grosz, Joshi,
-and Weinstein for analyzing and evaluating discourse coherence.
+and Weinstein for analyzing entity tracking and discourse cohesion.
 
-Key Features:
+Centering Theory models surface-level discourse cohesion through:
 - Forward center (Cf) computation with grammatical salience weighting
 - Backward center (Cb) inference with pronoun resolution
-- Transition classification: Continue, Retain, Smooth-Shift, Rough-Shift
-- Discourse coherence scoring
+- Transition classification: Establish, Continue, Retain, Smooth-Shift, Rough-Shift
+- Cohesion scoring based on transition distributions
+
+Note: In linguistics, cohesion (bagdasiklik) concerns surface grammatical/lexical
+links, while coherence (tutarlilik) concerns deeper semantic unity. This library
+implements local discourse cohesion as modeled by Centering Theory.
 """
 
 __version__ = "2.0.0"

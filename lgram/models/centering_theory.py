@@ -1,8 +1,8 @@
 """
 Centering Theory Implementation (Grosz, Joshi, Weinstein 1983/1995)
 
-Provides discourse coherence analysis through center computation,
-transition classification, and coherence scoring.
+Provides discourse cohesion analysis through center computation,
+transition classification, and cohesion scoring.
 
 Note: save()/load() use pickle for serialization. Only load files
 from trusted sources, as pickle can execute arbitrary code.
@@ -395,8 +395,7 @@ class EnhancedCenteringTheory:
             return last.forward_centers[0]
         return None
 
-    def evaluate_coherence(self, utterance_sequence: List[str]) -> Dict[str, Any]:
-        # preserve existing state
+    def evaluate_cohesion(self, utterance_sequence: List[str]) -> Dict[str, Any]:
         saved = list(self.discourse_history)
         self.discourse_history = []
 
@@ -407,17 +406,18 @@ class EnhancedCenteringTheory:
                 transition_counts[state.transition] = \
                     transition_counts.get(state.transition, 0) + 1
 
-        total = sum(transition_counts.values())
-
-        # restore
         self.discourse_history = saved
 
         score, dist = self._score_transitions(transition_counts)
         return {
-            "coherence_score": score,
+            "cohesion_score": score,
             "transition_distribution": dist,
             "total_transitions": sum(transition_counts.values()),
         }
+
+    def evaluate_coherence(self, utterance_sequence: List[str]) -> Dict[str, Any]:
+        """Deprecated: use evaluate_cohesion instead."""
+        return self.evaluate_cohesion(utterance_sequence)
 
     def get_discourse_summary(self) -> Dict[str, Any]:
         if not self.discourse_history:
@@ -519,14 +519,14 @@ class EnhancedCenteringTheory:
         return result
 
     def analyze_intra_sentential(self, sentence: str) -> Dict[str, Any]:
-        """Analyze clause-level coherence within a single complex sentence."""
+        """Analyze clause-level cohesion within a single complex sentence."""
         clauses = self.extract_clauses(sentence)
         if len(clauses) < 2:
             return {
                 "sentence": sentence,
                 "clause_count": len(clauses),
                 "transitions": [],
-                "coherence_score": 1.0,
+                "cohesion_score": 1.0,
             }
 
         saved = list(self.discourse_history)
@@ -555,12 +555,12 @@ class EnhancedCenteringTheory:
             "sentence": sentence,
             "clause_count": len(clauses),
             "transitions": transitions,
-            "coherence_score": round(score, 4),
+            "cohesion_score": round(score, 4),
             "transition_distribution": dist,
         }
 
     def analyze_full(self, text: str) -> Dict[str, Any]:
-        """Analyze both inter-sentential and intra-sentential coherence."""
+        """Analyze both inter-sentential and intra-sentential cohesion."""
         doc = self.nlp(text)
         sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
 
@@ -573,7 +573,7 @@ class EnhancedCenteringTheory:
         self.discourse_history = []
         for sent in sentences:
             self.update_discourse(sent)
-        inter_result = self.evaluate_coherence(sentences)
+        inter_result = self.evaluate_cohesion(sentences)
         self.discourse_history = saved
 
         return {

@@ -59,23 +59,23 @@ class TestCentering(unittest.TestCase):
         state = ct.update_discourse("He bought milk.")
         self.assertEqual(state.transition, TransitionType.CONTINUE)
 
-    def test_coherence_scoring(self):
+    def test_cohesion_scoring(self):
         import spacy
         from lgram import EnhancedCenteringTheory
 
         nlp = spacy.load("en_core_web_sm")
         ct = EnhancedCenteringTheory(nlp)
 
-        result = ct.evaluate_coherence([
+        result = ct.evaluate_cohesion([
             "John went to the store.",
             "He bought milk.",
             "The store was busy.",
             "Then John left.",
         ])
-        self.assertIn("coherence_score", result)
+        self.assertIn("cohesion_score", result)
         self.assertIn("transition_distribution", result)
-        self.assertGreaterEqual(result["coherence_score"], 0.0)
-        self.assertLessEqual(result["coherence_score"], 1.0)
+        self.assertGreaterEqual(result["cohesion_score"], 0.0)
+        self.assertLessEqual(result["cohesion_score"], 1.0)
 
     def test_evaluate_does_not_destroy_state(self):
         import spacy
@@ -89,7 +89,7 @@ class TestCentering(unittest.TestCase):
 
         before = len(ct.discourse_history)
 
-        ct.evaluate_coherence([
+        ct.evaluate_cohesion([
             "Unrelated text about weather.",
             "It was sunny outside.",
         ])
@@ -160,7 +160,7 @@ class TestCentering(unittest.TestCase):
         result = ct.analyze_intra_sentential(
             "John went to the store because he needed milk."
         )
-        self.assertIn("coherence_score", result)
+        self.assertIn("cohesion_score", result)
         self.assertIn("transitions", result)
         self.assertGreaterEqual(result["clause_count"], 2)
 
