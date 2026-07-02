@@ -508,8 +508,9 @@ class EnhancedCenteringTheory:
     # ------------------------------------------------------------------
 
     def _build_state(self, utterance: str) -> CenteringState:
-        cf, entity_map = self.compute_forward_centers(utterance)
-        cb = self.compute_backward_center(cf, entity_map, utterance)
+        doc = self.nlp(utterance)
+        cf, entity_map = self._compute_centers_from_doc(doc)
+        cb = self._compute_backward_from_doc(cf, entity_map, doc)
         cp = cf[0] if cf else None
         return CenteringState(
             utterance=utterance,
@@ -518,6 +519,75 @@ class EnhancedCenteringTheory:
             preferred_center=cp,
             _entity_map=entity_map,
         )
+
+    def _compute_centers_from_doc(
+        self, doc
+    ) -> Tuple[List[str], Dict[str, DiscourseEntity]]:
+        token_count = len(doc)
+        centers: List[Tuple[str, float, int]] = []
+        entity_map: Dict[str, DiscourseEntity] = {}
+        for token in doc:
+            if not self._is_center_candidate(token):
+                continue
+            key = token.text.lower()
+            if key not in entity_map:
+                g = self._resolve_gender(token)
+                is_p = token.ent_type_ == "PERSON" or g in ("male", "female")
+                entity_map[key] = DiscourseEntity(
+                    text=token.text, dep=token.dep_, pos=token.pos_,
+                    ent_type=token.ent_type_, tag=token.tag_,
+                    is_plural=token.tag_ in ("NNS", "NNPS"),
+                    is_person=is_p, gender=g, is_female=g == "female",
+                )
+            salience = self._calculate_salience(token, token_count)
+            centers.append((key, salience, token.i))
+        centers.sort(key=lambda x: (-x[1], x[2]))
+        seen, unique = set(), []
+        for c, _, _ in centers:
+            if c not in seen:
+                seen.add(c); unique.append(c)
+        return unique[:5], entity_map
+
+    def _compute_backward_from_doc(
+        self, current_cf: List[str], current_entity_map: Dict[str, DiscourseEntity], doc,
+    ) -> Optional[str]:
+        if not self.discourse_history or not current_cf:
+            return None
+        prev_state = self.discourse_history[-1]
+        prev_cf = prev_state.forward_centers
+        prev_map = prev_state._entity_map
+
+        # possessive pronouns in the doc
+        for token in doc:
+            if token.pos_ == "PRON":
+                token_lower = token.text.lower()
+                if token_lower in self._person_pronouns | self._object_pronouns:
+                    for pc in prev_cf:
+                        if self._pronoun_matches_entity(token_lower, pc, prev_map):
+                            ent = prev_map.get(pc)
+                            if ent and ent.is_person:
+                                return pc
+
+        for pc in prev_cf:
+            if pc in current_cf:
+                return pc
+        for cc in current_cf:
+            cc_lower = cc.lower()
+            if cc_lower in self._all_pronouns:
+                for pc in prev_cf:
+                    if self._pronoun_matches_entity(cc_lower, pc, prev_map):
+                        return pc
+        for pc in prev_cf:
+            for cc in current_cf:
+                if self._are_coreferent_cached(pc, cc, prev_map, current_entity_map):
+                    return pc
+        for cc in current_cf:
+            cc_lower = cc.lower()
+            if cc_lower in self._plural_pronouns:
+                persons = [pc for pc in prev_cf if prev_map.get(pc) and prev_map[pc].is_person]
+                if len(persons) >= 2:
+                    return persons[0]
+        return None
 
     def analyze_utterance(self, utterance: str) -> CenteringState:
         state = self._build_state(utterance)

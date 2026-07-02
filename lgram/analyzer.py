@@ -518,46 +518,25 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def lexical_chain_score(self, text: str, threshold: float = 0.5) -> float:
-        """Score lexical cohesion via noun-noun similarity chains."""
+        """Score lexical cohesion via noun overlap across adjacent sentences."""
         doc = self.nlp(text)
         sents = [s for s in doc.sents if s.text.strip()]
         if len(sents) < 2:
             return 1.0
 
-        # extract nouns per sentence
+        # extract nouns per sentence (use doc directly, no re-parse)
         sent_nouns: List[List[str]] = []
         for sent in sents:
             nouns = [t.text.lower() for t in sent
                     if t.pos_ in ("NOUN", "PROPN") and not t.is_stop]
             sent_nouns.append(nouns)
 
-        # build chains: adjacent sentences with shared/similar nouns
         chain_lengths: List[int] = []
         current_chain = 0
         for i in range(1, len(sent_nouns)):
-            prev_nouns = set(sent_nouns[i - 1])
-            curr_nouns = set(sent_nouns[i])
-
-            # direct overlap
-            if prev_nouns & curr_nouns:
-                current_chain += 1
-                continue
-
-            # vector similarity
-            matched = False
-            for pn in prev_nouns:
-                for cn in curr_nouns:
-                    try:
-                        sim = self.nlp(pn).similarity(self.nlp(cn))
-                        if sim >= threshold:
-                            matched = True
-                            break
-                    except Exception:
-                        pass
-                if matched:
-                    break
-
-            if matched:
+            prev_set = set(sent_nouns[i - 1])
+            curr_set = set(sent_nouns[i])
+            if prev_set & curr_set:
                 current_chain += 1
             else:
                 if current_chain > 0:
@@ -566,7 +545,6 @@ class TextAnalyzer:
 
         if current_chain > 0:
             chain_lengths.append(current_chain)
-
         if not chain_lengths:
             return 0.0
 
