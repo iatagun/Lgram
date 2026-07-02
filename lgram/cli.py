@@ -21,6 +21,7 @@ Examples:
   centering-lgram score --text "Alice met Bob. She greeted him."
   centering-lgram info
   centering-lgram version
+""",
     )
 
     subparsers = parser.add_subparsers(dest="command")
