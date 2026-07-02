@@ -34,7 +34,7 @@ Examples:
     )
     analyze.add_argument("--verbose", "-v", action="store_true")
 
-    score = subparsers.add_parser("score", help="Coherence score only")
+    score = subparsers.add_parser("score", help="Cohesion score only")
     score.add_argument("--text", "-t", type=str)
     score.add_argument("--file", "-f", type=Path)
     score.add_argument(
@@ -217,11 +217,11 @@ def _full(args) -> int:
 
     for i, intra in enumerate(result["intra_sentential"]):
         sent = intra["sentence"]
-        score = intra["coherence_score"]
+        score = intra["cohesion_score"]
         clauses = intra["clause_count"]
         if clauses >= 2:
             print(f"  [{i+1}] {sent[:60]}{'...' if len(sent)>60 else ''}")
-            print(f"       clauses={clauses}  coherence={score:.3f}")
+            print(f"       clauses={clauses}  cohesion={score:.3f}")
             for t in intra["transitions"]:
                 print(f"         {t['transition']:12s}  {t['clause'][:40]}")
     return 0
