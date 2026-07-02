@@ -281,26 +281,26 @@ class EnhancedCenteringTheory:
             if ent.is_person and ent.gender == "" and entity_text_lower not in self._female_pronouns:
                 return True
 
-        if pronoun in self._female_pronouns:
+        elif pronoun in self._female_pronouns:
             if ent.gender == "female":
                 return True
             if ent.is_person and ent.gender == "" and entity_text_lower not in self._male_pronouns:
                 return True
 
-        if pronoun in self._person_pronouns:
-            if ent.is_person and ent.gender == "":
-                return True
-            if entity_text_lower in self._person_pronouns:
-                return True
+        elif pronoun in self._object_pronouns:
+            return not ent.is_person and entity_text_lower not in self._person_pronouns
 
-        if pronoun in self._object_pronouns:
-            if not ent.is_person and entity_text_lower not in self._person_pronouns:
-                return True
-
-        if pronoun in self._plural_pronouns:
+        elif pronoun in self._plural_pronouns:
             if ent.is_plural:
                 return True
             if entity_text_lower in self._plural_pronouns:
+                return True
+
+        # pronoun chain: match any person pronoun to any person pronoun
+        if pronoun in self._person_pronouns:
+            if entity_text_lower in self._person_pronouns:
+                return True
+            if ent.is_person and ent.gender == "":
                 return True
 
         return False
@@ -480,21 +480,22 @@ class EnhancedCenteringTheory:
         saved = list(self.discourse_history)
         self.discourse_history = []
 
-        transition_counts: Dict[TransitionType, int] = {}
-        for u in utterance_sequence:
-            state = self.update_discourse(u)
-            if state.transition:
-                transition_counts[state.transition] = \
-                    transition_counts.get(state.transition, 0) + 1
+        try:
+            transition_counts: Dict[TransitionType, int] = {}
+            for u in utterance_sequence:
+                state = self.update_discourse(u)
+                if state.transition:
+                    transition_counts[state.transition] = \
+                        transition_counts.get(state.transition, 0) + 1
 
-        self.discourse_history = saved
-
-        score, dist = self._score_transitions(transition_counts)
-        return {
-            "cohesion_score": score,
-            "transition_distribution": dist,
-            "total_transitions": sum(transition_counts.values()),
-        }
+            score, dist = self._score_transitions(transition_counts)
+            return {
+                "cohesion_score": score,
+                "transition_distribution": dist,
+                "total_transitions": sum(transition_counts.values()),
+            }
+        finally:
+            self.discourse_history = saved
 
     def evaluate_coherence(self, utterance_sequence: List[str]) -> Dict[str, Any]:
         """Deprecated: use evaluate_cohesion instead."""
@@ -668,64 +669,61 @@ class EnhancedCenteringTheory:
     # ------------------------------------------------------------------
 
     def detect_boundaries(self, utterance_sequence: List[str]) -> List[int]:
-        """
-        Detect discourse segment boundaries using centering patterns.
-        Returns list of utterance indices (0-based) where a new segment begins.
-        A boundary is triggered by: ROUGH-SHIFT + no Cb found.
-        """
         saved = list(self.discourse_history)
         self.discourse_history = []
 
-        boundaries: List[int] = [0]  # first utterance always starts a segment
-        recent_rough: int = 0
+        try:
+            boundaries: List[int] = [0]
+            recent_rough: int = 0
 
-        for i, u in enumerate(utterance_sequence):
-            state = self.update_discourse(u)
-            t = state.transition
-            if t == TransitionType.ROUGH_SHIFT:
-                recent_rough += 1
-                if state.backward_center is None and recent_rough >= 2:
-                    boundaries.append(i)
-                    recent_rough = 0
-            elif t == TransitionType.CONTINUE:
-                recent_rough = max(0, recent_rough - 1)
-            else:
-                recent_rough = max(0, recent_rough - 1)
+            for i, u in enumerate(utterance_sequence):
+                state = self.update_discourse(u)
+                t = state.transition
+                if t == TransitionType.ROUGH_SHIFT:
+                    recent_rough += 1
+                    if state.backward_center is None and recent_rough >= 2:
+                        boundaries.append(i)
+                        recent_rough = 0
+                elif t == TransitionType.CONTINUE:
+                    recent_rough = max(0, recent_rough - 1)
+                else:
+                    recent_rough = max(0, recent_rough - 1)
 
-        self.discourse_history = saved
-        return boundaries
+            return boundaries
+        finally:
+            self.discourse_history = saved
 
     # ------------------------------------------------------------------
     # Annotated text output
     # ------------------------------------------------------------------
 
     def annotate_text(self, text: str) -> List[Dict[str, Any]]:
-        """Return structured annotation for each utterance in text."""
         doc = self.nlp(text)
         sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
 
         saved = list(self.discourse_history)
         self.discourse_history = []
 
-        annotations: List[Dict[str, Any]] = []
-        for i, sent in enumerate(sentences):
-            state = self.update_discourse(sent)
-            annotations.append({
-                "index": i,
-                "utterance": sent,
-                "transition": state.transition.value if state.transition else None,
-                "preferred_center": state.preferred_center,
-                "backward_center": state.backward_center,
-                "forward_centers": state.forward_centers,
-                "entities": {
-                    k: {"text": v.text, "pos": v.pos, "dep": v.dep,
-                        "is_person": v.is_person, "gender": v.gender}
-                    for k, v in state._entity_map.items()
-                },
-            })
-
-        self.discourse_history = saved
-        return annotations
+        try:
+            annotations: List[Dict[str, Any]] = []
+            for i, sent in enumerate(sentences):
+                state = self.update_discourse(sent)
+                annotations.append({
+                    "index": i,
+                    "utterance": sent,
+                    "transition": state.transition.value if state.transition else None,
+                    "preferred_center": state.preferred_center,
+                    "backward_center": state.backward_center,
+                    "forward_centers": state.forward_centers,
+                    "entities": {
+                        k: {"text": v.text, "pos": v.pos, "dep": v.dep,
+                            "is_person": v.is_person, "gender": v.gender}
+                        for k, v in state._entity_map.items()
+                    },
+                })
+            return annotations
+        finally:
+            self.discourse_history = saved
 
     # ------------------------------------------------------------------
     # Validity checking
@@ -810,6 +808,8 @@ class EnhancedCenteringTheory:
                 "salience_weights": self.salience_weights,
                 "pos_weights": self.pos_weights,
                 "history_limit": self.history_limit,
+                "similarity_threshold": self.similarity_threshold,
+                "gender_lookup": self._gender_lookup,
             }, f)
 
     def load(self, path: str) -> None:
@@ -819,3 +819,9 @@ class EnhancedCenteringTheory:
         self.salience_weights = data.get("salience_weights", self.salience_weights)
         self.pos_weights = data.get("pos_weights", self.pos_weights)
         self.history_limit = data.get("history_limit", self.history_limit)
+        self.similarity_threshold = data.get("similarity_threshold", 0.65)
+        self._gender_lookup = data.get("gender_lookup", self._gender_lookup)
+
+    def reset(self) -> None:
+        """Clear discourse history."""
+        self.discourse_history.clear()
