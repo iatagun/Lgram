@@ -895,11 +895,29 @@ class EnhancedCenteringTheory:
         try:
             lines: List[str] = []
             max_len = max((len(s) for s in sentences), default=40)
+            transition_counts: Dict[TransitionType, int] = {}
+            rough_streak: int = 0
+            boundary_count: int = 1
 
             for i, sent in enumerate(sentences):
                 state = self.update_discourse(sent)
                 symbol = self._viz_symbols.get(state.transition, "?")
                 t_name = state.transition.value if state.transition else "?"
+                t = state.transition
+
+                if t:
+                    transition_counts[t] = transition_counts.get(t, 0) + 1
+
+                # boundary detection inline
+                if t == TransitionType.ROUGH_SHIFT:
+                    rough_streak += 1
+                    if state.backward_center is None and rough_streak >= 2:
+                        boundary_count += 1
+                        rough_streak = 0
+                elif t == TransitionType.CONTINUE:
+                    rough_streak = max(0, rough_streak - 1)
+                else:
+                    rough_streak = max(0, rough_streak - 1)
 
                 # utterance line
                 display = sent if len(sent) <= max_len else sent[:max_len - 3] + "..."
@@ -914,13 +932,13 @@ class EnhancedCenteringTheory:
                 if i < len(sentences) - 1:
                     lines.append(f"  {'':12s} |")
 
-            result = self.evaluate_cohesion(sentences)
-            score = result["cohesion_score"]
+            score, _ = self._score_transitions(transition_counts)
             bar_len = int(score * 40)
             bar = "#" * bar_len + "-" * (40 - bar_len)
 
             lines.append(f"\n  Cohesion: {bar} {score:.3f}")
-            lines.append(f"  Segments: {len(self.discourse_history) // 3 + 1} estimate")
+            lines.append(f"  Segments: {boundary_count}")
+            lines.append(f"  Transitions: {len(sentences)} sentences")
 
             return "\n".join(lines)
         finally:
@@ -963,7 +981,8 @@ class EnhancedCenteringTheory:
     # ------------------------------------------------------------------
 
     def stream_start(self) -> None:
-        """Begin a streaming session. Resets discourse history."""
+        """Begin a streaming session. Saves existing history, resets for stream."""
+        self._stream_saved = list(self.discourse_history)
         self.discourse_history = []
         self._stream_stats: Dict[str, Any] = {
             "sentences_processed": 0,
@@ -997,12 +1016,17 @@ class EnhancedCenteringTheory:
         }
 
     def stream_flush(self) -> Dict[str, Any]:
-        """End the streaming session. Returns final summary."""
+        """End the streaming session. Restores previous history. Returns final summary."""
         stats = getattr(self, "_stream_stats", None)
         if stats is None:
             return {"error": "no active stream"}
 
         score, dist = self._score_transitions(stats["transition_counts"])
+
+        if hasattr(self, "_stream_saved"):
+            self.discourse_history = self._stream_saved
+            del self._stream_saved
+
         return {
             "total_sentences": stats["sentences_processed"],
             "final_cohesion": score,
