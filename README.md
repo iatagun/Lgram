@@ -41,13 +41,16 @@ ta = TextAnalyzer(use_sentence_transformers=True)
 
 ## Model Comparison
 
-| Model | Size | Cohesion* | Continue | Rough-Shift |
-|---|---|---|---|---|
-| `en_core_web_sm` (no vectors) | 12 MB | 0.500 | 14% | 71% |
-| `en_core_web_md` (GloVe 300d) | 40 MB | **0.943** | 57% | 0% |
-| `all-MiniLM-L6-v2` (384d) | 80 MB | **0.914** | 57% | 0% |
+*25 texts across 5 domains (news, academic, dialogue, literary, blog). Same threshold (0.65) for fair comparison.*
 
-*\*Same news article, 7 sentences. Threshold auto-adjusted per model.*
+| Model | Size | Cohesion | Continue | Rough-Shift |
+|---|---|---|---|---|
+| `en_core_web_sm` (no vectors) | 12 MB | 0.57 | 17% | 60% |
+| `en_core_web_md` (GloVe 300d) | 40 MB | **0.62** | 19% | **50%** |
+
+md consistently reduces Rough-Shift by 5-22% across all domains. The improvement is real but modest at the same threshold.
+
+*For maximum accuracy, lower the threshold with md/lg/MiniLM models (0.35 recommended). This can reduce Rough-Shift to near-zero on well-written texts.*
 
 ---
 
