@@ -142,6 +142,21 @@ class TextAnalyzer:
         paragraphs = self._split_paragraphs(text, doc)
         ct = self._make_ct()
 
+        all_sentences_flat = [s for p in paragraphs for s in p]
+        if len(all_sentences_flat) < 2:
+            return TextReport(
+                text=text,
+                sentence_count=len(all_sentences_flat),
+                paragraph_count=len(paragraphs),
+                word_count=len(text.split()),
+                overall_cohesion=0.0,
+                transition_distribution={},
+                paragraphs=[],
+                segments=[0] if all_sentences_flat else [],
+                quality="insufficient_data",
+                metadata={"model": self.model_name, "warning": "Need at least 2 sentences"},
+            )
+
         paragraph_results: List[ParagraphAnalysis] = []
         all_sentences: List[SentenceAnalysis] = []
         all_transitions: Dict[TransitionType, int] = {}
