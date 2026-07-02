@@ -78,6 +78,7 @@ class TextAnalyzer:
         similarity_threshold: float = 0.65,
         gender_map: Optional[Dict[str, str]] = None,
         history_limit: int = 20,
+        use_sentence_transformers: bool = False,
     ):
         self.nlp = spacy.load(model)
         self.model_name = model
@@ -86,9 +87,33 @@ class TextAnalyzer:
             "gender_map": gender_map,
             "history_limit": history_limit,
         }
+        self._st_model = None
+        if use_sentence_transformers:
+            try:
+                from sentence_transformers import SentenceTransformer
+                self._st_model = SentenceTransformer("all-MiniLM-L6-v2")
+            except ImportError:
+                pass
 
     def _make_ct(self) -> EnhancedCenteringTheory:
         return EnhancedCenteringTheory(self.nlp, **self._ct_kwargs)
+
+    def _sentence_similarity(self, text_a: str, text_b: str) -> float:
+        """Sentence-to-sentence similarity, using transformers if available."""
+        if self._st_model:
+            try:
+                emb = self._st_model.encode([text_a, text_b])
+                a, b = emb[0], emb[1]
+                return float(sum(x*y for x, y in zip(a, b)) / (
+                    math.sqrt(sum(x*x for x in a)) * math.sqrt(sum(x*x for x in b))
+                ))
+            except Exception:
+                pass
+        da = self.nlp(text_a)
+        db = self.nlp(text_b)
+        if da.vector_norm and db.vector_norm:
+            return float(da.similarity(db))
+        return 0.5
 
     # ------------------------------------------------------------------
     # Single text analysis
@@ -336,12 +361,8 @@ class TextAnalyzer:
 
         # similarity between adjacent sentences
         sims: List[float] = []
-        for i in range(len(sent_vecs) - 1):
-            a, b = sent_vecs[i], sent_vecs[i + 1]
-            if a is not None and b is not None and (a_norm := math.sqrt(sum(x*x for x in a))) and (b_norm := math.sqrt(sum(x*x for x in b))):
-                sims.append(sum(x*y for x, y in zip(a, b)) / (a_norm * b_norm))
-            else:
-                sims.append(0.5)
+        for i in range(len(sents) - 1):
+            sims.append(self._sentence_similarity(sents[i].text, sents[i + 1].text))
 
         # smooth
         smoothed = []
@@ -416,9 +437,7 @@ class TextAnalyzer:
                 overlap = len(set(si) & set(sj)) / max(len(set(si) | set(sj)), 1)
 
                 # vector similarity
-                di = self.nlp(sents[i])
-                dj = self.nlp(sents[j])
-                vec_sim = di.similarity(dj) if di.vector_norm and dj.vector_norm else 0.5
+                vec_sim = self._sentence_similarity(sents[i], sents[j])
 
                 weight = round(0.6 * overlap + 0.4 * vec_sim, 4)
                 adj[i][j] = weight
@@ -522,6 +541,266 @@ class TextAnalyzer:
         avg_chain = sum(chain_lengths) / len(chain_lengths)
         max_possible = len(sents) - 1
         return round(min(avg_chain / max(max_possible, 1), 1.0), 4)
+
+    # ------------------------------------------------------------------
+    # P3: Cohesion Trend (sliding window)
+    # ------------------------------------------------------------------
+
+    def cohesion_trend(
+        self, text: str, window: int = 3,
+    ) -> Dict[str, Any]:
+        """Track cohesion across text using sliding window."""
+        doc = self.nlp(text)
+        sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+        n = len(sents)
+
+        if n < window:
+            return {"windows": [], "mean": 1.0, "min": 1.0, "trend": "flat"}
+
+        scores: List[float] = []
+        for i in range(n - window + 1):
+            chunk = sents[i:i + window]
+            ct = self._make_ct()
+            ct.discourse_history = []
+            for sent in chunk:
+                ct.update_discourse(sent)
+            r = ct.evaluate_cohesion(chunk)
+            scores.append(r["cohesion_score"])
+
+        mean_score = round(sum(scores) / len(scores), 4)
+        min_score = round(min(scores), 4)
+        min_idx = scores.index(min_score)
+
+        if len(scores) >= 2:
+            slope = (scores[-1] - scores[0]) / len(scores)
+            if slope > 0.05:
+                trend = "improving"
+            elif slope < -0.05:
+                trend = "declining"
+            else:
+                trend = "stable"
+        else:
+            trend = "stable"
+
+        return {
+            "windows": [
+                {"start": i, "end": i + window - 1, "score": round(s, 4)}
+                for i, s in enumerate(scores)
+            ],
+            "mean": mean_score,
+            "min": min_score,
+            "min_window_start": min_idx,
+            "trend": trend,
+        }
+
+    # ------------------------------------------------------------------
+    # P4: Cohesion Heatmap
+    # ------------------------------------------------------------------
+
+    def cohesion_heatmap(
+        self, text: str, ascii_render: bool = True,
+    ) -> Dict[str, Any]:
+        """NxN sentence similarity matrix. Weak pairs flagged."""
+        doc = self.nlp(text)
+        sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+        n = len(sents)
+
+        if n < 2:
+            return {"matrix": [[1.0]], "weak_pairs": [], "ascii": ""}
+
+        matrix = [[0.0] * n for _ in range(n)]
+        for i in range(n):
+            matrix[i][i] = 1.0
+        for i in range(n):
+            for j in range(i + 1, n):
+                sim = self._sentence_similarity(sents[i], sents[j])
+                matrix[i][j] = round(sim, 4)
+                matrix[j][i] = round(sim, 4)
+
+        weak_pairs = []
+        for i in range(n - 1):
+            if matrix[i][i + 1] < 0.3:
+                weak_pairs.append({
+                    "sentence_a": i,
+                    "sentence_b": i + 1,
+                    "similarity": matrix[i][i + 1],
+                })
+
+        ascii_out = ""
+        if ascii_render:
+            chars = [" ", "░", "▒", "▓"]
+            lines: List[str] = []
+            for i in range(n):
+                row_chars = "".join(
+                    chars[min(3, int(matrix[i][j] * 4))] for j in range(n)
+                )
+                lines.append(f"  [{i:02d}] {row_chars}")
+            ascii_out = "\n".join(lines)
+
+        return {
+            "matrix": matrix,
+            "weak_pairs": weak_pairs,
+            "weak_count": len(weak_pairs),
+            "ascii": ascii_out,
+        }
+
+    # ------------------------------------------------------------------
+    # P5: Readability Integration
+    # ------------------------------------------------------------------
+
+    def readability_score(self, text: str) -> Dict[str, float]:
+        """Flesch Reading Ease + basic text statistics (pure Python)."""
+        words = text.split()
+        sentences = [s for s in text.replace("!", ".").replace("?", ".").split(".")
+                     if s.strip()]
+        n_words = len(words) or 1
+        n_sents = len(sentences) or 1
+
+        # syllable count (simple heuristic: count vowel groups)
+        syllables = 0
+        for word in words:
+            word = word.lower().strip(".,;:!?\"'()[]{}")
+            if not word:
+                continue
+            count = 0
+            prev_vowel = False
+            for ch in word:
+                is_vowel = ch in "aeiouy"
+                if is_vowel and not prev_vowel:
+                    count += 1
+                prev_vowel = is_vowel
+            syllables += max(count, 1)
+
+        # Flesch Reading Ease
+        flesch = 206.835 - 1.015 * (n_words / n_sents) - 84.6 * (syllables / n_words)
+        flesch = round(max(0, min(120, flesch)), 1)
+
+        avg_sent_len = round(n_words / n_sents, 1)
+        avg_word_len = round(sum(len(w) for w in words) / n_words, 1)
+
+        return {
+            "flesch_reading_ease": flesch,
+            "avg_sentence_length": avg_sent_len,
+            "avg_word_length": avg_word_len,
+            "words": n_words,
+            "sentences": n_sents,
+        }
+
+    def combined_score(self, text: str) -> float:
+        """Cohesion + readability combined quality score."""
+        r = self.analyze(text)
+        readability = self.readability_score(text)
+        read_norm = min(readability["flesch_reading_ease"] / 100.0, 1.0)
+        return round(r.overall_cohesion * 0.6 + read_norm * 0.4, 4)
+
+    # ------------------------------------------------------------------
+    # P6: Improvement Suggestions
+    # ------------------------------------------------------------------
+
+    def suggest_improvements(self, text: str) -> List[Dict[str, Any]]:
+        """Detect weak cohesion points and suggest fixes."""
+        doc = self.nlp(text)
+        sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+        ct = self._make_ct()
+
+        suggestions: List[Dict[str, Any]] = []
+        rough_count = 0
+
+        for i, sent in enumerate(sents):
+            state = ct.update_discourse(sent)
+            t = state.transition
+            if t is None:
+                continue
+
+            if t.value == "Rough-Shift":
+                rough_count += 1
+                if state.backward_center is None:
+                    suggestions.append({
+                        "index": i,
+                        "issue": "no_backward_center",
+                        "severity": "high",
+                        "suggestion": (
+                            f"No link to previous topic. Add a pronoun, repeat a key word, "
+                            f"or use a transition phrase (however, therefore, in addition)."
+                        ),
+                    })
+                else:
+                    suggestions.append({
+                        "index": i,
+                        "issue": "rough_shift",
+                        "severity": "medium",
+                        "suggestion": "Topic shift detected. Consider adding a transition phrase.",
+                    })
+
+        # consecutive rough shifts warning
+        if rough_count >= 3:
+            suggestions.append({
+                "index": -1,
+                "issue": "consecutive_rough_shifts",
+                "severity": "high",
+                "suggestion": f"{rough_count} consecutive topic shifts. This section may need restructuring.",
+            })
+
+        return suggestions
+
+    def annotate_weak_points(self, text: str) -> str:
+        """Insert <<<WEAK>>> markers at low-cohesion boundaries."""
+        suggestions = self.suggest_improvements(text)
+        doc = self.nlp(text)
+        sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+        weak_indices = {s["index"] for s in suggestions if s["index"] >= 0}
+
+        result = []
+        for i, sent in enumerate(sents):
+            marker = " <<<WEAK>>>" if i in weak_indices else ""
+            result.append(f"[{i}] {sent}{marker}")
+
+        return "\n".join(result)
+
+    # ------------------------------------------------------------------
+    # P7: Diff Analysis
+    # ------------------------------------------------------------------
+
+    def diff_cohesion(
+        self, original: str, revised: str,
+    ) -> Dict[str, Any]:
+        """Compare cohesion of two text versions."""
+        r1 = self.analyze(original)
+        r2 = self.analyze(revised)
+
+        delta = round(r2.overall_cohesion - r1.overall_cohesion, 4)
+
+        def _count(t_dist, name):
+            return t_dist.get(name, 0)
+
+        continue_delta = round(
+            _count(r2.transition_distribution, "Continue")
+            - _count(r1.transition_distribution, "Continue"), 3
+        )
+        rough_delta = round(
+            _count(r2.transition_distribution, "Rough-Shift")
+            - _count(r1.transition_distribution, "Rough-Shift"), 3
+        )
+
+        if delta > 0.05:
+            verdict = "improved"
+        elif delta < -0.05:
+            verdict = "declined"
+        else:
+            verdict = "similar"
+
+        return {
+            "original_score": r1.overall_cohesion,
+            "revised_score": r2.overall_cohesion,
+            "delta": delta,
+            "verdict": verdict,
+            "continue_delta": continue_delta,
+            "rough_shift_delta": rough_delta,
+            "original_segments": len(r1.segments),
+            "revised_segments": len(r2.segments),
+            "original_quality": r1.quality,
+            "revised_quality": r2.quality,
+        }
 
     # ------------------------------------------------------------------
     # Export
