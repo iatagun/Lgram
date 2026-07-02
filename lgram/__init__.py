@@ -15,7 +15,7 @@ links, while coherence (tutarlilik) concerns deeper semantic unity. This library
 implements local discourse cohesion as modeled by Centering Theory.
 """
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 __author__ = "Ilker Atagun"
 __email__ = "ilker.atagun@gmail.com"
 __license__ = "MIT"

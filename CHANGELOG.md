@@ -1,61 +1,63 @@
 # Changelog
 
-## 2.1.0 (2025-07-02)
+## 2.2.0 (2025-07-02)
 
-### New Features
+### New: Analysis Layer (TextAnalyzer)
 
-- **Gender-aware pronoun resolution** — 60-name gender map (male/female). "he" matches "bob" but not "alice". Configurable via `gender_map` constructor parameter.
-- **Vector-based semantic coreference** — uses spaCy word vectors (md/lg models) to detect coreference between semantically similar entities (e.g., "study"↔"research"). Configurable `similarity_threshold`.
-- **Discourse boundary detection** — `detect_boundaries()` identifies topic shift points via ROUGH-SHIFT clustering.
-- **Annotated text output** — `annotate_text()` returns structured JSON per utterance (Cf, Cb, Cp, entities, gender).
-- **Rule validation** — `validate_sequence()` checks Rule 1 (Cb from Cf(Ui-1)) and Rule 2 (pronoun realization constraint).
-- **LLM output evaluator** — `analyze_llm()` scores LLM-generated text cohesion with quality rating (high/medium/low) and optional prompt comparison.
-- **Visualization** — `visualize()` generates ASCII cohesion graph with transition symbols and score bar.
-- **Comparative analysis** — `compare_texts()` ranks multiple texts by cohesion score.
-- **Streaming analysis** — `stream_start()/stream_feed()/stream_flush()` for real-time incremental cohesion tracking.
-- **`reset()` method** — Clear discourse history.
+- **High-level API** — `TextAnalyzer` class wraps EnhancedCenteringTheory
+- `analyze()` — full text analysis: sentences, paragraphs, transitions, entities
+- `analyze_batch()` — multi-text comparison with rankings
+- **Entity Grid** (Barzilay & Lapata 2005) — entity role persistence across sentences
+- **TextTiling** (Hearst 1994) — vector-based topic segmentation
+- **Hybrid boundaries** — Centering + TextTiling intersection
+- **Cohesion graph** — sentence adjacency matrix with density, centrality, communities
+- **Lexical chains** — noun repetition + similarity chains
+- **Cohesion trend** — sliding window with improving/declining/stable detection
+- **Cohesion heatmap** — N×N similarity matrix with weak pair detection
+- **Readability** — Flesch Reading Ease + combined score
+- **Suggestions** — detect weak points, suggest fixes
+- **Diff analysis** — compare two text versions
+- **Benchmark suite** — 4 validation tests (permutation, degradation, cross-method, classification)
+
+### New: Model Support
+
+- `en_core_web_sm` (12 MB, baseline)
+- `en_core_web_md` (40 MB, GloVe 300d vectors)
+- `all-MiniLM-L6-v2` (80 MB, sentence-transformers, optional)
+- Auto-adjusted similarity threshold per model
+- MiniLM connected to core centering engine for full benefit
 
 ### Improvements
 
-- `_pronoun_matches_entity` refactored with clean elif chain and pronoun-chain fallthrough
-- All public methods now use `try/finally` for exception-safe state restoration
-- `save()`/`load()` now serialize `similarity_threshold` and `_gender_lookup`
-- `visualize()` computes score inline (no double-parse)
-- `stream_start()` saves existing history before resetting
-- `stream_flush()` restores previous history
+- Gender map expanded to 120+ names (English + Turkish)
+- Title/honorific detection (Mr/Mrs/Ms)
+- Suffix-based gender heuristics for unknown names
+- `is_female` boolean for O(1) gender checks
+- `is_person` inferred from gender map (not just spaCy NER)
+- Male/female pronoun matching with early reject
+- All public methods exception-safe (try/finally)
+- `reset()` method added
+- `save()`/`load()` include similarity_threshold and gender_lookup
+- Empty/single-sentence texts return "insufficient_data"
+- Zero dead code, zero unused imports
 
-### Terminology
+## 2.1.0 (2025-07-02)
 
-- Renamed "coherence" → "cohesion" throughout (API, CLI, docs). `evaluate_coherence` kept as deprecated alias.
-- Linguistically accurate: Centering Theory models surface-level cohesion (bağdaşıklık), not semantic coherence (tutarlılık).
+- Gender-aware pronoun resolution (60-name map)
+- Vector-based semantic coreference (md/lg models)
+- Discourse boundary detection
+- Annotated text output
+- Rule validation (Rule 1 + Rule 2)
+- LLM output evaluator
+- Visualization (ASCII graph)
+- Comparative analysis
+- Streaming analysis (start/feed/flush)
 
 ## 2.0.0 (2025-07-01)
 
-### Breaking Changes
-
-- Removed all statistical n-gram language model components
-- Removed T5 grammar correction, GPU acceleration, gender detection
-- Package renamed from `lgram` to `centering-lgram` (the import remains `lgram`)
-- Minimum dependencies reduced from 7 to 1 (`spacy>=3.4.0` only)
-
-### Features
-
-- Complete Centering Theory implementation (Grosz, Joshi, Weinstein)
-- Five transition types: Establish, Continue, Retain, Smooth-Shift, Rough-Shift
-- Configurable salience and POS weights
-- Pronoun resolution with person/object/plural distinction
-- Possessive pronoun handling (his, her, their)
-- Compound plural antecedent detection
-- Intra-sentential clause-level analysis
-- Combined inter + intra-sentential analysis
-- CLI with 6 commands: analyze, score, clauses, full, info, version
-- Save/load discourse state
-- 49 tests covering edge cases and false positives
-
-### Bug Fixes (since original 1.x)
-
-- Corrected transition classification for first utterance pair
-- Fixed entity map overwrite on duplicate words
-- Fixed pronoun filtering (possessive pronouns no longer candidate centers)
-- Fixed coreference resolution across utterance boundaries
-- Eliminated dead code and duplicate logic
+- Complete rewrite: Centering Theory only
+- Removed all statistical ML components
+- Single dependency: spacy>=3.4.0
+- 5 transition types, configurable weights
+- Intra-sentential clause analysis
+- 49 tests
