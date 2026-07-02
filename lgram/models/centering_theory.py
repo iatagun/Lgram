@@ -39,6 +39,7 @@ class DiscourseEntity:
     is_plural: bool = False
     is_person: bool = False
     gender: str = ""  # "" | "male" | "female"
+    is_female: bool = False
 
 
 @dataclass
@@ -89,7 +90,28 @@ class EnhancedCenteringTheory:
 
     def _resolve_gender(self, token) -> str:
         text = token.text.lower()
-        return self._gender_lookup.get(text, "")
+        gender = self._gender_lookup.get(text, "")
+
+        # title-based detection
+        if not gender:
+            if text in self._titles_male:
+                return "male"
+            if text in self._titles_female:
+                return "female"
+
+        # suffix-based heuristics for unknown names (only for PROPN tokens)
+        if not gender and token.pos_ == "PROPN" and len(text) > 3:
+            for suffix in self._female_suffixes:
+                if text.endswith(suffix) and text[-len(suffix)-1] not in "aeiou":
+                    gender = "female"
+                    break
+            if not gender:
+                for suffix in self._male_suffixes:
+                    if text.endswith(suffix):
+                        gender = "male"
+                        break
+
+        return gender
 
     # ------------------------------------------------------------------
     # Core – center computation
@@ -107,6 +129,8 @@ class EnhancedCenteringTheory:
 
             key = token.text.lower()
             if key not in entity_map:
+                g = self._resolve_gender(token)
+                is_p = token.ent_type_ == "PERSON" or g in ("male", "female")
                 entity_map[key] = DiscourseEntity(
                     text=token.text,
                     dep=token.dep_,
@@ -114,8 +138,9 @@ class EnhancedCenteringTheory:
                     ent_type=token.ent_type_,
                     tag=token.tag_,
                     is_plural=token.tag_ in ("NNS", "NNPS"),
-                    is_person=token.ent_type_ == "PERSON",
-                    gender=self._resolve_gender(token),
+                    is_person=is_p,
+                    gender=g,
+                    is_female=g == "female",
                 )
 
             salience = self._calculate_salience(token, token_count)
@@ -168,16 +193,16 @@ class EnhancedCenteringTheory:
         if not self.discourse_history:
             return False
         pronoun = pronoun_token.text.lower()
+        is_male = pronoun in self._male_pronouns
+        is_female = pronoun in self._female_pronouns
         for state in self.discourse_history[-3:]:
             for center in state.forward_centers:
                 ent = state._entity_map.get(center)
                 if ent is None:
                     continue
-                if pronoun in self._male_pronouns and ent.gender == "male":
+                if is_male and (ent.gender == "male" or ent.is_person):
                     return True
-                if pronoun in self._female_pronouns and ent.gender == "female":
-                    return True
-                if pronoun in self._person_pronouns and ent.is_person and ent.gender == "":
+                if is_female and (ent.is_female or ent.is_person):
                     return True
                 if pronoun in self._object_pronouns and not ent.is_person:
                     return True
@@ -198,6 +223,7 @@ class EnhancedCenteringTheory:
     _all_pronouns: frozenset = _person_pronouns | _object_pronouns | _plural_pronouns
 
     _gender_map: Dict[str, str] = {
+        # male
         "john": "male", "bob": "male", "dave": "male", "frank": "male",
         "mike": "male", "tom": "male", "jim": "male", "bill": "male",
         "steve": "male", "peter": "male", "paul": "male", "mark": "male",
@@ -205,6 +231,20 @@ class EnhancedCenteringTheory:
         "charles": "male", "daniel": "male", "matthew": "male", "andrew": "male",
         "charlie": "male", "henry": "male", "george": "male", "jack": "male",
         "alex": "male", "sam": "male", "harry": "male", "ben": "male",
+        "william": "male", "joseph": "male", "thomas": "male", "christopher": "male",
+        "donald": "male", "ronald": "male", "steven": "male", "edward": "male",
+        "brian": "male", "kevin": "male", "jason": "male", "jeff": "male",
+        "ryan": "male", "eric": "male", "scott": "male", "gary": "male",
+        "larry": "male", "patrick": "male", "adam": "male", "nathan": "male",
+        "justin": "male", "brandon": "male", "aaron": "male", "nick": "male",
+        "ethan": "male", "jacob": "male", "noah": "male", "liam": "male",
+        "mason": "male", "lucas": "male", "logan": "male", "oliver": "male",
+        "musa": "male", "mustafa": "male", "murat": "male", "ahmet": "male",
+        "mehmet": "male", "ali": "male", "hasan": "male", "hüseyin": "male",
+        "osman": "male", "orhan": "male", "kemal": "male", "can": "male",
+        "emir": "male", "eren": "male", "barış": "male", "burak": "male",
+        "ilker": "male",
+        # female
         "alice": "female", "mary": "female", "sue": "female", "jane": "female",
         "sarah": "female", "emma": "female", "lisa": "female", "anna": "female",
         "laura": "female", "kate": "female", "sophie": "female", "lucy": "female",
@@ -212,7 +252,28 @@ class EnhancedCenteringTheory:
         "helen": "female", "martha": "female", "nancy": "female", "linda": "female",
         "barbara": "female", "elizabeth": "female", "margaret": "female",
         "susan": "female", "dorothy": "female", "betty": "female", "carol": "female",
+        "jennifer": "female", "patricia": "female", "jessica": "female", "amanda": "female",
+        "melissa": "female", "michelle": "female", "stephanie": "female", "rebecca": "female",
+        "karen": "female", "amy": "female", "angela": "female", "sandra": "female",
+        "rachel": "female", "katherine": "female", "nicole": "female", "christine": "female",
+        "samantha": "female", "isabella": "female", "mia": "female", "charlotte": "female",
+        "amelia": "female", "ava": "female", "harper": "female", "evelyn": "female",
+        "fatma": "female", "ayşe": "female", "zeynep": "female", "elif": "female",
+        "merve": "female", "büşra": "female", "esra": "female", "tuğba": "female",
+        "gizem": "female", "eda": "female", "cansu": "female", "burcu": "female",
+        "sibel": "female", "ayla": "female", "deniz": "female",
     }
+
+    # name suffixes that strongly indicate gender
+    _female_suffixes = frozenset({
+        "a", "ia", "na", "ica", "ina", "ela", "ella", "ette", "ine", "lyn",
+    })
+    _male_suffixes = frozenset({
+        "us", "er", "or", "an", "en", "on", "os",
+    })
+
+    _titles_male = frozenset({"mr", "sir", "lord", "king", "duke", "prince"})
+    _titles_female = frozenset({"mrs", "ms", "miss", "lady", "queen", "duchess", "princess"})
 
     def compute_backward_center(
         self, current_cf: List[str], current_entity_map: Dict[str, DiscourseEntity],
@@ -276,15 +337,15 @@ class EnhancedCenteringTheory:
         entity_text_lower = ent.text.lower()
 
         if pronoun in self._male_pronouns:
-            if ent.gender == "male":
-                return True
-            if ent.is_person and ent.gender == "" and entity_text_lower not in self._female_pronouns:
+            if ent.is_female:
+                return False
+            if ent.gender == "male" or ent.is_person:
                 return True
 
         elif pronoun in self._female_pronouns:
-            if ent.gender == "female":
-                return True
-            if ent.is_person and ent.gender == "" and entity_text_lower not in self._male_pronouns:
+            if ent.gender == "male":
+                return False
+            if ent.is_female or ent.is_person:
                 return True
 
         elif pronoun in self._object_pronouns:
@@ -300,7 +361,7 @@ class EnhancedCenteringTheory:
         if pronoun in self._person_pronouns:
             if entity_text_lower in self._person_pronouns:
                 return True
-            if ent.is_person and ent.gender == "":
+            if ent.is_person:
                 return True
 
         return False
@@ -350,15 +411,13 @@ class EnhancedCenteringTheory:
         e1_lower = e1.lower()
 
         # gender-aware person pronoun matching
-        if ent1.gender and ent2.gender and ent1.gender != ent2.gender:
+        if ent1.is_female and e2_lower in self._male_pronouns:
+            return False
+        if ent2.is_female and e1_lower in self._male_pronouns:
             return False
         if ent1.gender == "male" and e2_lower in self._female_pronouns:
             return False
-        if ent1.gender == "female" and e2_lower in self._male_pronouns:
-            return False
         if ent2.gender == "male" and e1_lower in self._female_pronouns:
-            return False
-        if ent2.gender == "female" and e1_lower in self._male_pronouns:
             return False
 
         if ent1.is_person and e2_lower in self._person_pronouns:
