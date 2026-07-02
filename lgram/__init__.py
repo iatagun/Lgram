@@ -32,6 +32,7 @@ try:
         DiscourseEntity,
         TransitionType,
     )
+    from .analyzer import TextAnalyzer, TextReport, SentenceAnalysis, ParagraphAnalysis
     _import_success = True
 except ImportError as e:
     _import_success = False
@@ -64,6 +65,10 @@ __all__ = [
     "CenteringState",
     "DiscourseEntity",
     "TransitionType",
+    "TextAnalyzer",
+    "TextReport",
+    "SentenceAnalysis",
+    "ParagraphAnalysis",
     "setup_logging",
     "show_info",
     "__version__",
