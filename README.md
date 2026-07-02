@@ -47,30 +47,31 @@ print(r.overall_cohesion)  # 0.87
 print(r.quality)           # "high"
 ```
 
-**For best results**, use the medium model or sentence-transformers:
+**For best results**, use the medium model:
 
 ```python
-# SpaCy medium model (40 MB, GloVe vectors)
 ta = TextAnalyzer("en_core_web_md")
-
-# Or sentence-transformers (80 MB, MiniLM)
-ta = TextAnalyzer(use_sentence_transformers=True)
 ```
 
 ---
 
-## Model Comparison
+## Genre Calibration (Brown Corpus)
 
-*25 texts across 5 domains (news, academic, dialogue, literary, blog). Same threshold (0.65) for fair comparison.*
+*Empirically derived transition patterns from NLTK Brown Corpus (1.1M words, 500 files, 15 categories).*
+*n=30 per genre, HIGH confidence. Method: Tukey's fence (p75 + 1.5×IQR).*
 
-| Model | Size | Cohesion | Continue | Rough-Shift |
-|---|---|---|---|---|
-| `en_core_web_sm` (no vectors) | 12 MB | 0.57 | 17% | 60% |
-| `en_core_web_md` (GloVe 300d) | 40 MB | **0.62** | 19% | **50%** |
+| Genre | n | Rough-Shift normal | Flag if > | Continue mean | Confidence |
+|---|---|---|---|---|---|
+| **Narrative** (fiction, adventure) | 30 | 11.5% – 27.3% | **51.0%** | 49.8% | HIGH |
+| **Expository** (news, gov, academic) | 30 | 16.7% – 33.3% | **58.2%** | 29.2% | HIGH |
+| **Essay** (editorial, reviews) | 30 | 11.5% – 27.7% | **52.0%** | 30.7% | HIGH |
 
-md consistently reduces Rough-Shift by 5-22% across all domains.
+**Key finding:** Rough-Shift >50% is abnormal for **any** well-written genre.
+Narrative texts have the highest Continue rate (50%) — stories naturally keep the same subjects.
 
-> ⚠️ **Reliability note:** Scores depend on the underlying embedding model. Different models produce different scores for the SAME text. For production use, pick ONE model and standardize on it. For maximum accuracy with vector models, lower the threshold to 0.35.
+*Calibration is reproducible: `python -m lgram.brown_calibration`*
+
+> ⚠️ **Reliability note:** Scores depend on the underlying embedding model. For production use, pick ONE model (recommended: `en_core_web_md`) and standardize on it. Compare texts only within the same genre — cross-genre comparison is meaningless because different genres have different natural transition patterns.
 
 ---
 
