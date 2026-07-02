@@ -38,6 +38,7 @@ class DiscourseEntity:
     tag: str = ""
     is_plural: bool = False
     is_person: bool = False
+    gender: str = ""  # "" | "male" | "female"
 
 
 @dataclass
@@ -58,10 +59,13 @@ class EnhancedCenteringTheory:
         history_limit: int = 10,
         salience_weights: Optional[Dict[str, float]] = None,
         pos_weights: Optional[Dict[str, float]] = None,
+        similarity_threshold: float = 0.65,
+        gender_map: Optional[Dict[str, str]] = None,
     ):
         self.nlp = nlp_model
         self.discourse_history: List[CenteringState] = []
         self.history_limit = history_limit
+        self.similarity_threshold = similarity_threshold
 
         self.salience_weights = salience_weights or {
             "nsubj": 4.0,
@@ -80,6 +84,12 @@ class EnhancedCenteringTheory:
             "PROPN": 2.0,
             "NOUN": 1.0,
         }
+
+        self._gender_lookup = gender_map if gender_map is not None else dict(self._gender_map)
+
+    def _resolve_gender(self, token) -> str:
+        text = token.text.lower()
+        return self._gender_lookup.get(text, "")
 
     # ------------------------------------------------------------------
     # Core – center computation
@@ -105,6 +115,7 @@ class EnhancedCenteringTheory:
                     tag=token.tag_,
                     is_plural=token.tag_ in ("NNS", "NNPS"),
                     is_person=token.ent_type_ == "PERSON",
+                    gender=self._resolve_gender(token),
                 )
 
             salience = self._calculate_salience(token, token_count)
@@ -162,7 +173,11 @@ class EnhancedCenteringTheory:
                 ent = state._entity_map.get(center)
                 if ent is None:
                     continue
-                if pronoun in self._person_pronouns and ent.is_person:
+                if pronoun in self._male_pronouns and ent.gender == "male":
+                    return True
+                if pronoun in self._female_pronouns and ent.gender == "female":
+                    return True
+                if pronoun in self._person_pronouns and ent.is_person and ent.gender == "":
                     return True
                 if pronoun in self._object_pronouns and not ent.is_person:
                     return True
@@ -174,10 +189,30 @@ class EnhancedCenteringTheory:
     # Backward center (Cb)
     # ------------------------------------------------------------------
 
+    # pronoun sets with gender distinction
+    _male_pronouns = frozenset({"he", "him", "his"})
+    _female_pronouns = frozenset({"she", "her", "hers"})
     _person_pronouns = frozenset({"he", "him", "his", "she", "her", "hers"})
     _object_pronouns = frozenset({"it", "its"})
     _plural_pronouns = frozenset({"they", "them", "their", "theirs"})
     _all_pronouns: frozenset = _person_pronouns | _object_pronouns | _plural_pronouns
+
+    _gender_map: Dict[str, str] = {
+        "john": "male", "bob": "male", "dave": "male", "frank": "male",
+        "mike": "male", "tom": "male", "jim": "male", "bill": "male",
+        "steve": "male", "peter": "male", "paul": "male", "mark": "male",
+        "james": "male", "robert": "male", "david": "male", "richard": "male",
+        "charles": "male", "daniel": "male", "matthew": "male", "andrew": "male",
+        "charlie": "male", "henry": "male", "george": "male", "jack": "male",
+        "alex": "male", "sam": "male", "harry": "male", "ben": "male",
+        "alice": "female", "mary": "female", "sue": "female", "jane": "female",
+        "sarah": "female", "emma": "female", "lisa": "female", "anna": "female",
+        "laura": "female", "kate": "female", "sophie": "female", "lucy": "female",
+        "emily": "female", "olivia": "female", "grace": "female", "diana": "female",
+        "helen": "female", "martha": "female", "nancy": "female", "linda": "female",
+        "barbara": "female", "elizabeth": "female", "margaret": "female",
+        "susan": "female", "dorothy": "female", "betty": "female", "carol": "female",
+    }
 
     def compute_backward_center(
         self, current_cf: List[str], current_entity_map: Dict[str, DiscourseEntity],
@@ -240,8 +275,20 @@ class EnhancedCenteringTheory:
 
         entity_text_lower = ent.text.lower()
 
+        if pronoun in self._male_pronouns:
+            if ent.gender == "male":
+                return True
+            if ent.is_person and ent.gender == "" and entity_text_lower not in self._female_pronouns:
+                return True
+
+        if pronoun in self._female_pronouns:
+            if ent.gender == "female":
+                return True
+            if ent.is_person and ent.gender == "" and entity_text_lower not in self._male_pronouns:
+                return True
+
         if pronoun in self._person_pronouns:
-            if ent.is_person:
+            if ent.is_person and ent.gender == "":
                 return True
             if entity_text_lower in self._person_pronouns:
                 return True
@@ -273,6 +320,18 @@ class EnhancedCenteringTheory:
             return ent
         return self._find_in_history(key)
 
+    def _vector_similarity(self, e1: str, e2: str) -> float:
+        if not getattr(self.nlp.vocab, "vectors_length", 0):
+            return 0.0
+        try:
+            d1 = self.nlp(e1)
+            d2 = self.nlp(e2)
+            if not d1.vector_norm or not d2.vector_norm:
+                return 0.0
+            return float(d1.similarity(d2))
+        except Exception:
+            return 0.0
+
     def _are_coreferent_cached(
         self,
         e1: str, e2: str,
@@ -283,10 +342,25 @@ class EnhancedCenteringTheory:
             return True
         ent1 = self._resolve_entity(e1, map1)
         ent2 = self._resolve_entity(e2, map2)
+
         if ent1 is None or ent2 is None:
             return False
+
         e2_lower = e2.lower()
         e1_lower = e1.lower()
+
+        # gender-aware person pronoun matching
+        if ent1.gender and ent2.gender and ent1.gender != ent2.gender:
+            return False
+        if ent1.gender == "male" and e2_lower in self._female_pronouns:
+            return False
+        if ent1.gender == "female" and e2_lower in self._male_pronouns:
+            return False
+        if ent2.gender == "male" and e1_lower in self._female_pronouns:
+            return False
+        if ent2.gender == "female" and e1_lower in self._male_pronouns:
+            return False
+
         if ent1.is_person and e2_lower in self._person_pronouns:
             return True
         if ent2.is_person and e1_lower in self._person_pronouns:
@@ -299,6 +373,13 @@ class EnhancedCenteringTheory:
             return True
         if ent2.is_plural and e1_lower in self._plural_pronouns:
             return True
+
+        # vector-based semantic similarity fallback
+        if self.similarity_threshold > 0.0:
+            sim = self._vector_similarity(e1, e2)
+            if sim >= self.similarity_threshold:
+                return True
+
         return False
 
     # ------------------------------------------------------------------
@@ -580,6 +661,129 @@ class EnhancedCenteringTheory:
             "sentence_count": len(sentences),
             "inter_sentential": inter_result,
             "intra_sentential": intra_results,
+        }
+
+    # ------------------------------------------------------------------
+    # Discourse boundary detection
+    # ------------------------------------------------------------------
+
+    def detect_boundaries(self, utterance_sequence: List[str]) -> List[int]:
+        """
+        Detect discourse segment boundaries using centering patterns.
+        Returns list of utterance indices (0-based) where a new segment begins.
+        A boundary is triggered by: ROUGH-SHIFT + no Cb found.
+        """
+        saved = list(self.discourse_history)
+        self.discourse_history = []
+
+        boundaries: List[int] = [0]  # first utterance always starts a segment
+        recent_rough: int = 0
+
+        for i, u in enumerate(utterance_sequence):
+            state = self.update_discourse(u)
+            t = state.transition
+            if t == TransitionType.ROUGH_SHIFT:
+                recent_rough += 1
+                if state.backward_center is None and recent_rough >= 2:
+                    boundaries.append(i)
+                    recent_rough = 0
+            elif t == TransitionType.CONTINUE:
+                recent_rough = max(0, recent_rough - 1)
+            else:
+                recent_rough = max(0, recent_rough - 1)
+
+        self.discourse_history = saved
+        return boundaries
+
+    # ------------------------------------------------------------------
+    # Annotated text output
+    # ------------------------------------------------------------------
+
+    def annotate_text(self, text: str) -> List[Dict[str, Any]]:
+        """Return structured annotation for each utterance in text."""
+        doc = self.nlp(text)
+        sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+
+        saved = list(self.discourse_history)
+        self.discourse_history = []
+
+        annotations: List[Dict[str, Any]] = []
+        for i, sent in enumerate(sentences):
+            state = self.update_discourse(sent)
+            annotations.append({
+                "index": i,
+                "utterance": sent,
+                "transition": state.transition.value if state.transition else None,
+                "preferred_center": state.preferred_center,
+                "backward_center": state.backward_center,
+                "forward_centers": state.forward_centers,
+                "entities": {
+                    k: {"text": v.text, "pos": v.pos, "dep": v.dep,
+                        "is_person": v.is_person, "gender": v.gender}
+                    for k, v in state._entity_map.items()
+                },
+            })
+
+        self.discourse_history = saved
+        return annotations
+
+    # ------------------------------------------------------------------
+    # Validity checking
+    # ------------------------------------------------------------------
+
+    def validate_sequence(self, utterance_sequence: List[str]) -> Dict[str, Any]:
+        """
+        Validate discourse sequence against Centering Theory constraints.
+
+        Rule 1: Every utterance has exactly one Cb (except possibly the first).
+        Rule 2: If any element of Cf(Ui-1) is realized as a pronoun in Ui,
+                then Cb(Ui) must be that element.
+        Rule 3: CONTINUE > RETAIN > SMOOTH-SHIFT > ROUGH-SHIFT preference.
+        """
+        saved = list(self.discourse_history)
+        self.discourse_history = []
+
+        states: List[CenteringState] = []
+        for u in utterance_sequence:
+            states.append(self.update_discourse(u))
+
+        violations: List[Dict[str, Any]] = []
+
+        # Rule 2: pronoun realization constraint
+        for i in range(1, len(states)):
+            prev = states[i - 1]
+            curr = states[i]
+            for pc in prev.forward_centers:
+                if pc not in curr.forward_centers:
+                    for cc in curr.forward_centers:
+                        if cc.lower() in self._all_pronouns:
+                            if self._pronoun_matches_entity(
+                                cc.lower(), pc, prev._entity_map
+                            ):
+                                if curr.backward_center != pc:
+                                    violations.append({
+                                        "utterance_index": i,
+                                        "rule": "Rule 2",
+                                        "desc": f"Cb should be '{pc}' (pronominalized), got '{curr.backward_center}'",
+                                    })
+
+        # preference ordering check
+        rough_positions = [i for i, s in enumerate(states) if s.transition == TransitionType.ROUGH_SHIFT]
+        continue_positions = [i for i, s in enumerate(states) if s.transition == TransitionType.CONTINUE]
+
+        score, dist = self._score_transitions(
+            {t: sum(1 for s in states if s.transition == t) for t in TransitionType}
+        )
+
+        self.discourse_history = saved
+
+        return {
+            "is_valid": len(violations) == 0,
+            "violations": violations,
+            "violation_count": len(violations),
+            "cohesion_score": score,
+            "transition_distribution": dist,
+            "utterance_count": len(utterance_sequence),
         }
 
     # ------------------------------------------------------------------
