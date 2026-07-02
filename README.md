@@ -19,6 +19,10 @@ Discourse cohesion analysis based on **Centering Theory** (Grosz, Joshi, and Wei
   - [Inter-sentential (Sentence-Level)](#inter-sentential-sentence-level)
   - [Intra-sentential (Clause-Level)](#intra-sentential-clause-level)
   - [Combined Analysis](#combined-analysis)
+  - [LLM Output Evaluation](#llm-output-evaluation)
+  - [Visualization & Comparison](#visualization--comparison)
+  - [Streaming Analysis](#streaming-analysis)
+  - [Boundary Detection & Validation](#boundary-detection--validation)
   - [Configuration](#configuration)
   - [Inspection & Serialization](#inspection--serialization)
 - [CLI Reference](#cli-reference)
@@ -221,6 +225,101 @@ for intra in result["intra_sentential"]:         # per-sentence clause-level
 
 ---
 
+### LLM Output Evaluation
+
+#### `analyze_llm(response, prompt=None) -> Dict[str, Any]`
+
+Evaluate cohesion of LLM-generated text. Optionally compare with prompt for cross-boundary analysis.
+
+```python
+r = ct.analyze_llm(
+    response="AI has transformed healthcare. It enables faster diagnosis. These systems analyze images. They detect diseases early.",
+)
+print(r["quality"])             # "high" (>=0.80), "medium" (>=0.55), "low"
+print(r["response_cohesion"])   # 0.0 - 1.0
+print(r["response_segments"])   # number of discourse segments
+
+# With prompt comparison
+r = ct.analyze_llm(
+    response="AI helps doctors make faster diagnoses...",
+    prompt="Explain how AI impacts healthcare."
+)
+print(r["prompt_cohesion"])          # prompt's internal cohesion
+print(r["cross_boundary_penalty"])   # ROUGH-SHIFTs at prompt->response boundary
+```
+
+---
+
+### Visualization & Comparison
+
+#### `visualize(text: str) -> str`
+
+Generate ASCII cohesion graph with transition symbols, centers, and score bar.
+
+```python
+print(ct.visualize("John went to the store. He bought milk. The store was busy."))
+# [+] [00] Establish    | John went to the store.
+#                | Cp: john         Cb: .            Cf: [john, store]
+#                |
+# --> [01] Continue     | He bought milk.
+#                | Cp: he           Cb: john         Cf: [he, milk]
+#                |
+# //> [02] Rough-Shift  | The store was busy.
+#                | Cp: store        Cb: .            Cf: [store]
+#
+#   Cohesion: ##########################-------------- 0.650
+```
+
+#### `compare_texts(*texts, labels=None) -> Dict[str, Any]`
+
+Compare cohesion metrics across multiple texts with rankings.
+
+```python
+r = ct.compare_texts(good_response, bad_response, labels=["Good", "Bad"])
+print(f"Best: {r['best']['label']} = {r['best']['cohesion']:.3f}")
+print(f"Mean: {r['mean_cohesion']:.3f}")
+for entry in r["rankings"]:
+    print(f"  {entry['label']}: {entry['cohesion']:.3f} [{entry['quality']}]")
+```
+
+---
+
+### Streaming Analysis
+
+#### `stream_start() / stream_feed() / stream_flush()`
+
+Track cohesion in real-time as text arrives — ideal for monitoring LLM output streams.
+
+```python
+ct.stream_start()
+for sentence in llm_output_sentences:
+    s = ct.stream_feed(sentence)
+    print(f"Running cohesion: {s['running_cohesion']:.3f}")
+final = ct.stream_flush()
+print(f"Final: {final['final_cohesion']:.3f}")
+```
+
+---
+
+### Boundary Detection & Validation
+
+#### `detect_boundaries(utterances) -> List[int]`
+
+Detect discourse segment boundaries where topic shifts occur.
+
+#### `validate_sequence(utterances) -> Dict[str, Any]`
+
+Validate against Centering Theory constraints (Rule 1: Cb from Cf(Ui-1), Rule 2: pronoun realization).
+
+```python
+v = ct.validate_sequence(["John went to the store.", "He bought milk.", "The weather changed."])
+print(v["is_valid"])           # True/False
+print(v["violations"])         # list of rule violations with descriptions
+print(v["cohesion_score"])     # 0.0 - 1.0
+```
+
+---
+
 ### Configuration
 
 ```python
@@ -366,13 +465,28 @@ lgram/
   utils.py            # Logging utility
   models/
     __init__.py       # Sub-package exports
-    centering_theory.py  # Core implementation (600 lines)
+    centering_theory.py  # Core implementation (1063 lines)
 tests/
   test_lgram.py       # Core API tests (15 tests)
   test_edges.py       # Edge case / false positive tests (34 tests)
 ```
 
 Single dependency: `spacy>=3.4.0`. No PyTorch, no transformers, no NumPy.
+
+### Features Summary
+
+| Feature | Methods |
+|---|---|
+| Core Centering Theory | `analyze_utterance`, `update_discourse`, `evaluate_cohesion` |
+| Clause-level | `extract_clauses`, `analyze_intra_sentential`, `analyze_full` |
+| LLM Evaluation | `analyze_llm` (quality rating, prompt comparison) |
+| Visualization | `visualize` (ASCII graph with centers and transitions) |
+| Comparison | `compare_texts` (ranking, best/worst, mean cohesion) |
+| Streaming | `stream_start`, `stream_feed`, `stream_flush` |
+| Boundaries | `detect_boundaries` (discourse segment detection) |
+| Validation | `validate_sequence` (Rule 1 + Rule 2 constraints) |
+| Inspection | `get_discourse_summary`, `get_coherent_next_center` |
+| Serialization | `save`, `load`, `reset` |
 
 ---
 
