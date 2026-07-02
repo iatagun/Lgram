@@ -4,10 +4,30 @@ Discourse cohesion analysis based on **Centering Theory** (Grosz, Joshi, and Wei
 
 > **Note:** _Cohesion_ (bağdaşıklık) = surface grammatical/lexical links. _Coherence_ (tutarlılık) = deeper semantic unity. Centering Theory models cohesion.
 
+---
+
+## ⚠️ What This Tool Does NOT Measure
+
+- **Factual accuracy** — a high cohesion score does NOT mean the content is correct
+- **Hallucination** — a fluent-sounding LLM output can still be completely false
+- **Overall quality** — cohesion is ONE dimension of text quality, not the whole picture
+
+**Correct positioning:** Use centering-lgram as a **complementary** evaluator alongside faithfulness/accuracy checkers. It measures **"how smoothly does this read?"**, not **"is this correct?"**.
+
+| What we measure | What we DON'T measure |
+|---|---|
+| Entity flow across sentences | Factual correctness |
+| Pronoun resolution quality | Hallucination / faithfulness |
+| Topic continuity / shifts | Logical reasoning |
+| Readability (Flesch) | Relevance to prompt |
+| Lexical repetition chains | Domain accuracy |
+
+---
+
 [![PyPI](https://img.shields.io/badge/pypi-centering--lgram-blue)](https://pypi.org/project/centering-lgram/)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-49%20passed-green)]()
+[![Tests](https://img.shields.io/badge/tests-64%20passed-green)]()
 
 ---
 
@@ -48,9 +68,9 @@ ta = TextAnalyzer(use_sentence_transformers=True)
 | `en_core_web_sm` (no vectors) | 12 MB | 0.57 | 17% | 60% |
 | `en_core_web_md` (GloVe 300d) | 40 MB | **0.62** | 19% | **50%** |
 
-md consistently reduces Rough-Shift by 5-22% across all domains. The improvement is real but modest at the same threshold.
+md consistently reduces Rough-Shift by 5-22% across all domains.
 
-*For maximum accuracy, lower the threshold with md/lg/MiniLM models (0.35 recommended). This can reduce Rough-Shift to near-zero on well-written texts.*
+> ⚠️ **Reliability note:** Scores depend on the underlying embedding model. Different models produce different scores for the SAME text. For production use, pick ONE model and standardize on it. For maximum accuracy with vector models, lower the threshold to 0.35.
 
 ---
 
