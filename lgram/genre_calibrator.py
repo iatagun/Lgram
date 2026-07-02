@@ -28,14 +28,26 @@ class GenreProfile:
     std_rough: float = 0.0
     p25_rough: float = 0.0
     p75_rough: float = 0.0
+    iqr_rough: float = 0.0
+    tukey_upper: float = 0.0
     mean_continue: float = 0.0
     mean_retain: float = 0.0
     mean_smooth: float = 0.0
+    confidence: str = "low"
     recommendation: str = ""
 
 
 class GenreCalibrator:
-    """Calibrate genre thresholds from real text samples."""
+    """
+    Calibrate genre thresholds from real text samples.
+
+    IMPORTANT: Calibration corpus must be DIFFERENT from evaluation corpus.
+    Using the same data for both = circular validation. Split corpus into
+    train (calibration) and test (evaluation) sets.
+
+    Threshold method: Tukey's fence (p75 + 1.5 * IQR).
+    Minimum recommended: 20 samples per genre for high confidence.
+    """
 
     def __init__(self, model: str = "en_core_web_md"):
         self.ta = TextAnalyzer(model, similarity_threshold=0.35)
@@ -85,16 +97,32 @@ class GenreCalibrator:
             profile.std_rough = round(self._std(roughs, profile.mean_rough), 3)
             profile.p25_rough = round(self._percentile(sorted(roughs), 25), 3)
             profile.p75_rough = round(self._percentile(sorted(roughs), 75), 3)
+            profile.iqr_rough = round(profile.p75_rough - profile.p25_rough, 3)
+            # Tukey's fence: p75 + 1.5 * IQR (standard outlier detection)
+            profile.tukey_upper = round(min(profile.p75_rough + 1.5 * profile.iqr_rough, 1.0), 3)
             profile.mean_continue = round(self._mean(continues), 3)
             profile.mean_retain = round(self._mean(retains), 3)
             profile.mean_smooth = round(self._mean(smooths), 3)
 
+            # Confidence level
+            if len(roughs) >= 20:
+                profile.confidence = "high"
+            elif len(roughs) >= 10:
+                profile.confidence = "medium"
+            else:
+                profile.confidence = "low"
+
             # Recommendation
             profile.recommendation = (
                 f"Rough-Shift {profile.p25_rough:.1%}-{profile.p75_rough:.1%} is normal "
-                f"(mean={profile.mean_rough:.1%}, std={profile.std_rough:.1%}). "
-                f"Flag if Rough > {min(profile.p75_rough + profile.std_rough, 1.0):.1%}."
+                f"(IQR={profile.iqr_rough:.1%}). "
+                f"Flag if Rough > {profile.tukey_upper:.1%} (Tukey: p75 + 1.5*IQR)."
             )
+            if profile.confidence != "high":
+                profile.recommendation += (
+                    f" [CONFIDENCE: {profile.confidence.upper()} — need >=20 samples. "
+                    f"Current n={len(roughs)}.]"
+                )
 
             profiles.append(profile)
 
@@ -106,6 +134,9 @@ class GenreCalibrator:
             "=" * 70,
             "  GENRE CALIBRATION REPORT",
             "=" * 70,
+            "  Method: Tukey's fence (p75 + 1.5*IQR)",
+            "  Minimum: 20 samples/genre for high confidence",
+            "  WARNING: Use separate corpus for evaluation (not calibration data)",
         ]
 
         for p in profiles:
