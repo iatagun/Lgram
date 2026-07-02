@@ -873,6 +873,143 @@ class EnhancedCenteringTheory:
         }
 
     # ------------------------------------------------------------------
+    # Visualization
+    # ------------------------------------------------------------------
+
+    _viz_symbols = {
+        TransitionType.ESTABLISH: "[+]",
+        TransitionType.CONTINUE: "-->",
+        TransitionType.RETAIN: "~> ",
+        TransitionType.SMOOTH_SHIFT: "~~>",
+        TransitionType.ROUGH_SHIFT: "//>",
+    }
+
+    def visualize(self, text: str) -> str:
+        """Generate ASCII cohesion graph showing centers and transitions."""
+        doc = self.nlp(text)
+        sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+
+        saved = list(self.discourse_history)
+        self.discourse_history = []
+
+        try:
+            lines: List[str] = []
+            max_len = max((len(s) for s in sentences), default=40)
+
+            for i, sent in enumerate(sentences):
+                state = self.update_discourse(sent)
+                symbol = self._viz_symbols.get(state.transition, "?")
+                t_name = state.transition.value if state.transition else "?"
+
+                # utterance line
+                display = sent if len(sent) <= max_len else sent[:max_len - 3] + "..."
+                lines.append(f"{symbol} [{i:02d}] {t_name:12s} | {display}")
+
+                # center line
+                cp = state.preferred_center or "."
+                cb = state.backward_center or "."
+                cf = ", ".join(state.forward_centers[:3]) if state.forward_centers else "."
+                lines.append(f"  {'':12s} | Cp: {cp:12s} Cb: {cb:12s} Cf: [{cf}]")
+
+                if i < len(sentences) - 1:
+                    lines.append(f"  {'':12s} |")
+
+            result = self.evaluate_cohesion(sentences)
+            score = result["cohesion_score"]
+            bar_len = int(score * 40)
+            bar = "#" * bar_len + "-" * (40 - bar_len)
+
+            lines.append(f"\n  Cohesion: {bar} {score:.3f}")
+            lines.append(f"  Segments: {len(self.discourse_history) // 3 + 1} estimate")
+
+            return "\n".join(lines)
+        finally:
+            self.discourse_history = saved
+
+    # ------------------------------------------------------------------
+    # Comparative analysis
+    # ------------------------------------------------------------------
+
+    def compare_texts(
+        self, *texts: str, labels: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Compare cohesion metrics across multiple texts."""
+        results: List[Dict[str, Any]] = []
+
+        for i, text in enumerate(texts):
+            r = self.analyze_llm(text)
+            results.append({
+                "label": labels[i] if labels and i < len(labels) else f"text_{i+1}",
+                "cohesion": r["response_cohesion"],
+                "segments": r["response_segments"],
+                "sentences": r["response_sentences"],
+                "transitions": r["response_transitions"],
+                "quality": r["quality"],
+            })
+
+        best = max(results, key=lambda x: x["cohesion"])
+        worst = min(results, key=lambda x: x["cohesion"])
+
+        return {
+            "count": len(texts),
+            "best": best,
+            "worst": worst,
+            "mean_cohesion": round(sum(r["cohesion"] for r in results) / len(results), 4),
+            "rankings": sorted(results, key=lambda x: x["cohesion"], reverse=True),
+        }
+
+    # ------------------------------------------------------------------
+    # Streaming / incremental analysis
+    # ------------------------------------------------------------------
+
+    def stream_start(self) -> None:
+        """Begin a streaming session. Resets discourse history."""
+        self.discourse_history = []
+        self._stream_stats: Dict[str, Any] = {
+            "sentences_processed": 0,
+            "transition_counts": {t: 0 for t in TransitionType},
+            "running_cohesion": 1.0,
+        }
+
+    def stream_feed(self, utterance: str) -> Dict[str, Any]:
+        """Feed one utterance into the stream. Returns incremental stats."""
+        if not hasattr(self, "_stream_stats"):
+            self.stream_start()
+
+        state = self.update_discourse(utterance)
+        t = state.transition
+        stats = self._stream_stats
+        stats["sentences_processed"] += 1
+
+        if t:
+            stats["transition_counts"][t] = stats["transition_counts"].get(t, 0) + 1
+
+        score, dist = self._score_transitions(stats["transition_counts"])
+        stats["running_cohesion"] = score
+
+        return {
+            "utterance": utterance[:60],
+            "transition": t.value if t else None,
+            "cp": state.preferred_center,
+            "cb": state.backward_center,
+            "running_cohesion": score,
+            "sentences": stats["sentences_processed"],
+        }
+
+    def stream_flush(self) -> Dict[str, Any]:
+        """End the streaming session. Returns final summary."""
+        stats = getattr(self, "_stream_stats", None)
+        if stats is None:
+            return {"error": "no active stream"}
+
+        score, dist = self._score_transitions(stats["transition_counts"])
+        return {
+            "total_sentences": stats["sentences_processed"],
+            "final_cohesion": score,
+            "transition_distribution": dist,
+        }
+
+    # ------------------------------------------------------------------
     # Serialization
     # ------------------------------------------------------------------
 
