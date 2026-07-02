@@ -52,13 +52,15 @@ def analyze(title, text, genre="essay"):
     # Only truly broken = consecutive no-Cb Rough-Shifts
     truly_broken = [s for s in issues if s["issue"] in ("no_backward_center", "consecutive_rough_shifts")]
 
-    # Overall assessment
+    # Overall assessment — tiered
     if rough_flagged:
-        verdict = "FLAGGED — Rough-Shift exceeds Tukey threshold"
+        verdict = "FLAGGED — exceeds Tukey threshold"
+    elif len(truly_broken) >= 4:
+        verdict = "REVIEW (significant) — multiple cohesion breaks"
     elif len(truly_broken) >= 2:
-        verdict = "REVIEW — minor cohesion breaks detected"
+        verdict = "REVIEW (minor) — a few cohesion breaks"
     else:
-        verdict = "OK — normal for this genre"
+        verdict = "OK"
 
     cbar = "#" * int(cohesion * 40) + "-" * (40 - int(cohesion * 40))
 
@@ -86,6 +88,8 @@ essays = [
     ("Social Media", """Social media has changed how people communicate with each other today. Many young people use platforms like Instagram and TikTok every day. These apps let users share photos and videos with their friends easily. Social media can help people stay connected across long distances. But it also has some negative effects on mental health sometimes. People often compare themselves to others on these platforms. This comparison can make them feel bad about their own lives. Cyberbullying is another serious problem on social media sites. I think social media is both good and bad for society overall. Parents should monitor their children's social media use more carefully.""", "essay"),
     ("Climate Change", """Climate change is a big problem facing the world right now. Scientists say the Earth is getting warmer because of greenhouse gases. These gases come from cars and factories mostly every day. Rising temperatures are causing ice caps to melt at the poles. This melting leads to higher sea levels around the world. Many coastal cities could be underwater in the future eventually. We need to reduce our carbon emissions as soon as possible. Renewable energy like solar and wind power can help solve this problem. Governments should pass laws to limit pollution from companies. Everyone can also help by making small changes in their daily lives.""", "essay"),
     ("Broken thoughts", """Technology is great. I really like my computer a lot. Computers are very useful for many things. The weather today is sunny and warm outside. My favorite subject is mathematics and science. I go to school every day except weekends. Many people use smartphones for social media. I think schools should have more computers. Homework is sometimes boring but necessary. My friends and I study together after school.""", "essay"),
+    # Extremely incoherent — should trigger FLAG
+    ("Random sentences", """Quantum physics explains subatomic behavior. My neighbor has a loud barking dog. The Roman Empire fell in 476 CE. I enjoy eating pizza on Friday evenings. Basketball requires good hand-eye coordination. The ocean contains millions of species. Beethoven composed nine symphonies. Cats are independent animals. The stock market fluctuates daily. Mountains are formed by tectonic activity.""", "essay"),
 ]
 
 for title, text, genre in essays:
