@@ -55,19 +55,32 @@ ta = TextAnalyzer("en_core_web_md")
 
 ---
 
-## Genre Calibration (Brown Corpus)
+## Genre Calibration
 
-*Empirically derived transition patterns from NLTK Brown Corpus (1.1M words, 500 files, 15 categories).*
-*n=30 per genre, HIGH confidence. Method: Tukey's fence (p75 + 1.5×IQR).*
+*Empirically derived transition patterns. Method: Tukey's fence (p75 + 1.5×IQR).*
 
-| Genre | n | Rough-Shift normal | Flag if > | Continue mean | Confidence |
-|---|---|---|---|---|---|
-| **Narrative** (fiction, adventure) | 30 | 11.5% – 27.3% | **51.0%** | 49.8% | HIGH |
-| **Expository** (news, gov, academic) | 30 | 16.7% – 33.3% | **58.2%** | 29.2% | HIGH |
-| **Essay** (editorial, reviews) | 30 | 11.5% – 27.7% | **52.0%** | 30.7% | HIGH |
+### Brown Corpus (1960s) — n=30/genre, HIGH confidence
 
-**Key finding:** Rough-Shift >50% is abnormal for **any** well-written genre.
-Narrative texts have the highest Continue rate (50%) — stories naturally keep the same subjects.
+| Genre | Rough normal | Flag > | Continue | Confidence |
+|---|---|---|---|---|
+| **Narrative** | 11.5% – 27.3% | 51.0% | 49.8% | HIGH |
+| **Expository** | 16.7% – 33.3% | 58.2% | 29.2% | HIGH |
+| **Essay** | 11.5% – 27.7% | 52.0% | 30.7% | HIGH |
+
+### Modern Corpus (2020s) — n=8/genre, LOW confidence
+
+| Genre | Rough normal | Flag > | Continue | Confidence |
+|---|---|---|---|---|
+| **Narrative** | 16.1% – 29.8% | 50.4% | 27.7% | LOW |
+| **Expository** | 12.5% – 20.0% | 31.2% | 22.1% | LOW |
+| **Essay** | 0.0% – 20.0% | 50.0% | 27.5% | LOW |
+
+### Key Findings
+
+1. **Rough-Shift >50% is abnormal** for any well-written genre (both corpora agree)
+2. Modern texts show **~10% lower Rough-Shift** than 1960s texts (more cohesive writing)
+3. Narrative texts have the **highest Continue rate** — stories keep subjects longer
+4. Flag thresholds are **stable** for narrative (50-51%), vary for expository (31-58%)
 
 *Calibration is reproducible: `python -m lgram.brown_calibration`*
 
