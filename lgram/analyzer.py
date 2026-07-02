@@ -75,18 +75,13 @@ class TextAnalyzer:
     def __init__(
         self,
         model: str = "en_core_web_sm",
-        similarity_threshold: float = 0.65,
+        similarity_threshold: Optional[float] = None,
         gender_map: Optional[Dict[str, str]] = None,
         history_limit: int = 20,
         use_sentence_transformers: bool = False,
     ):
         self.nlp = spacy.load(model)
         self.model_name = model
-        self._ct_kwargs = {
-            "similarity_threshold": similarity_threshold,
-            "gender_map": gender_map,
-            "history_limit": history_limit,
-        }
         self._st_model = None
         if use_sentence_transformers:
             try:
@@ -95,8 +90,30 @@ class TextAnalyzer:
             except ImportError:
                 pass
 
+        if similarity_threshold is None:
+            similarity_threshold = 0.35 if self._st_model else 0.65
+
+        self._ct_kwargs = {
+            "similarity_threshold": similarity_threshold,
+            "gender_map": gender_map,
+            "history_limit": history_limit,
+        }
+
     def _make_ct(self) -> EnhancedCenteringTheory:
-        return EnhancedCenteringTheory(self.nlp, **self._ct_kwargs)
+        kwargs = dict(self._ct_kwargs)
+        if self._st_model:
+            def _sim(a: str, b: str) -> float:
+                try:
+                    emb = self._st_model.encode([a, b])
+                    a_vec, b_vec = emb[0], emb[1]
+                    dot = float(sum(x*y for x, y in zip(a_vec, b_vec)))
+                    na = math.sqrt(sum(x*x for x in a_vec))
+                    nb = math.sqrt(sum(x*x for x in b_vec))
+                    return dot / (na * nb) if na and nb else 0.0
+                except Exception:
+                    return 0.0
+            kwargs["custom_similarity"] = _sim
+        return EnhancedCenteringTheory(self.nlp, **kwargs)
 
     def _sentence_similarity(self, text_a: str, text_b: str) -> float:
         """Sentence-to-sentence similarity, using transformers if available."""

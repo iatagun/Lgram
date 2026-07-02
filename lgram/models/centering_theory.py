@@ -14,7 +14,7 @@ import logging
 import pickle
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import spacy
 
@@ -62,11 +62,13 @@ class EnhancedCenteringTheory:
         pos_weights: Optional[Dict[str, float]] = None,
         similarity_threshold: float = 0.65,
         gender_map: Optional[Dict[str, str]] = None,
+        custom_similarity: Optional[Callable[[str, str], float]] = None,
     ):
         self.nlp = nlp_model
         self.discourse_history: List[CenteringState] = []
         self.history_limit = history_limit
         self.similarity_threshold = similarity_threshold
+        self._custom_similarity = custom_similarity
 
         self.salience_weights = salience_weights or {
             "nsubj": 4.0,
@@ -382,6 +384,11 @@ class EnhancedCenteringTheory:
         return self._find_in_history(key)
 
     def _vector_similarity(self, e1: str, e2: str) -> float:
+        if self._custom_similarity:
+            try:
+                return self._custom_similarity(e1, e2)
+            except Exception:
+                pass
         if not getattr(self.nlp.vocab, "vectors_length", 0):
             return 0.0
         try:
