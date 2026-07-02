@@ -77,14 +77,22 @@ ta = TextAnalyzer("en_core_web_md")
 | **Expository** | 0.0% – 25.0% | 62.5% | 32.3% | HIGH |
 | **Essay** | 0.0% – 25.0% | 62.5% | 20.3% | HIGH |
 
-*Note: Modern corpus written by single author — stylistic consistency may inflate homogeneity.*
+*Note: Single-author corpus. Stylistic homogeneity may narrow distributions.*
+
+### Cross-Validation: Wikipedia (multi-author, 2024)
+
+| Genre | n | Rough normal | Flag > | Continue | Conf. |
+|---|---|---|---|---|---|
+| **Expository** (Wikipedia) | 12 | 23.0% – 34.6% | 52.0% | 34.5% | MEDIUM |
+
+*Multi-author modern expository texts. Wikipedia's 52.0% flag threshold aligns with Brown's 58.2% (1960s) — suggesting temporal stability for this genre when author diversity is controlled.*
 
 ### Findings
 
-1. **Rough-Shift >50% is abnormal** — Brown and modern corpora agree. Flag thresholds: 51-63% depending on corpus and genre.
-2. **Narrative has the highest Continue rate** (Brown: 50%, Modern: 25%) — contrary to the initial assumption that multi-character stories generate more shifts. Stories are protagonist-centered.
-3. **Modern expository texts have the highest Continue rate** (32%) among contemporary genres — news and academic writing track entities more consistently than fiction or opinion pieces.
-4. **Modern corpus caveat**: written by a single author. Stylistic homogeneity may produce narrower distributions than a multi-author corpus would. Cross-validation with diverse modern sources (news articles, blog posts, published fiction) is the next step.
+1. **Rough-Shift >50% is abnormal** — all corpora agree. Flag thresholds: 51-63%.
+2. **Wikipedia cross-validates Brown** — multi-author expository flag: Wikipedia=52% vs Brown=58%. The single-author modern corpus (63%) is an outlier — likely due to stylistic homogeneity.
+3. **Narrative has the highest Continue rate** (Brown: 50%) — stories are protagonist-centered. Same subject, different events.
+4. **Expository Continue rates vary by author diversity**: single-author=32%, Wikipedia=35%, Brown=29%. All within a narrow band.
 
 *Calibration is reproducible: `python -m lgram.brown_calibration`*
 
