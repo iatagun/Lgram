@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import math
-from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -58,7 +57,6 @@ class TextReport:
 class EntityGrid:
     entities: List[str]
     matrix: List[List[str]]
-    transition_probs: Dict[Tuple[str, str], float]
     score: float
 
 
@@ -109,12 +107,14 @@ class TextAnalyzer:
         for p_idx, para_sents in enumerate(paragraphs):
             sent_analyses: List[SentenceAnalysis] = []
             clause_analyses: List[Dict[str, Any]] = []
+            para_transitions: Dict[TransitionType, int] = {}
 
             for s_idx, sent_text in enumerate(para_sents):
                 state = ct.update_discourse(sent_text)
                 t = state.transition
                 if t:
                     all_transitions[t] = all_transitions.get(t, 0) + 1
+                    para_transitions[t] = para_transitions.get(t, 0) + 1
 
                 sa = SentenceAnalysis(
                     index=s_idx,
@@ -141,12 +141,12 @@ class TextAnalyzer:
                             "analysis": ct.analyze_intra_sentential(sent_text),
                         })
 
-            total = sum(all_transitions.values()) or 1
+            para_total = sum(para_transitions.values()) or 1
             para_score = round(
-                sum(all_transitions.get(t, 0) * ct._transition_weights.get(t, 0.5)
-                    for t in TransitionType) / total, 4
+                sum(para_transitions.get(t, 0) * ct._transition_weights.get(t, 0.5)
+                    for t in TransitionType) / para_total, 4
             )
-            para_dist = {t.value: all_transitions.get(t, 0) / total
+            para_dist = {t.value: para_transitions.get(t, 0) / para_total
                         for t in TransitionType}
 
             boundaries = ct.detect_boundaries([s.text for s in sent_analyses])
@@ -238,7 +238,6 @@ class TextAnalyzer:
         sentences_str = [s.text.strip() for s in doc.sents if s.text.strip()]
 
         # resolve pronouns to canonical entities across sentences
-        canonical: Dict[str, str] = {}  # pronoun/text -> entity key
         resolved_roles: List[Dict[str, str]] = []
 
         for sent_text in sentences_str:
@@ -257,16 +256,9 @@ class TextAnalyzer:
                     continue
                 seen.add(key)
 
-                # resolve pronoun to canonical entity
                 entity_key = key
-                if token.pos_ == "PRON" and state:
-                    for ck in state.forward_centers:
-                        if key in ck or ck in key:
-                            entity_key = ck
-                            break
-                    if entity_key == key and state.backward_center:
-                        entity_key = state.backward_center
-                canonical[key] = entity_key
+                if token.pos_ == "PRON" and state and state.backward_center:
+                    entity_key = state.backward_center
 
                 dep = token.dep_.split(":")[0]
                 if dep in self._subject_deps:
@@ -297,42 +289,35 @@ class TextAnalyzer:
             matrix.append(row)
 
         if not matrix or len(matrix) < 2:
-            return EntityGrid(
-                entities=entity_list, matrix=matrix,
-                transition_probs={}, score=1.0,
-            )
+            return EntityGrid(entities=entity_list, matrix=matrix, score=1.0)
 
-        # coherence rule: smooth transitions (S→S, O→O) > rough (S→-, O→-)
-        smooth = 0
-        rough = 0
+        # cohesion: count entity persistence vs disappearance across adjacent sentences
+        persist = 0
+        disrupt = 0
         for col in range(n_entities):
             for row in range(1, len(matrix)):
                 prev = matrix[row - 1][col]
                 curr = matrix[row][col]
-                if prev != "-" and curr != "-" and prev == curr:
-                    smooth += 1
+                if prev != "-" and curr != "-":
+                    persist += 1
                 elif prev != "-" and curr == "-":
-                    rough += 1
+                    disrupt += 1
 
-        total = smooth + rough
-        score = round(smooth / max(total, 1), 4) if total > 0 else 1.0
+        total = persist + disrupt
+        score = round(persist / max(total, 1), 4) if total > 0 else 1.0
 
-        return EntityGrid(
-            entities=entity_list, matrix=matrix,
-            transition_probs={}, score=score,
-        )
+        return EntityGrid(entities=entity_list, matrix=matrix, score=score)
 
     # ------------------------------------------------------------------
     # TextTiling Segmentation (Hearst 1994/1997)
     # ------------------------------------------------------------------
 
     def texttile_segments(
-        self, text: str, w: int = 20, k: int = 10, cutoff: float = 0.2,
+        self, text: str, k: int = 10, cutoff: float = 0.2,
     ) -> List[int]:
         """
         TextTiling segmentation — returns sentence indices of boundaries.
-        w = pseudo-sentence size in tokens, k = smoothing window,
-        cutoff = relative depth threshold (0-1).
+        k = smoothing window, cutoff = relative depth threshold (0-1).
         """
         doc = self.nlp(text)
         sents = [s for s in doc.sents if s.text.strip()]
@@ -605,7 +590,6 @@ class TextAnalyzer:
         """Split text into paragraphs, each containing sentences."""
         raw_paras = text.split("\n\n")
         paragraphs: List[List[str]] = []
-        pos = 0
 
         for raw in raw_paras:
             if not raw.strip():
