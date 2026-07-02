@@ -81,18 +81,19 @@ ta = TextAnalyzer("en_core_web_md")
 
 ### Cross-Validation: Wikipedia (multi-author, 2024)
 
+*n=12, MEDIUM confidence. Small sample — treat as observational, not conclusive.*
+
 | Genre | n | Rough normal | Flag > | Continue | Conf. |
 |---|---|---|---|---|---|
 | **Expository** (Wikipedia) | 12 | 23.0% – 34.6% | 52.0% | 34.5% | MEDIUM |
 
-*Multi-author modern expository texts. Wikipedia's 52.0% flag threshold aligns with Brown's 58.2% (1960s) — suggesting temporal stability for this genre when author diversity is controlled.*
+*Wikipedia's 52% flag threshold is broadly consistent with Brown's 58%. Direction is as expected (multi-author corpora cluster together, single-author is the outlier). However, at n=12 this is an observation, not a validated claim. Two caveats: (1) Wikipedia's strict editing guidelines may make it a distinct sub-genre, not representative of general 2020s expository writing. (2) The 6% gap could be measurement noise, temporal change, or genre artifact — the current data cannot distinguish between these explanations.*
 
 ### Findings
 
 1. **Rough-Shift >50% is abnormal** — all corpora agree. Flag thresholds: 51-63%.
-2. **Wikipedia cross-validates Brown** — multi-author expository flag: Wikipedia=52% vs Brown=58%. The single-author modern corpus (63%) is an outlier — likely due to stylistic homogeneity.
-3. **Narrative has the highest Continue rate** (Brown: 50%) — stories are protagonist-centered. Same subject, different events.
-4. **Expository Continue rates vary by author diversity**: single-author=32%, Wikipedia=35%, Brown=29%. All within a narrow band.
+2. **Wikipedia cross-validates the multi-author finding** — Brown (58%) and Wikipedia (52%) cluster together, while the single-author corpus (63%) diverges. Consistent with the stylistic homogeneity hypothesis. However, n=12 precludes strong conclusions about temporal stability.
+3. **Wikipedia is not "general 2020s writing"** — its strict editing guidelines may constitute a distinct sub-genre. More diverse modern sources needed.
 
 *Calibration is reproducible: `python -m lgram.brown_calibration`*
 
