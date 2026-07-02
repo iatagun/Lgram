@@ -664,9 +664,84 @@ class EnhancedCenteringTheory:
             "intra_sentential": intra_results,
         }
 
-    # ------------------------------------------------------------------
-    # Discourse boundary detection
-    # ------------------------------------------------------------------
+    def analyze_llm(
+        self, response: str, prompt: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Analyze LLM-generated text cohesion. Optionally compare with prompt."""
+        doc = self.nlp(response)
+        sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+
+        result: Dict[str, Any] = {
+            "response_sentences": len(sentences),
+            "response_words": len(response.split()),
+        }
+
+        # response analysis
+        saved = list(self.discourse_history)
+        self.discourse_history = []
+
+        try:
+            transition_counts: Dict[TransitionType, int] = {}
+            for sent in sentences:
+                state = self.update_discourse(sent)
+                t = state.transition
+                if t:
+                    transition_counts[t] = transition_counts.get(t, 0) + 1
+
+            score, dist = self._score_transitions(transition_counts)
+            boundaries = list(self.discourse_history)
+            _b = [0]
+            rough = 0
+            for _i, _s in enumerate(boundaries):
+                if _s.transition == TransitionType.ROUGH_SHIFT:
+                    rough += 1
+                    if _s.backward_center is None and rough >= 2:
+                        _b.append(_i)
+                        rough = 0
+                else:
+                    rough = max(0, rough - 1)
+
+            result["response_cohesion"] = round(score, 4)
+            result["response_transitions"] = dist
+            result["response_segments"] = len(_b)
+
+            # quality rating
+            if score >= 0.80:
+                result["quality"] = "high"
+            elif score >= 0.55:
+                result["quality"] = "medium"
+            else:
+                result["quality"] = "low"
+        finally:
+            self.discourse_history = saved
+
+        # prompt analysis (separate, no cross-contamination)
+        if prompt:
+            prompt_doc = self.nlp(prompt)
+            prompt_sents = [s.text.strip() for s in prompt_doc.sents if s.text.strip()]
+            self.discourse_history = []
+            prompt_counts: Dict[TransitionType, int] = {}
+            for sent in prompt_sents:
+                state = self.update_discourse(sent)
+                t = state.transition
+                if t:
+                    prompt_counts[t] = prompt_counts.get(t, 0) + 1
+            prompt_score, _ = self._score_transitions(prompt_counts)
+            result["prompt_cohesion"] = round(prompt_score, 4)
+            result["prompt_sentences"] = len(prompt_sents)
+
+            # gap analysis: does response maintain prompt's cohesion?
+            combined = prompt_sents + sentences
+            self.discourse_history = []
+            for sent in combined:
+                self.update_discourse(sent)
+            result["cross_boundary_penalty"] = 0
+            for i in range(len(prompt_sents), len(combined)):
+                if (self.discourse_history[i].transition == TransitionType.ROUGH_SHIFT
+                        and self.discourse_history[i].backward_center is None):
+                    result["cross_boundary_penalty"] += 1
+
+        return result
 
     def detect_boundaries(self, utterance_sequence: List[str]) -> List[int]:
         saved = list(self.discourse_history)
