@@ -557,15 +557,21 @@ class TextAnalyzer:
         if n < window:
             return {"windows": [], "mean": 1.0, "min": 1.0, "trend": "flat"}
 
+        ct = self._make_ct()
         scores: List[float] = []
         for i in range(n - window + 1):
             chunk = sents[i:i + window]
-            ct = self._make_ct()
             ct.discourse_history = []
             for sent in chunk:
                 ct.update_discourse(sent)
-            r = ct.evaluate_cohesion(chunk)
-            scores.append(r["cohesion_score"])
+            # compute score from accumulated transitions (avoid double-parse)
+            counts: Dict = {}
+            for st in ct.discourse_history:
+                t = st.transition
+                if t:
+                    counts[t] = counts.get(t, 0) + 1
+            s, _ = ct._score_transitions(counts)
+            scores.append(s)
 
         mean_score = round(sum(scores) / len(scores), 4)
         min_score = round(min(scores), 4)
@@ -628,7 +634,7 @@ class TextAnalyzer:
 
         ascii_out = ""
         if ascii_render:
-            chars = [" ", "░", "▒", "▓"]
+            chars = [" ", ".", ":", "#"]
             lines: List[str] = []
             for i in range(n):
                 row_chars = "".join(
@@ -719,10 +725,10 @@ class TextAnalyzer:
                         "index": i,
                         "issue": "no_backward_center",
                         "severity": "high",
-                        "suggestion": (
-                            f"No link to previous topic. Add a pronoun, repeat a key word, "
-                            f"or use a transition phrase (however, therefore, in addition)."
-                        ),
+                    "suggestion": (
+                        "No link to previous topic. Add a pronoun, repeat a key word, "
+                        "or use a transition phrase (however, therefore, in addition)."
+                    ),
                     })
                 else:
                     suggestions.append({
