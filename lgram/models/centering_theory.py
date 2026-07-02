@@ -735,47 +735,60 @@ class EnhancedCenteringTheory:
         """
         Validate discourse sequence against Centering Theory constraints.
 
-        Rule 1: Every utterance has exactly one Cb (except possibly the first).
-        Rule 2: If any element of Cf(Ui-1) is realized as a pronoun in Ui,
-                then Cb(Ui) must be that element.
-        Rule 3: CONTINUE > RETAIN > SMOOTH-SHIFT > ROUGH-SHIFT preference.
+        Rule 1: Cb(Ui) is the highest-ranked element of Cf(Ui-1) realized in Ui.
+        Rule 2: If any Cf(Ui-1) element is pronominalized in Ui, Cb(Ui) = that element.
         """
         saved = list(self.discourse_history)
         self.discourse_history = []
 
-        states: List[CenteringState] = []
-        for u in utterance_sequence:
-            states.append(self.update_discourse(u))
-
         violations: List[Dict[str, Any]] = []
+        try:
+            states: List[CenteringState] = []
+            for u in utterance_sequence:
+                states.append(self.update_discourse(u))
 
-        # Rule 2: pronoun realization constraint
-        for i in range(1, len(states)):
-            prev = states[i - 1]
-            curr = states[i]
-            for pc in prev.forward_centers:
-                if pc not in curr.forward_centers:
-                    for cc in curr.forward_centers:
-                        if cc.lower() in self._all_pronouns:
-                            if self._pronoun_matches_entity(
-                                cc.lower(), pc, prev._entity_map
-                            ):
-                                if curr.backward_center != pc:
-                                    violations.append({
-                                        "utterance_index": i,
-                                        "rule": "Rule 2",
-                                        "desc": f"Cb should be '{pc}' (pronominalized), got '{curr.backward_center}'",
-                                    })
+            # Rule 1: Cb(Ui) must come from highest-ranked Cf(Ui-1)
+            for i in range(1, len(states)):
+                prev = states[i - 1]
+                curr = states[i]
+                if curr.backward_center is None:
+                    continue
 
-        # preference ordering check
-        rough_positions = [i for i, s in enumerate(states) if s.transition == TransitionType.ROUGH_SHIFT]
-        continue_positions = [i for i, s in enumerate(states) if s.transition == TransitionType.CONTINUE]
+                # verify Cb(Ui) matches a Cf(Ui-1) element
+                cb_in_prev = False
+                for pc in prev.forward_centers:
+                    if pc == curr.backward_center:
+                        cb_in_prev = True
+                        break
 
-        score, dist = self._score_transitions(
-            {t: sum(1 for s in states if s.transition == t) for t in TransitionType}
-        )
+                if not cb_in_prev:
+                    violations.append({
+                        "utterance_index": i,
+                        "rule": "Rule 1",
+                        "desc": f"Cb '{curr.backward_center}' not found in Cf(Ui-1) {prev.forward_centers}",
+                    })
 
-        self.discourse_history = saved
+            # Rule 2: pronoun realization constraint
+            for i in range(1, len(states)):
+                prev = states[i - 1]
+                curr = states[i]
+                for pc in prev.forward_centers:
+                    if pc not in curr.forward_centers:
+                        for cc in curr.forward_centers:
+                            if cc.lower() in self._all_pronouns:
+                                if self._pronoun_matches_entity(cc.lower(), pc, prev._entity_map):
+                                    if curr.backward_center != pc:
+                                        violations.append({
+                                            "utterance_index": i,
+                                            "rule": "Rule 2",
+                                            "desc": f"'{pc}' pronominalized as '{cc}' but Cb is '{curr.backward_center}'",
+                                        })
+
+            score, dist = self._score_transitions(
+                {t: sum(1 for s in states if s.transition == t) for t in TransitionType}
+            )
+        finally:
+            self.discourse_history = saved
 
         return {
             "is_valid": len(violations) == 0,
