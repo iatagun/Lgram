@@ -25,5 +25,12 @@ jobs:
           pip install -e .
           python -m spacy download en_core_web_sm
 
+      - name: Lint
+        run: |
+          pip install black flake8 mypy
+          black --check --diff lgram/ tests/
+          flake8 lgram/ tests/ --count --select=E,F,W --show-source --statistics
+          mypy lgram/
+
       - name: Run tests
         run: python -m pytest tests/ -v

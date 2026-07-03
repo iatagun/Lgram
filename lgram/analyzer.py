@@ -17,6 +17,14 @@ import spacy
 
 from .models.centering_theory import EnhancedCenteringTheory, TransitionType
 
+# cohesion quality thresholds
+QUALITY_HIGH = 0.80
+QUALITY_MEDIUM = 0.55
+HEATMAP_WEAK = 0.3
+GRAPH_EDGE_THRESHOLD = 0.3
+TREND_SLOPE_THRESHOLD = 0.05
+DIFF_DELTA_THRESHOLD = 0.05
+
 
 @dataclass
 class SentenceAnalysis:
@@ -125,7 +133,7 @@ class TextAnalyzer:
                     math.sqrt(sum(x*x for x in a)) * math.sqrt(sum(x*x for x in b))
                 ))
             except Exception:
-                pass
+                pass  # fall through to spaCy similarity
         da = self.nlp(text_a)
         db = self.nlp(text_b)
         if da.vector_norm and db.vector_norm:
@@ -228,9 +236,9 @@ class TextAnalyzer:
         all_texts = [s.text for s in all_sentences]
         all_boundaries = ct.detect_boundaries(all_texts)
 
-        if overall_score >= 0.80:
+        if overall_score >= QUALITY_HIGH:
             quality = "high"
-        elif overall_score >= 0.55:
+        elif overall_score >= QUALITY_MEDIUM:
             quality = "medium"
         else:
             quality = "low"
@@ -282,6 +290,81 @@ class TextAnalyzer:
         }
 
     # ------------------------------------------------------------------
+    # LLM Output Evaluation
+    # ------------------------------------------------------------------
+
+    def analyze_llm(
+        self, response: str, prompt: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Analyze LLM-generated text cohesion. Optionally compare with prompt."""
+        ct = self._make_ct()
+        doc = self.nlp(response)
+        sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+
+        result: Dict[str, Any] = {
+            "response_sentences": len(sentences),
+            "response_words": len(response.split()),
+        }
+
+        transition_counts: Dict[TransitionType, int] = {}
+        for sent in sentences:
+            state = ct.update_discourse(sent)
+            t = state.transition
+            if t:
+                transition_counts[t] = transition_counts.get(t, 0) + 1
+
+        score, dist = ct._score_transitions(transition_counts)
+
+        boundaries = list(ct.discourse_history)
+        _b = [0]
+        rough = 0
+        for _i, _s in enumerate(boundaries):
+            if _s.transition == TransitionType.ROUGH_SHIFT:
+                rough += 1
+                if _s.backward_center is None and rough >= 2:
+                    _b.append(_i)
+                    rough = 0
+            else:
+                rough = max(0, rough - 1)
+
+        result["response_cohesion"] = round(score, 4)
+        result["response_transitions"] = dist
+        result["response_segments"] = len(_b)
+
+        if score >= QUALITY_HIGH:
+            result["quality"] = "high"
+        elif score >= QUALITY_MEDIUM:
+            result["quality"] = "medium"
+        else:
+            result["quality"] = "low"
+
+        if prompt:
+            prompt_doc = self.nlp(prompt)
+            prompt_sents = [s.text.strip() for s in prompt_doc.sents if s.text.strip()]
+            ct2 = self._make_ct()
+            prompt_counts: Dict[TransitionType, int] = {}
+            for sent in prompt_sents:
+                state = ct2.update_discourse(sent)
+                t = state.transition
+                if t:
+                    prompt_counts[t] = prompt_counts.get(t, 0) + 1
+            prompt_score, _ = ct2._score_transitions(prompt_counts)
+            result["prompt_cohesion"] = round(prompt_score, 4)
+            result["prompt_sentences"] = len(prompt_sents)
+
+            ct3 = self._make_ct()
+            combined = prompt_sents + sentences
+            result["cross_boundary_penalty"] = 0
+            for sent in combined:
+                ct3.update_discourse(sent)
+            for i in range(len(prompt_sents), len(combined)):
+                if (ct3.discourse_history[i].transition == TransitionType.ROUGH_SHIFT
+                        and ct3.discourse_history[i].backward_center is None):
+                    result["cross_boundary_penalty"] += 1
+
+        return result
+
+    # ------------------------------------------------------------------
     # Entity Grid Model (Barzilay & Lapata 2005/2008)
     # ------------------------------------------------------------------
 
@@ -294,18 +377,20 @@ class TextAnalyzer:
         doc = self.nlp(text)
         sentences_str = [s.text.strip() for s in doc.sents if s.text.strip()]
 
-        # resolve pronouns to canonical entities across sentences
         resolved_roles: List[Dict[str, str]] = []
 
         for sent_text in sentences_str:
             ct.update_discourse(sent_text)
 
-        for sent_idx, sent_text in enumerate(sentences_str):
+        for sent_idx, sent_span in enumerate(doc.sents):
+            sent_text = sent_span.text.strip()
+            if not sent_text:
+                continue
             state = ct.discourse_history[sent_idx] if sent_idx < len(ct.discourse_history) else None
             roles: Dict[str, str] = {}
             seen: set = set()
 
-            for token in self.nlp(sent_text):
+            for token in sent_span:
                 if token.pos_ not in ("NOUN", "PROPN", "PRON"):
                     continue
                 key = token.text.lower()
@@ -499,12 +584,12 @@ class TextAnalyzer:
                 visited[v] = True
                 comp.append(v)
                 for u in range(n):
-                    if adj[v][u] > 0.3 and not visited[u]:
+                    if adj[v][u] > GRAPH_EDGE_THRESHOLD and not visited[u]:
                         stack.append(u)
             communities.append(sorted(comp))
 
         # centrality: degree
-        degrees = [sum(1 for j in range(n) if j != i and adj[i][j] > 0.3) for i in range(n)]
+        degrees = [sum(1 for j in range(n) if j != i and adj[i][j] > GRAPH_EDGE_THRESHOLD) for i in range(n)]
         max_deg = max(degrees) if degrees else 0
         central = [i for i, d in enumerate(degrees) if d == max_deg] if max_deg > 0 else [0]
 
@@ -589,9 +674,9 @@ class TextAnalyzer:
 
         if len(scores) >= 2:
             slope = (scores[-1] - scores[0]) / len(scores)
-            if slope > 0.05:
+            if slope > TREND_SLOPE_THRESHOLD:
                 trend = "improving"
-            elif slope < -0.05:
+            elif slope < -TREND_SLOPE_THRESHOLD:
                 trend = "declining"
             else:
                 trend = "stable"
@@ -635,7 +720,7 @@ class TextAnalyzer:
 
         weak_pairs = []
         for i in range(n - 1):
-            if matrix[i][i + 1] < 0.3:
+            if matrix[i][i + 1] < HEATMAP_WEAK:
                 weak_pairs.append({
                     "sentence_a": i,
                     "sentence_b": i + 1,
@@ -798,9 +883,9 @@ class TextAnalyzer:
             - _count(r1.transition_distribution, "Rough-Shift"), 3
         )
 
-        if delta > 0.05:
+        if delta > DIFF_DELTA_THRESHOLD:
             verdict = "improved"
-        elif delta < -0.05:
+        elif delta < -DIFF_DELTA_THRESHOLD:
             verdict = "declined"
         else:
             verdict = "similar"

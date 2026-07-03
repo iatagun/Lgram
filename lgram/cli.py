@@ -89,7 +89,7 @@ Examples:
 
 
 def _read(args) -> str:
-    if args.text:
+    if args.text is not None:
         return args.text
     if args.file:
         path: Optional[Path] = args.file
