@@ -681,12 +681,7 @@ class EnhancedCenteringTheory:
             intra = self.analyze_intra_sentential(sent)
             intra_results.append(intra)
 
-        saved = list(self.discourse_history)
-        self.discourse_history = []
-        for sent in sentences:
-            self.update_discourse(sent)
         inter_result = self.evaluate_cohesion(sentences)
-        self.discourse_history = saved
 
         return {
             "sentence_count": len(sentences),
@@ -979,16 +974,44 @@ class EnhancedCenteringTheory:
             return {"error": "no active stream"}
 
         score, dist = self._score_transitions(stats["transition_counts"])
-
-        if hasattr(self, "_stream_saved"):
-            self.discourse_history = self._stream_saved
-            del self._stream_saved
-
-        return {
+        result = {
             "total_sentences": stats["sentences_processed"],
             "final_cohesion": score,
             "transition_distribution": dist,
         }
+
+        if hasattr(self, "_stream_saved"):
+            self.discourse_history = self._stream_saved
+            del self._stream_saved
+        if hasattr(self, "_stream_stats"):
+            del self._stream_stats
+
+        return result
+
+    # ------------------------------------------------------------------
+    # Async streaming (wraps sync streaming for non-blocking use)
+    # ------------------------------------------------------------------
+
+    async def astream_feed(self, utterance: str) -> Dict[str, Any]:
+        """Async wrapper around stream_feed."""
+        import asyncio
+        loop = asyncio.get_running_loop()
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            return await loop.run_in_executor(pool, self.stream_feed, utterance)
+
+    async def astream_text(self, text: str) -> List[Dict[str, Any]]:
+        """Async analysis of a multi-sentence text, yielding per-sentence results."""
+        doc = self.nlp(text)
+        sentences = [s.text.strip() for s in doc.sents if s.text.strip()]
+        self.stream_start()
+        results = []
+        for sent in sentences:
+            result = await self.astream_feed(sent)
+            results.append(result)
+        final = self.stream_flush()
+        results.append(final)
+        return results
 
     # ------------------------------------------------------------------
     # Serialization

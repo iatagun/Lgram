@@ -7,3 +7,5 @@ build/
 .vscode/
 .qodo/
 *.egg
+.mypy_cache/
+docs/_build/

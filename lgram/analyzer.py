@@ -466,17 +466,6 @@ class TextAnalyzer:
         if len(sents) < 3:
             return [0]
 
-        # build sentence vectors via average token vectors
-        sent_vecs: List = []
-        for sent in sents:
-            vecs = [t.vector for t in sent if t.has_vector and not t.is_stop]
-            if vecs:
-                avg = sum(vecs) / len(vecs)
-                sent_vecs.append(avg)
-            else:
-                sent_vecs.append(None)
-
-        # similarity between adjacent sentences
         sims: List[float] = []
         for i in range(len(sents) - 1):
             sims.append(self._sentence_similarity(sents[i].text, sents[i + 1].text))
@@ -967,20 +956,26 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def _split_paragraphs(self, text: str, doc) -> List[List[str]]:
-        """Split text into paragraphs, each containing sentences."""
+        """Split text into paragraphs using doc.sents position mapping."""
         raw_paras = text.split("\n\n")
         paragraphs: List[List[str]] = []
+        all_sents = list(doc.sents)
 
         for raw in raw_paras:
             if not raw.strip():
                 continue
-            para_doc = self.nlp(raw.strip())
-            sents = [s.text.strip() for s in para_doc.sents if s.text.strip()]
-            if sents:
-                paragraphs.append(sents)
+            start_char = text.index(raw.strip())
+            end_char = start_char + len(raw.strip())
+            para_sents = [
+                s.text.strip() for s in all_sents
+                if s.start_char >= start_char and s.end_char <= end_char
+                and s.text.strip()
+            ]
+            if para_sents:
+                paragraphs.append(para_sents)
 
         if not paragraphs:
-            sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+            sents = [s.text.strip() for s in all_sents if s.text.strip()]
             if sents:
                 paragraphs.append(sents)
 
