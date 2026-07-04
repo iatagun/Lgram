@@ -77,4 +77,11 @@ __all__ = [
     "__license__",
 ]
 
+try:
+    from .essay.grader import CAEASGrader
+    from .essay.models import Essay, CAEASReport
+    __all__ += ["CAEASGrader", "Essay", "CAEASReport"]
+except ImportError:
+    pass
+
 logging.getLogger(__name__).addHandler(logging.NullHandler())
