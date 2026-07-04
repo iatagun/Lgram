@@ -37,17 +37,22 @@ aralığı var.
 kanıtlanmış, "bir metindeki varlıklar cümleden cümleye nasıl takip ediliyor"
 sorusuna matematiksel cevap veren bir model. Biz bunu Türk öğrencilerin
 İngilizce yazma hatalarına uyarladık. Dilbilgisi tarafında LanguageTool (açık
-kaynak, 6000+ İngilizce kural) ve LM Studio üzerinden yerel LLM kullanıyoruz.
+kaynak, binlerce İngilizce kural) ve LM Studio üzerinden yerel LLM kullanıyoruz.
 Tüm işlem bilgisayarda çalışıyor, veri dışarı çıkmıyor.
 
-**Ne aşamada:** Prototip çalışıyor, 163 otomatik test geçiyor. Uç senaryolarla
-(çok iyi yazılmış vs. kasten tutarsız bir metin) yaptığımız kontrol
-testlerinde, cohesion analizi 56 puanlık net bir ayrım gösteriyor. Ama gerçek
-öğrenci denemeleri bu kadar uç olmayacak — çoğu orta bantta, birkaç
-yerelleşmiş sorun içeren metinler olacak. Şu an içinde olduğumuz aşama: **bir
-okulla pilot çalışmaya başlayıp, sistemi gerçek öğretmen değerlendirmeleriyle
-kalibre etmek.** Pilotun amacı tam olarak bu: cohesion ağırlığını, eşik
-değerlerini ve güven aralıklarını gerçek veriyle ampirik olarak belirlemek.
+**Ne aşamada:** Prototip çalışıyor, 163 otomatik test geçiyor (kod her değiştiğinde
+sistemin bozulmadığını kontrol eden testler). Uç senaryolarla (çok iyi yazılmış
+vs. kasten tutarsız bir metin) yaptığımız kontrol testlerinde, cohesion analizi
+56 puanlık net bir ayrım gösteriyor. Ancak gerçek öğrenci denemeleri bu kadar
+uç olmayacak — çoğu orta bantta, birkaç yerelleşmiş sorun içeren metinler
+olacak. Ayrıca LLM tabanlı bileşenler (gramer derin kontrolü, içerik analizi)
+çalıştırmalar arasında küçük farklılıklar gösterebiliyor — bunu güven
+aralıklarına yansıtıyoruz ve pilot sırasında gözlemleyeceğiz.
+
+Şu an içinde olduğumuz aşama: **bir okulla pilot çalışmaya başlayıp, sistemi
+gerçek öğretmen değerlendirmeleriyle kalibre etmek.** Pilotun amacı tam olarak
+bu: cohesion ağırlığını, eşik değerlerini ve güven aralıklarını gerçek veriyle
+ampirik olarak belirlemek.
 
 ---
 

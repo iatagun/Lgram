@@ -4,7 +4,7 @@
 
 ### New: Full 5-Layer Rubric with Real NLP Tools
 
-- **Grammar Layer** — LanguageTool (6000+ rules) + LLM deep grammar check
+- **Grammar Layer** — LanguageTool (binlerce kural) + LLM deep grammar check
   - Catches mechanical errors (missing "to", spelling, punctuation)
   - LLM supplement finds subject-verb agreement, missing subjects, article errors
   - Combined: 6 errors detected vs 1 with LanguageTool alone
