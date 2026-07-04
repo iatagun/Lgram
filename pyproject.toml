@@ -49,6 +49,11 @@ dev = [
     "build>=0.8.0",
     "twine>=4.0.0",
 ]
+essay = [
+    "language-tool-python>=2.7.0",
+    "pyspellchecker>=0.8.0",
+    "openai>=1.0.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/iatagun/Lgram"

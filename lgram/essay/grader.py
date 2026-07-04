@@ -51,7 +51,27 @@ from .models import (
     LayerResult,
     RubricCriterion,
 )
-from .prefilter import PreFilter, PreFilterReport
+
+try:
+    from .layer_grammar import GrammarLayer
+    _grammar_available = True
+except ImportError:
+    GrammarLayer = None
+    _grammar_available = False
+
+try:
+    from .layer_mechanics import MechanicsLayer
+    _mechanics_available = True
+except ImportError:
+    MechanicsLayer = None
+    _mechanics_available = False
+
+try:
+    from .layer_llm_content import LLMContentAnalyzer
+    _llm_available = True
+except ImportError:
+    LLMContentAnalyzer = None
+    _llm_available = False
 
 
 class CAEASGrader:
@@ -83,9 +103,10 @@ class CAEASGrader:
         borderline_margin: float = 5.0,
         cefr_level: Optional[str] = None,
         l1_language: Optional[str] = None,
-        use_prefilter: bool = False,
+        use_grammar: bool = True,
+        use_mechanics: bool = True,
+        use_llm: bool = True,
     ):
-        self._content_analyzer = content_analyzer or MockContentAnalyzer()
         self._rubric = rubric or EFL_RUBRIC
         self._cohesion = CohesionLayer(model=surface_model)
         self._surface = SurfaceLayer(model=surface_model)
@@ -94,12 +115,22 @@ class CAEASGrader:
         self._confidence = ConfidenceLayer(borderline_margin=borderline_margin)
         self._calibration: Optional[CalibrationReport] = None
 
+        self._grammar = GrammarLayer() if use_grammar and GrammarLayer else None
+        self._mechanics = MechanicsLayer() if use_mechanics and MechanicsLayer else None
+
+        if use_llm and LLMContentAnalyzer:
+            llm = LLMContentAnalyzer()
+            self._content_analyzer: ContentAnalyzer = (
+                llm if llm.available else (content_analyzer or MockContentAnalyzer())
+            )
+        else:
+            self._content_analyzer = content_analyzer or MockContentAnalyzer()
+
         self.use_efl = True
         self.cefr_level: Optional[str] = cefr_level
         self.l1_language: Optional[str] = l1_language or "tr"
 
         self._l1_analyzer = L1TransferAnalyzer() if self.l1_language == "tr" else None
-        self._prefilter = PreFilter() if use_prefilter else None
 
     @property
     def rubric(self) -> List[RubricCriterion]:
@@ -128,25 +159,25 @@ class CAEASGrader:
                 f"Currently supported: tr (Turkish)."
             )
 
-    def enable_prefilter(self) -> None:
-        if self._prefilter is None:
-            self._prefilter = PreFilter()
+    def enable_prefilter(self) -> None:  # deprecated, kept for compat
+        pass
 
     def grade(self, essay: Essay) -> CAEASReport:
         return self.analyze(essay)
 
     def analyze(self, essay: Essay) -> CAEASReport:
         """
-        Analyze essay and produce evidence-based feedback.
+        Analyze essay across all 5 rubric dimensions.
 
-        Returns CAEASReport with estimated cohesion indicator,
-        confidence interval, and teacher-review recommendations.
+        Layers:
+          1. Grammar (LanguageTool)  → rubric Grammar
+          2. Content (LLM/heuristic) → rubric Content
+          3. Cohesion (Lgram)        → rubric Organization
+          4. Surface (readability)   → rubric Style
+          5. Mechanics (spellcheck)  → rubric Mechanics
 
-        EFL mode adds:
-          - CEFR level estimation (if not explicitly set)
-          - CEFR-aware thresholds
-          - L1 transfer analysis (Turkish, if enabled)
-          - PreFilter disambiguation (if enabled)
+        Primary metric: cohesion_score (pure Layer 3, 0-100)
+        Supplementary: composite_indicator (all 5 layers blended)
         """
         cefr_level = self.cefr_level
         detected_level = None
@@ -161,21 +192,14 @@ class CAEASGrader:
 
         complexity = self._cefr_calibrator.assess_complexity(essay.text)
 
-        pf_report: Optional[PreFilterReport] = None
-        if self._prefilter:
-            pf_report = self._prefilter.analyze(essay.text)
+        l_grammar = self._grammar.evaluate(essay) if self._grammar else _placeholder("Grammar")
+        l_content = self._content_analyzer.analyze(essay, self._rubric)
+        l_cohesion = self._cohesion.evaluate(essay)
+        l_surface = self._surface.evaluate(essay)
+        l_mechanics = self._mechanics.evaluate(essay) if self._mechanics else _placeholder("Mechanics")
 
-        l1 = self._content_analyzer.analyze(essay, self._rubric)
-        l2 = self._cohesion.evaluate(essay)
-        l3 = self._surface.evaluate(essay)
-
-        if pf_report:
-            if pf_report.has_critical_grammar_issues and l2.confidence_interval:
-                ci_lo, ci_hi = l2.confidence_interval
-                l2.confidence_interval = (max(0, ci_lo - 15), ci_hi)
-
-        layer_results = [l1, l2, l3]
-        weights = [c.weight for c in self._rubric[:3]]
+        layer_results = [l_grammar, l_content, l_cohesion, l_surface, l_mechanics]
+        weights = [c.weight for c in self._rubric]
         total_w = sum(weights)
         if total_w > 0:
             weights = [w / total_w for w in weights]
@@ -189,7 +213,7 @@ class CAEASGrader:
         composite = round(composite, 1)
         composite = max(0.0, min(100.0, composite))
 
-        cohesion_score = l2.score
+        cohesion_score = l_cohesion.score
 
         if self._calibration and self._calibration.ready:
             cohesion_score = self._apply_calibration(cohesion_score)
@@ -207,14 +231,11 @@ class CAEASGrader:
             },
         }
 
-        if pf_report:
-            raw_details["prefilter"] = pf_report.to_dict()
-
-            if pf_report.cohesion_override_count > 0:
-                raw_details["cohesion_warning"] = (
-                    f"{pf_report.cohesion_override_count} grammar issues "
-                    f"may affect cohesion analysis (confidence: {pf_report.parse_confidence:.0%})"
-                )
+        if self._grammar and not self._grammar.available:
+            raw_details["grammar_warning"] = (
+                "LanguageTool not available. Install: pip install language-tool-python "
+                "(requires Java 8+). Grammar scoring disabled."
+            )
 
         l1_transfer = None
         if self._l1_analyzer:
@@ -264,13 +285,6 @@ class CAEASGrader:
                 f"L1 transfer patterns detected (score: {l1_transfer.overall_transfer_score:.2f}) "
                 f"— some cohesion observations may reflect Turkish L1 transfer rather than "
                 f"writing quality issues"
-            )
-
-        if pf_report and pf_report.has_critical_grammar_issues:
-            conf["triggers"].append(
-                f"High grammar error rate detected — grammar feedback should take "
-                f"priority over cohesion review. Cohesion observations may be affected "
-                f"by grammatical errors."
             )
 
         return CAEASReport(
@@ -360,3 +374,14 @@ class CAEASGrader:
         return [self.analyze(e) for e in essays]
 
     grade_batch = analyze_batch
+
+
+def _placeholder(name: str) -> LayerResult:
+    return LayerResult(
+        layer_name=name,
+        score=50.0,
+        normalized_score=0.5,
+        raw_details={"note": f"{name} layer not loaded (optional dependency missing)"},
+        evidence=[f"{name} layer not available — install optional dependencies"],
+        confidence_interval=(40.0, 60.0),
+    )
