@@ -48,14 +48,16 @@ class TestModels(unittest.TestCase):
         )
         from lgram.essay.models import CAEASReport as CAEASReport_model
         r = CAEASReport_model(
-            overall_cohesion_indicator=75.0,
+            cohesion_score=75.0,
+            composite_indicator=70.0,
             confidence_interval=(70.0, 80.0),
             layer_results=[lr],
             suggestion="OK",
             justification="test",
         )
         d = r.to_dict()
-        self.assertEqual(d["overall_cohesion_indicator"], 75.0)
+        self.assertEqual(d["cohesion_score"], 75.0)
+        self.assertEqual(d["composite_indicator"], 70.0)
         self.assertEqual(d["suggestion"], "OK")
 
 
@@ -391,8 +393,85 @@ class TestCAEASGrader(unittest.TestCase):
         essay = Essay(title="T", text="A. B. C.")
         report = self.grader.grade(essay)
         self.assertIsInstance(report.triggers, list)
-        self.assertIsInstance(report.human_review_recommended, bool)
+        self.assertIsInstance(report.teacher_review_recommended, bool)
         self.assertIsInstance(report.borderline, bool)
+
+
+class TestDiscriminantValidity(unittest.TestCase):
+    """Sanity check: system MUST differentiate good vs bad essays on pure cohesion."""
+
+    def setUp(self):
+        self.grader = CAEASGrader()
+
+    def test_cohesion_differentiates_good_vs_bad(self):
+        good = Essay(title="Good", text=(
+            "Technology has transformed education in many important ways. "
+            "First, online learning platforms have made education accessible to "
+            "students in remote areas. For example, students in rural regions "
+            "can now attend virtual classes from top universities. "
+            "Second, digital tools enable personalized learning experiences. "
+            "Teachers can track individual student progress and adjust their "
+            "instruction accordingly. However, technology also presents challenges. "
+            "Not all students have reliable internet access, which creates a "
+            "digital divide. Furthermore, excessive screen time may affect "
+            "students concentration and health. In conclusion, while technology "
+            "offers significant benefits for education, schools must address "
+            "equity concerns and establish healthy usage guidelines."
+        ))
+        bad = Essay(title="Bad", text=(
+            "Technology is good. I like computers. My neighbor has a dog. "
+            "The weather today is sunny. Schools should have more technology. "
+            "Pizza is my favorite food. Students use the internet for research."
+        ))
+        gr = self.grader.analyze(good)
+        br = self.grader.analyze(bad)
+
+        self.assertGreater(
+            gr.cohesion_score, br.cohesion_score,
+            f"Good essay cohesion ({gr.cohesion_score:.0f}) must exceed "
+            f"bad essay cohesion ({br.cohesion_score:.0f})"
+        )
+
+        self.assertGreater(
+            gr.cohesion_score - br.cohesion_score, 10,
+            f"Cohesion gap ({gr.cohesion_score - br.cohesion_score:.0f}) "
+            f"too small — good ({gr.cohesion_score:.0f}) vs bad ({br.cohesion_score:.0f})"
+        )
+
+        self.assertGreater(
+            gr.composite_indicator, br.composite_indicator,
+            f"Composite indicator: good ({gr.composite_indicator:.0f}) must exceed "
+            f"bad ({br.composite_indicator:.0f})"
+        )
+
+    def test_cohesion_solo_signal_stronger_than_composite(self):
+        good = Essay(title="Good", text=(
+            "Alice went to the park yesterday afternoon with her dog. "
+            "She sat on a bench near the lake and watched the ducks. "
+            "Alice then read a book that she had borrowed from the library. "
+            "She enjoyed the story very much because it was exciting. "
+            "The weather was beautiful with a gentle breeze. "
+            "Alice stayed at the park until the sun began to set."
+        ))
+        bad = Essay(title="Bad", text=(
+            "Alice likes apples. Quantum physics explains particles. "
+            "My car needs an oil change soon. Beethoven wrote symphonies. "
+            "The weather report predicts rain tomorrow afternoon."
+        ))
+        gr = self.grader.analyze(good)
+        br = self.grader.analyze(bad)
+
+        self.assertGreater(gr.cohesion_score, br.cohesion_score + 15)
+
+    def test_cohesion_fields_exist(self):
+        essay = Essay(title="T", text="A simple test. With multiple sentences. For cohesion checking.")
+        report = self.grader.analyze(essay)
+        self.assertTrue(hasattr(report, "cohesion_score"))
+        self.assertTrue(hasattr(report, "composite_indicator"))
+        self.assertGreaterEqual(report.cohesion_score, 0)
+        self.assertLessEqual(report.cohesion_score, 100)
+        self.assertGreaterEqual(report.composite_indicator, 0)
+        self.assertLessEqual(report.composite_indicator, 100)
 
 
 if __name__ == "__main__":

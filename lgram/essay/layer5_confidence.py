@@ -173,7 +173,7 @@ class ConfidenceLayer:
     ) -> str:
         """Build traceable evidence summary for teacher review."""
         parts = [
-            f"Cohesion analysis complete. Estimated indicator: {overall_score:.1f}/100 "
+            f"Cohesion analysis complete. Estimated cohesion: {overall_score:.1f}/100 "
             f"(CI: {ci[0]:.0f}–{ci[1]:.0f}).",
             "",
             "Observations by dimension:",

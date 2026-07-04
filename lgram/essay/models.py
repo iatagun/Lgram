@@ -49,7 +49,8 @@ class LayerResult:
 
 @dataclass
 class CAEASReport:
-    overall_cohesion_indicator: float
+    cohesion_score: float
+    composite_indicator: float
     confidence_interval: Tuple[float, float]
     layer_results: List[LayerResult]
     suggestion: str
@@ -62,8 +63,12 @@ class CAEASReport:
     cefr_detected: bool = False
 
     @property
+    def overall_cohesion_indicator(self) -> float:
+        return self.cohesion_score
+
+    @property
     def overall_score(self) -> float:
-        return self.overall_cohesion_indicator
+        return self.cohesion_score
 
     @property
     def human_review_recommended(self) -> bool:
@@ -75,7 +80,8 @@ class CAEASReport:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "overall_cohesion_indicator": self.overall_cohesion_indicator,
+            "cohesion_score": self.cohesion_score,
+            "composite_indicator": self.composite_indicator,
             "confidence_interval": list(self.confidence_interval),
             "suggestion": self.suggestion,
             "justification": self.justification,

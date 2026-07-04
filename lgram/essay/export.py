@@ -65,11 +65,12 @@ class DataExporter:
             record = {
                 "title": essay.title,
                 "text_length": len(essay.text.split()),
-                "estimated_cefr": cefr,
-                "overall_cohesion_indicator": report.overall_score,
+                "estimated_cefr": report.cefr_level,
+                "cohesion_score": report.cohesion_score,
+                "composite_indicator": report.composite_indicator,
                 "confidence_interval": list(report.confidence_interval),
                 "borderline": report.borderline,
-                "human_review_recommended": report.human_review_recommended,
+                "teacher_review_recommended": report.teacher_review_recommended,
                 "trigger_count": len(report.triggers),
                 "layers": [
                     {

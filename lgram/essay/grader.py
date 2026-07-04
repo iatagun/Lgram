@@ -180,20 +180,26 @@ class CAEASGrader:
         if total_w > 0:
             weights = [w / total_w for w in weights]
 
-        raw_score = sum(lr.score * w for lr, w in zip(layer_results, weights))
+        composite = sum(lr.score * w for lr, w in zip(layer_results, weights))
 
         if complexity.adjustment_factor != 1.0:
-            raw_score *= complexity.adjustment_factor
-            raw_score = min(100.0, raw_score)
+            composite *= complexity.adjustment_factor
+            composite = min(100.0, composite)
 
-        overall_indicator = raw_score
+        composite = round(composite, 1)
+        composite = max(0.0, min(100.0, composite))
+
+        cohesion_score = l2.score
+
         if self._calibration and self._calibration.ready:
-            overall_indicator = self._apply_calibration(raw_score)
+            cohesion_score = self._apply_calibration(cohesion_score)
+            composite = self._apply_calibration(composite)
 
-        overall_indicator = round(overall_indicator, 1)
-        overall_indicator = max(0.0, min(100.0, overall_indicator))
+        cohesion_score = round(cohesion_score, 1)
+        cohesion_score = max(0.0, min(100.0, cohesion_score))
 
         raw_details: Dict[str, Any] = {
+            "composite_indicator": composite,
             "complexity": {
                 "level": complexity.complexity_level,
                 "adjustment": complexity.adjustment_factor,
@@ -231,11 +237,11 @@ class CAEASGrader:
             }
 
         conf = self._confidence.analyze(
-            overall_indicator, layer_results, weights
+            cohesion_score, layer_results, weights
         )
 
         suggestion = self._build_suggestion(
-            overall_indicator, conf, cefr_level, cefr_profile, l1_transfer
+            cohesion_score, conf, cefr_level, cefr_profile, l1_transfer
         )
 
         if not self.calibration_ready:
@@ -268,7 +274,8 @@ class CAEASGrader:
             )
 
         return CAEASReport(
-            overall_cohesion_indicator=overall_indicator,
+            cohesion_score=cohesion_score,
+            composite_indicator=composite,
             confidence_interval=conf["confidence_interval"],
             layer_results=layer_results,
             suggestion=suggestion,

@@ -124,16 +124,19 @@ class ErrorTypology:
         triggers: Optional[List[str]] = None,
     ) -> None:
         self._essay_count += 1
-        self._cefr_counts[cefr_level] = self._cefr_counts.get(cefr_level, 0) + 1
+        effective_cefr = cefr_level or getattr(report, "cefr_level", "") or "unknown"
+        self._cefr_counts[effective_cefr] = self._cefr_counts.get(effective_cefr, 0) + 1
+
+        effective_triggers = triggers or getattr(report, "triggers", []) or []
 
         for lr in getattr(report, "layer_results", []):
-            if lr.layer_name == "Cohesion & Organization":
-                self._categorize_cohesion(lr, cefr_level)
-            elif lr.layer_name == "Content & Argument (heuristic)":
-                self._categorize_content(lr, cefr_level)
+            if "Cohesion" in lr.layer_name:
+                self._categorize_cohesion(lr, effective_cefr)
+            elif "Content" in lr.layer_name:
+                self._categorize_content(lr, effective_cefr)
 
-        if triggers:
-            self._categorize_triggers(triggers, cefr_level)
+        if effective_triggers:
+            self._categorize_triggers(effective_triggers, effective_cefr)
 
     def build(self) -> TypologyReport:
         entries: List[TypologyEntry] = []
@@ -208,7 +211,7 @@ class ErrorTypology:
 
         for seg in segments:
             rough = seg.get("rough_shift_ratio", 0)
-            if rough > 0.3:
+            if rough > 0.2:
                 self._errors[ErrorCategory.MISSING_TRANSITION].append({
                     "cefr": cefr_level,
                     "evidence": f"Segment {seg.get('index', 0)} rough_shift={rough:.2f}",
@@ -216,18 +219,20 @@ class ErrorTypology:
                     "weight": int(rough * 10),
                 })
 
-            if seg.get("cohesion", 0) < 0.4:
+            if seg.get("cohesion", 0) < 0.55:
                 self._errors[ErrorCategory.ABRUPT_TOPIC_SHIFT].append({
                     "cefr": cefr_level,
                     "evidence": f"Segment {seg.get('index', 0)} cohesion={seg.get('cohesion', 0):.2f}",
                     "l1_transfer": False,
+                    "weight": 1,
                 })
 
-            if seg.get("continue_ratio", 0) > 0.6:
+            if seg.get("continue_ratio", 0) > 0.5:
                 self._errors[ErrorCategory.OVERUSE_REPETITION].append({
                     "cefr": cefr_level,
                     "evidence": f"Segment {seg.get('index', 0)} high continue ratio",
                     "l1_transfer": True,
+                    "weight": 1,
                 })
 
     def _categorize_content(self, lr: Any, cefr_level: str) -> None:

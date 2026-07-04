@@ -70,6 +70,11 @@ class SurfaceLayer:
             + vocabulary * self.WEIGHTS["vocabulary"]
             + grammar * self.WEIGHTS["grammar_complexity"]
         )
+
+        if word_count < 80:
+            penalty = max(0.5, word_count / 80)
+            weighted *= penalty
+
         score = round(weighted * 100, 1)
         normalized = round(weighted, 3)
 
