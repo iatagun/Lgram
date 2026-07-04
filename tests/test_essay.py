@@ -473,6 +473,38 @@ class TestDiscriminantValidity(unittest.TestCase):
         self.assertGreaterEqual(report.composite_indicator, 0)
         self.assertLessEqual(report.composite_indicator, 100)
 
+    def test_single_foreign_sentence_localized(self):
+        clean = Essay(title="Clean", text=(
+            "Technology has transformed education in many important ways. "
+            "First, online learning platforms have made education accessible to "
+            "students in remote areas. For example, students in rural regions "
+            "can now attend virtual classes from top universities. "
+            "Second, digital tools enable personalized learning experiences. "
+            "However, technology also presents challenges. "
+            "In conclusion, while technology offers significant benefits, "
+            "schools must address equity concerns."
+        ))
+        contaminated = Essay(title="Contaminated", text=(
+            "Technology has transformed education in many important ways. "
+            "First, online learning platforms have made education accessible to "
+            "students in remote areas. For example, students in rural regions "
+            "can now attend virtual classes from top universities. "
+            "Second, digital tools enable personalized learning experiences. "
+            "Pizza is my favorite food with extra cheese. "
+            "However, technology also presents challenges. "
+            "In conclusion, while technology offers significant benefits, "
+            "schools must address equity concerns."
+        ))
+        gr = self.grader.analyze(clean)
+        cr = self.grader.analyze(contaminated)
+
+        self.assertGreater(gr.cohesion_score, cr.cohesion_score,
+            f"Clean ({gr.cohesion_score:.0f}) must exceed contaminated ({cr.cohesion_score:.0f})")
+
+        self.assertGreater(gr.cohesion_score - cr.cohesion_score, 5,
+            f"Single foreign sentence should drop cohesion by >5pts, "
+            f"got {gr.cohesion_score - cr.cohesion_score:.0f}")
+
 
 if __name__ == "__main__":
     unittest.main()

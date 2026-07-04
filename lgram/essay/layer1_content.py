@@ -101,6 +101,8 @@ class MockContentAnalyzer(ContentAnalyzer):
         if len(sentences) < 2:
             return 0.2
         first_three = " ".join(sentences[:3]).lower()
+        all_text = " ".join(sentences).lower()
+
         thesis_signals = {
             "argue that", "this essay", "in this paper", "the main",
             "will discuss", "will examine", "will explore", "will analyze",
@@ -108,13 +110,31 @@ class MockContentAnalyzer(ContentAnalyzer):
             "my position", "the issue", "the problem", "the question",
             "important because", "significant because",
             "has changed", "have changed", "is a big problem", "is an issue",
-            "there are", "there is", "can be", "should be",
+            "has transformed", "have transformed", "plays a", "is one of",
         }
-        hits = sum(1 for s in thesis_signals if s in first_three)
-        score = min(1.0, 0.3 + hits * 0.15)
+
+        structure_signals = {
+            "first", "second", "third", "finally",
+            "in conclusion", "to conclude", "in summary",
+            "however", "therefore", "moreover", "furthermore",
+            "on the other hand", "consequently",
+        }
+
+        thesis_hits = sum(1 for s in thesis_signals if s in first_three)
+        structure_hits = sum(1 for s in structure_signals if s in all_text)
+
+        score = 0.3 + thesis_hits * 0.12 + structure_hits * 0.05
+
+        if len(sentences[0].split()) >= 8:
+            score += 0.10
+
+        if len(sentences) >= 8 and structure_hits >= 2:
+            score += 0.15
+
         if len(sentences[0].split()) < 3:
             score *= 0.5
-        return score
+
+        return min(1.0, score)
 
     def _assess_evidence(self, words: List[str], sentences: List[str]) -> float:
         evidence_signals = {
@@ -127,20 +147,26 @@ class MockContentAnalyzer(ContentAnalyzer):
         }
         text_lower = " ".join(sentences).lower()
         hits = sum(1 for s in evidence_signals if s in text_lower)
-        score = min(1.0, 0.2 + hits * 0.10)
+        score = min(1.0, 0.25 + hits * 0.08)
+        if len(words) >= 80:
+            score += 0.10
         if len(words) < 50:
             score *= 0.5
-        return score
+        return min(1.0, score)
 
     def _assess_structure(self, sentences: List[str], words: List[str]) -> float:
         if len(sentences) < 3:
             return 0.3
         transition_count = self._count_transitions(" ".join(sentences))
-        ideal_transitions = max(1, int(len(sentences) * 0.3))
-        transition_score = min(1.0, transition_count / ideal_transitions)
+        ideal_transitions = max(1, int(len(sentences) * 0.25))
+        transition_score = min(1.0, 0.3 + transition_count / ideal_transitions * 0.7)
         avg_words = len(words) / max(len(sentences), 1)
-        length_variety = min(1.0, avg_words / 20) if 5 <= avg_words <= 35 else 0.5
-        return (transition_score * 0.6 + length_variety * 0.4)
+        length_bonus = 0.0
+        if 10 <= avg_words <= 30:
+            length_bonus = 0.15
+        elif avg_words > 30:
+            length_bonus = 0.10
+        return min(1.0, transition_score * 0.65 + 0.35 * min(1.0, (avg_words / 25)) + length_bonus)
 
     def _assess_development(self, sentences: List[str]) -> float:
         if len(sentences) < 3:
@@ -160,10 +186,12 @@ class MockContentAnalyzer(ContentAnalyzer):
         depth_score = min(1.0, depth_hits * 0.12)
         score = 0.3
         if has_conclusion:
-            score += 0.25
+            score += 0.30
         if middle_development:
-            score += 0.2
-        score += depth_score * 0.25
+            score += 0.25
+        if "first" in text_lower and ("second" in text_lower or "however" in text_lower):
+            score += 0.15
+        score += depth_score * 0.20
         return min(1.0, score)
 
     def _count_transitions(self, text: str) -> int:
