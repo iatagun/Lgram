@@ -2,16 +2,33 @@
 
 **Tarih:** 4 Temmuz 2025
 **Branch:** `product/essay-grader`
-**Versiyon:** v0.2.0
+**Güncel Versiyon:** v0.3
 **Kapsam:** EFL (Yabancı Dil Olarak İngilizce) yazma ödevleri — geri bildirim aracı
 **Hedef L1:** Türkçe
 **Hedef CEFR:** B1, B2, C1
+**Test:** 163 passed (99 core + 38 CAEAS + 26 EFL)
 
 ---
 
 # Bölüm 1: Bugün İnşa Edilenler
 
-## v0.1 — Temel Mimari (CAEASGrader)
+## v0.3 — Full Rubrik Entegrasyonu (5 gerçek katman)
+
+Dilbilgisi + içerik + mekanik katmanları heuristic'ten gerçek NLP araçlarına yükseltildi:
+
+| Katman | v0.2 (önceki) | v0.3 (şimdi) |
+|--------|--------------|-------------|
+| **Grammar** | PreFilter heuristic | LanguageTool (6000+ kural) + LLM deep check → 6 hata |
+| **Content** | MockContentAnalyzer | LM Studio local LLM → thesis=0.75, evidence=0.50 |
+| **Mechanics** | Yok | pyspellchecker → spelling %94, caps %100 |
+
+Kompozit formül: `composite = rubrik_avg*(1-w) + cohesion*w` (w=0.50 varsayılan, kalibre edilebilir).
+Diskriminant: Good=98 Bad=42 (56p cohesion, 39p composite).
+163 test geçiyor.
+
+## v0.2 — Production Hardening (6 risk mitigasyonu)
+
+Tüm maddeler tamamlandı — detaylar için `CAEAS_V02_PLAN.md`.
 
 5 katmanlı kanıt-tabanlı essay analiz sistemi:
 
@@ -96,25 +113,32 @@
 lgram/essay/
 ├── __init__.py              — Paket export'ları (tüm modüller)
 ├── models.py                — Essay, CAEASReport, ContentAnalyzer, LayerResult
-├── layer1_content.py        — İçerik analizi (MockContentAnalyzer)
-├── layer2_cohesion.py       — Segment-duyarlı kohezyon (Lgram)
-├── layer3_surface.py        — Yüzey kalitesi (Flesch, TTR, vb.)
+├── utils.py                 — split_sentences, ARTICLE_RATIO_EXPECTED (shared)
+├── metrics.py               — QWK, ICC, recalibration bins (shared)
+├── layer_grammar.py         — LanguageTool + LLM deep grammar check (v0.3)
+├── layer_llm_content.py     — LM Studio local LLM content analysis (v0.3)
+├── layer_mechanics.py       — pyspellchecker spelling/punctuation (v0.3)
+├── layer1_content.py        — Content analyzer (MockContentAnalyzer fallback)
+├── layer2_cohesion.py       — Segment-duyarlı Lgram kohezyon
+├── layer3_surface.py        — Flesch, TTR, cümle çeşitliliği
 ├── layer4_calibration.py    — Popülasyon kalibrasyonu (QWK, ICC)
 ├── layer5_confidence.py     — Güven aralığı + öğretmen tetikleyicileri
+├── deep_grammar.py          — LLM deep grammar raw HTTP client (v0.3)
 ├── efl.py                   — EFL modülü (CEFR profilleri, L1 transfer)
-├── prefilter.py             — Grammar/cohesion ayırıcı (v0.2)
-├── cefr_calibration.py      — CEFR seviye kalibrasyonu (v0.2)
-├── export.py                — Veri export modülü (v0.2)
-├── typology.py              — Hata tipolojisi (v0.2)
-└── grader.py                — CAEASGrader ana sınıfı
+├── prefilter.py             — Grammar/cohesion ayırıcı (heuristic fallback)
+├── cefr_calibration.py      — CEFR seviye kalibrasyonu
+├── export.py                — Veri export modülü
+├── typology.py              — Hata tipolojisi
+└── grader.py                — CAEASGrader ana sınıfı (5-layer)
 
 tests/
-├── test_essay.py            — 34 test (temel CAEAS)
+├── test_essay.py            — 38 test (CAEAS base)
 ├── test_efl.py              — 26 test (EFL özel)
 └── test_lgram.py, ...       — 99 test (Lgram core)
 
 docs/
-├── CAEAS_V02_PLAN.md        — v0.2 implementasyon planı
+├── CAEAS_DEVELOPMENT_LOG.md — Bu doküman
+├── CAEAS_V02_PLAN.md        — v0.2 implementasyon planı (tamamlandı)
 ├── RESEARCH.md              — Literatür taraması
 └── ...
 ```

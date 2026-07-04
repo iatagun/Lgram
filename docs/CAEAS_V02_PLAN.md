@@ -1,5 +1,9 @@
 # CAEAS v0.2 — Production Hardening Plan
 
+> **Status: COMPLETED (2025-07-04).** All 6 items implemented.
+> Development continued beyond this scope — see `CAEAS_DEVELOPMENT_LOG.md`
+> and `CHANGELOG.md` for the current state (v0.3).
+
 ## Scope: EFL Writing Feedback Tool (Turkish L1, CEFR B1-C1)
 
 **Positioning change:** "Essay Assessment System" → "Cohesion-Aware Writing Feedback Tool"
