@@ -10,6 +10,47 @@
 
 ---
 
+## Ürünü Hiç Bilmeyen Birine Anlatım (Elevator Pitch)
+
+Bu araç, İngilizce öğretmenlerinin yazma ödevlerini değerlendirirken harcadığı
+tekrarlayan işi hafifletmek için tasarlandı. Şöyle çalışıyor:
+
+Öğrenci bir essay yazıyor. Sistem metni satır satır analiz edip öğretmene şunları
+söylüyor:
+
+- *"Bu essay'de cümleler arası akıcılık iyi. Ama 3. paragrafta bir kopukluk var,
+  şu cümleyi kontrol et."*
+- *"Bu öğrenci Türkçe'nin etkisiyle özne zamirlerini düşürüyor — bu bir dilbilgisi
+  alışkanlığı, düzeltebilir."*
+- *"Şu 5 gramer hatası var: özne-yüklem uyumsuzluğu, eksik artikel, yanlış zamir."*
+
+**Öğretmen ne kazanıyor:** Akıcılık/organizasyon/dilbilgisi gibi mekanik
+değerlendirme kriterlerinde sistemin işaret ettiği noktaları görüp, asıl değer
+kattığı yere — içerik, argüman kalitesi, eleştirel düşünme — odaklanıyor.
+
+**Not veriyor mu:** Hayır. Notu her zaman öğretmen veriyor. Sistem "bu ödeve kaç
+puan vereyim" sorusuna değil, "bu ödevde nelere dikkat etmeliyim" sorusuna cevap
+veriyor. Çıktılar "öneri" ve "gözlem" formatında, her birinin yanında güven
+aralığı var.
+
+**Neye dayanıyor:** 1983'te geliştirilmiş Centering Theory — dilbilimde
+kanıtlanmış, "bir metindeki varlıklar cümleden cümleye nasıl takip ediliyor"
+sorusuna matematiksel cevap veren bir model. Biz bunu Türk öğrencilerin
+İngilizce yazma hatalarına uyarladık. Dilbilgisi tarafında LanguageTool (açık
+kaynak, 6000+ İngilizce kural) ve LM Studio üzerinden yerel LLM kullanıyoruz.
+Tüm işlem bilgisayarda çalışıyor, veri dışarı çıkmıyor.
+
+**Ne aşamada:** Prototip çalışıyor, 163 otomatik test geçiyor. Uç senaryolarla
+(çok iyi yazılmış vs. kasten tutarsız bir metin) yaptığımız kontrol
+testlerinde, cohesion analizi 56 puanlık net bir ayrım gösteriyor. Ama gerçek
+öğrenci denemeleri bu kadar uç olmayacak — çoğu orta bantta, birkaç
+yerelleşmiş sorun içeren metinler olacak. Şu an içinde olduğumuz aşama: **bir
+okulla pilot çalışmaya başlayıp, sistemi gerçek öğretmen değerlendirmeleriyle
+kalibre etmek.** Pilotun amacı tam olarak bu: cohesion ağırlığını, eşik
+değerlerini ve güven aralıklarını gerçek veriyle ampirik olarak belirlemek.
+
+---
+
 # Bölüm 1: Bugün İnşa Edilenler
 
 ## v0.3 — Full Rubrik Entegrasyonu (5 gerçek katman)
@@ -333,15 +374,18 @@ print(report.overall_score)
 ```python
 from lgram.essay import CAEASGrader, Essay
 
-# Varsayılan: EFL modu, CEFR otomatik
+# Varsayılan: EFL modu, CEFR otomatik, 5 katman
 grader = CAEASGrader()
 
-# Opsiyonel: PreFilter + L1 analizi + belirli CEFR
+# LM Studio local LLM ile content + deep grammar
 grader = CAEASGrader(
     cefr_level="B2",
     l1_language="tr",
-    use_prefilter=True,      # LanguageTool opsiyonel
+    use_llm=True,
 )
+
+# Kalibrasyon için cohesion ağırlığını ayarla
+grader._cohesion_weight = 0.35
 
 essay = Essay(
     title="Social Media Effects",
@@ -350,10 +394,10 @@ essay = Essay(
 
 report = grader.analyze(essay)
 
-print(f"Kohezyon göstergesi: {report.overall_cohesion_indicator:.0f}/100")
+print(f"Kohezyon: {report.cohesion_score:.0f}/100")
+print(f"Kompozit: {report.composite_indicator:.0f}/100")
 print(f"Güven aralığı: {report.confidence_interval}")
 print(f"Öneri: {report.suggestion}")
-print(f"Öğretmen incelemesi önerilir: {report.teacher_review_recommended}")
 
 # Kalibrasyon için export
 from lgram.essay import DataExporter
@@ -372,9 +416,9 @@ print(typo_report.summary)
 ## Test Durumu
 
 ```
-159 tests passed, 0 failures
+163 tests passed, 0 failures
 ├── 99  Lgram core tests
-├── 34  CAEAS base tests
+├── 38  CAEAS base tests
 └── 26  EFL-specific tests
 ```
 
@@ -384,11 +428,13 @@ print(typo_report.summary)
 
 | Risk | Durum | Çözüm |
 |------|-------|-------|
-| spaCy hatalı EFL'de kırılgan | Azaltıldı | PreFilter grammar/cohesion ayırımı, parse confidence downgrade |
-| CEFR profilleri heuristic | Veri bekliyor | Gerçek öğrenci verisiyle CEFRCalibrator devreye girecek |
+| spaCy hatalı EFL'de kırılgan | Azaltıldı | LanguageTool + LLM deep grammar check ayrı çalışıyor |
+| CEFR profilleri teorik | Veri bekliyor | Pilot verisiyle ampirik kalibrasyon yapılacak |
 | Tek öğretmen notu yetersiz | Protokolde | Adım 3: inter-rater reliability (2+ öğretmen) |
 | Overfitting riski | Protokolde | Adım 6: train/test split (%70/%30) |
 | KVKK/etik risk | Protokolde | Adım 1: kurumsal izin + anonimleştirme |
-| Sadece organization ölçüyor | Bilinçli seçim | Diğer 4 boyut ölçülmüyor, bu açıkça belirtiliyor |
-| MockContentAnalyzer zayıf | Bilinçli seçim | Gerçek LLM analyzer için pluggable arayüz hazır |
-| LanguageTool opsiyonel | Bilinçli seçim | `pip install language-tool-python` ile aktifleşir |
+| cohesion_weight %50 sabit | Kalibre edilebilir | `grader._cohesion_weight = 0.35` ile değişir |
+| LLM non-determinizm | CI'a yansıtıldı | Grammar CI min 3.0 SEM, composite cohesion-blend ile stabilize |
+| LanguageTool coverage dar | LLM destekli | Deep grammar check 5 ek hata yakalıyor |
+| LM Studio thinking model yavaş | Structured output ile çözüldü | ~2sn/çağrı, non-thinking model ile anında |
+| Sentetik testler, gerçek veri yok | Pilot aşaması | Beştepe verisiyle doğrulanacak |
