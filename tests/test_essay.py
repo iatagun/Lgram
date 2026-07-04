@@ -326,7 +326,7 @@ class TestConfidenceLayer(unittest.TestCase):
 class TestCAEASGrader(unittest.TestCase):
 
     def setUp(self):
-        self.grader = CAEASGrader()
+        self.grader = CAEASGrader(use_grammar=False, use_mechanics=False, use_llm=False)
 
     def test_grade_coherent_essay(self):
         essay = Essay(
@@ -340,7 +340,7 @@ class TestCAEASGrader(unittest.TestCase):
         report = self.grader.grade(essay)
         self.assertGreaterEqual(report.overall_score, 0)
         self.assertLessEqual(report.overall_score, 100)
-        self.assertEqual(len(report.layer_results), 3)
+        self.assertEqual(len(report.layer_results), 5)
         self.assertIsNotNone(report.verdict)
         self.assertIsNotNone(report.justification)
         self.assertIsInstance(report.to_dict(), dict)
@@ -401,7 +401,7 @@ class TestDiscriminantValidity(unittest.TestCase):
     """Sanity check: system MUST differentiate good vs bad essays on pure cohesion."""
 
     def setUp(self):
-        self.grader = CAEASGrader()
+        self.grader = CAEASGrader(use_grammar=False, use_mechanics=False, use_llm=False)
 
     def test_cohesion_differentiates_good_vs_bad(self):
         good = Essay(title="Good", text=(

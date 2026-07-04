@@ -177,7 +177,7 @@ class TestL1TransferAnalyzer(unittest.TestCase):
 class TestEFLGrader(unittest.TestCase):
 
     def setUp(self):
-        self.grader = CAEASGrader()
+        self.grader = CAEASGrader(use_grammar=False, use_mechanics=False, use_llm=False)
 
     def test_efl_rubric_used_by_default(self):
         self.assertEqual(len(self.grader.rubric), 5)
@@ -209,7 +209,7 @@ class TestEFLGrader(unittest.TestCase):
         report = grader.grade(essay)
         self.assertGreaterEqual(report.overall_score, 0)
         self.assertLessEqual(report.overall_score, 100)
-        self.assertEqual(len(report.layer_results), 3)
+        self.assertEqual(len(report.layer_results), 5)
 
     def test_grade_without_l1(self):
         grader = CAEASGrader()
