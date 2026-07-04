@@ -137,6 +137,7 @@ class CAEASGrader:
         self.cefr_level: Optional[str] = cefr_level
         self.l1_language: Optional[str] = l1_language or "tr"
 
+        self._cohesion_weight = 0.50
         self._l1_analyzer = L1TransferAnalyzer() if self.l1_language == "tr" else None
 
     @property
@@ -221,7 +222,7 @@ class CAEASGrader:
             weights = [w / total_w for w in weights]
 
         composite = sum(lr.score * w for lr, w in zip(layer_results, weights))
-        composite = composite * 0.5 + l_cohesion.score * 0.5
+        composite = composite * (1.0 - self._cohesion_weight) + l_cohesion.score * self._cohesion_weight
 
         if complexity.adjustment_factor != 1.0:
             composite *= complexity.adjustment_factor
