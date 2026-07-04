@@ -17,6 +17,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from .models import Essay, LayerResult
+from .utils import split_sentences
 
 
 class SurfaceLayer:
@@ -53,7 +54,7 @@ class SurfaceLayer:
 
     def evaluate(self, essay: Essay) -> LayerResult:
         text = essay.text
-        sentences = _split_sentences(text)
+        sentences = split_sentences(text)
         words = _tokenize(text)
         word_count = len(words)
         sent_count = len(sentences)
@@ -205,9 +206,13 @@ class SurfaceLayer:
             return 0.8
 
 
-def _split_sentences(text: str) -> List[str]:
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if s.strip()]
+def _component_sem(values: List[float]) -> float:
+    n = len(values)
+    if n < 2:
+        return 0.1
+    mean = sum(values) / n
+    variance = sum((x - mean) ** 2 for x in values) / (n - 1)
+    return math.sqrt(variance / n)
 
 
 def _tokenize(text: str) -> List[str]:
@@ -231,12 +236,3 @@ def _count_syllables(word: str) -> int:
     if word.endswith("le") and len(word) > 3 and word[-3] not in vowels:
         count += 1
     return max(1, count)
-
-
-def _component_sem(values: List[float]) -> float:
-    n = len(values)
-    if n < 2:
-        return 0.1
-    mean = sum(values) / n
-    variance = sum((x - mean) ** 2 for x in values) / (n - 1)
-    return math.sqrt(variance / n)

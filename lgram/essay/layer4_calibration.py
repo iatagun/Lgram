@@ -19,6 +19,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from .metrics import quadratic_weighted_kappa, icc_multirater, has_multiple_raters, build_recalibration_bins
+
 
 @dataclass
 class CalibrationReport:
@@ -91,8 +93,8 @@ class PopulationCalibrator:
 
         avg_human = [sum(scores) / len(scores) for scores in human_scores]
 
-        qwk = self._quadratic_weighted_kappa(machine_scores, avg_human)
-        icc = self._icc_multirater(human_scores) if self._has_multiple_raters(human_scores) else 0.0
+        qwk = quadratic_weighted_kappa(machine_scores, avg_human)
+        icc = icc_multirater(human_scores) if has_multiple_raters(human_scores) else 0.0
 
         errors = [m - h for m, h in zip(machine_scores, avg_human)]
         mean_error = sum(errors) / n
@@ -125,7 +127,7 @@ class PopulationCalibrator:
                 f"Do not deploy for {population_id} without addressing these."
             )
 
-        recal_bins = self._build_recalibration_bins(machine_scores, avg_human, 10)
+        recal_bins = build_recalibration_bins(machine_scores, avg_human, 10)
 
         return CalibrationReport(
             population_id=population_id,
@@ -158,130 +160,3 @@ class PopulationCalibrator:
             },
         )
 
-    def _quadratic_weighted_kappa(
-        self, predicted: List[float], actual: List[float]
-    ) -> float:
-        n = len(predicted)
-        if n < 2:
-            return 0.0
-
-        min_val = min(min(predicted), min(actual))
-        max_val = max(max(predicted), max(actual))
-        num_bins = min(10, max(2, int(math.sqrt(n))))
-
-        if max_val == min_val:
-            return 1.0
-
-        bin_width = (max_val - min_val) / num_bins
-        if bin_width == 0:
-            bin_width = 1.0
-
-        def _to_bin(v: float) -> int:
-            return min(num_bins - 1, max(0, int((v - min_val) / bin_width)))
-
-        hist = [[0] * num_bins for _ in range(num_bins)]
-        for p, a in zip(predicted, actual):
-            hist[_to_bin(p)][_to_bin(a)] += 1
-
-        total = sum(sum(row) for row in hist)
-        if total == 0:
-            return 0.0
-
-        weights = [[0.0] * num_bins for _ in range(num_bins)]
-        for i in range(num_bins):
-            for j in range(num_bins):
-                weights[i][j] = ((i - j) / (num_bins - 1)) ** 2 if num_bins > 1 else 0.0
-
-        observed = sum(
-            hist[i][j] * weights[i][j]
-            for i in range(num_bins)
-            for j in range(num_bins)
-        ) / total
-
-        row_sums = [sum(row) for row in hist]
-        col_sums = [sum(hist[i][j] for i in range(num_bins)) for j in range(num_bins)]
-        expected = sum(
-            row_sums[i] * col_sums[j] * weights[i][j]
-            for i in range(num_bins)
-            for j in range(num_bins)
-        ) / (total * total)
-
-        if expected == 0:
-            return 1.0
-        return 1.0 - observed / expected
-
-    def _icc_multirater(self, scores: List[List[float]]) -> float:
-        """ICC(2,k) — two-way random effects, absolute agreement, average of k raters."""
-        n = len(scores)
-        if n < 2:
-            return 0.0
-
-        k = len(scores[0])
-        if k < 2:
-            return 0.0
-
-        all_vals = []
-        for ratings in scores:
-            all_vals.extend(ratings)
-
-        grand_mean = sum(all_vals) / len(all_vals)
-        if grand_mean == 0:
-            return 0.0
-
-        ss_between = 0.0
-        for ratings in scores:
-            subject_mean = sum(ratings) / k
-            ss_between += k * (subject_mean - grand_mean) ** 2
-
-        ss_within = 0.0
-        for ratings in scores:
-            subject_mean = sum(ratings) / k
-            for r in ratings:
-                ss_within += (r - subject_mean) ** 2
-
-        ms_between = ss_between / (n - 1) if n > 1 else 0.0
-        ms_within = ss_within / (n * (k - 1)) if k > 1 else 0.0
-
-        if ms_between == 0.0 and ms_within == 0.0:
-            return 1.0
-
-        if ms_within == 0.0:
-            return 1.0
-
-        icc = (ms_between - ms_within) / (ms_between + (k - 1) * ms_within)
-        return max(0.0, min(1.0, icc))
-
-    def _has_multiple_raters(self, scores: List[List[float]]) -> bool:
-        if not scores:
-            return False
-        return all(len(s) >= 2 for s in scores)
-
-    def _build_recalibration_bins(
-        self,
-        machine_scores: List[float],
-        human_scores: List[float],
-        num_bins: int = 10,
-    ) -> List[Tuple[float, float]]:
-        """Build isotonic recalibration bins: (machine_score → corrected_score)."""
-        if len(machine_scores) < num_bins * 2:
-            return []
-
-        min_val = min(machine_scores)
-        max_val = max(machine_scores)
-        if max_val == min_val:
-            return [(min_val, sum(human_scores) / len(human_scores))]
-
-        bin_width = (max_val - min_val) / num_bins
-        bins: List[Tuple[float, float]] = []
-
-        for i in range(num_bins):
-            low = min_val + i * bin_width
-            high = low + bin_width
-            in_bin = [
-                h for m, h in zip(machine_scores, human_scores)
-                if low <= m < high or (i == num_bins - 1 and m == high)
-            ]
-            if in_bin:
-                bins.append((round((low + high) / 2, 1), round(sum(in_bin) / len(in_bin), 1)))
-
-        return bins

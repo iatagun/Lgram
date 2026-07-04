@@ -20,6 +20,14 @@ class Essay:
     genre: str = "essay"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self):
+        if not self.text or not self.text.strip():
+            raise ValueError("Essay text must be non-empty.")
+
+    def __repr__(self) -> str:
+        preview = self.text[:80].replace("\n", " ") + ("..." if len(self.text) > 80 else "")
+        return f"Essay(title={self.title!r}, text={preview!r})"
+
 
 @dataclass
 class RubricCriterion:
@@ -50,6 +58,8 @@ class CAEASReport:
     teacher_review_recommended: bool = False
     borderline: bool = False
     essay: Optional[Essay] = None
+    cefr_level: str = ""
+    cefr_detected: bool = False
 
     @property
     def overall_score(self) -> float:

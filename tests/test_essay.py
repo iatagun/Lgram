@@ -65,10 +65,8 @@ class TestMockContentJudge(unittest.TestCase):
         self.judge = MockContentJudge()
 
     def test_empty_text(self):
-        essay = Essay(text="", title="Empty")
-        result = self.judge.evaluate(essay, [])
-        self.assertTrue(0 <= result.score <= 100)
-        self.assertIsNotNone(result.confidence_interval)
+        with self.assertRaises(ValueError):
+            Essay(text="", title="Empty")
 
     def test_single_sentence(self):
         essay = Essay(text="Hello world.", title="Short")
@@ -151,9 +149,8 @@ class TestSurfaceLayer(unittest.TestCase):
         self.layer = SurfaceLayer()
 
     def test_empty_text(self):
-        essay = Essay(text="", title="Empty")
-        result = self.layer.evaluate(essay)
-        self.assertTrue(0 <= result.score <= 100)
+        with self.assertRaises(ValueError):
+            Essay(text="", title="Empty")
 
     def test_short_text(self):
         essay = Essay(text="Hello world.", title="Short")

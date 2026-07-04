@@ -23,15 +23,15 @@ from .models import LayerResult
 class ConfidenceLayer:
     """
     Computes aggregate confidence intervals, borderline detection,
-    and human review recommendations from Layer 1-3 results.
+    and teacher review recommendations from Layer 1-3 results.
     """
 
-    BORDERLINE_MARGIN = 5.0
+    DEFAULT_BORDERLINE_MARGIN = 5.0
     CRITICAL_BOUNDARIES = [50.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0]
     REVIEW_SCORE_GAP = 20.0
 
     def __init__(self, borderline_margin: float = 5.0):
-        self.BORDERLINE_MARGIN = borderline_margin
+        self._borderline_margin = borderline_margin
 
     def analyze(
         self,
@@ -114,7 +114,7 @@ class ConfidenceLayer:
     ) -> bool:
         """Detect if indicator is near a common decision threshold."""
         for boundary in self.CRITICAL_BOUNDARIES:
-            if abs(score - boundary) <= self.BORDERLINE_MARGIN:
+            if abs(score - boundary) <= self._borderline_margin:
                 return True
         low, high = ci
         for boundary in self.CRITICAL_BOUNDARIES:

@@ -29,6 +29,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from .models import Essay, LayerResult, RubricCriterion
+from .utils import split_sentences, ARTICLE_RATIO_EXPECTED
 
 
 EFL_RUBRIC = [
@@ -142,11 +143,6 @@ class L1TransferAnalyzer:
          L2 result: overuse of full NPs, underuse of pronouns → clunky text.
     """
 
-    TURKISH_PRO_DROP_SIGNALS = frozenset({
-        "gidiyorum", "gidiyorsun", "gidiyor", "gidiyoruz", "gidiyorsunuz",
-        "yapıyorum", "geliyorum", "biliyorum", "düşünüyorum", "sanıyorum",
-    })
-
     GENDER_PRONOUN_PATTERNS = [
         (re.compile(r"\bhe\b", re.I), "male"),
         (re.compile(r"\bshe\b", re.I), "female"),
@@ -156,7 +152,7 @@ class L1TransferAnalyzer:
     ]
 
     def analyze(self, text: str) -> L1TransferReport:
-        sentences = _split_sentences(text)
+        sentences = split_sentences(text)
         words = text.split()
 
         report = L1TransferReport(text=text[:200] + "..." if len(text) > 200 else text)
@@ -272,7 +268,7 @@ class L1TransferAnalyzer:
         total_articles = a_count + an_count + the_count
         article_ratio = total_articles / word_count
 
-        expected_ratio = 0.065
+        expected_ratio = ARTICLE_RATIO_EXPECTED
 
         if article_ratio < 0.03:
             adequacy = 0.4
@@ -286,10 +282,6 @@ class L1TransferAnalyzer:
         else:
             adequacy = 0.75
             note = "High article rate — check for overuse (overcorrection from L1 awareness)"
-
-        noun_phrases = re.findall(
-            r"\b(a|an|the)\s+(?:\w+\s+){0,2}(\w+)", " ".join(sentences), re.I
-        )
 
         return {
             "a_count": a_count,
@@ -322,10 +314,6 @@ class L1TransferAnalyzer:
         return issues
 
 
-def _split_sentences(text: str) -> List[str]:
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if s.strip()]
-
 
 def get_cefr_profile(level: str) -> Dict[str, Any]:
     """Get CEFR calibration profile for the given level."""
@@ -344,12 +332,11 @@ def estimate_cefr_level(text: str) -> Tuple[str, float]:
     Heuristic (not definitive — for initial placement only):
       - Word count → rough proficiency proxy
       - Sentence complexity → avg length
-      - Vocabulary range → TTR
 
     Returns: (level_label, confidence)
     """
     words = text.split()
-    sentences = _split_sentences(text)
+    sentences = split_sentences(text)
     word_count = len(words)
     sent_count = len(sentences)
     avg_sent_len = word_count / max(sent_count, 1)

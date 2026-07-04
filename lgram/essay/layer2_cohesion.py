@@ -17,9 +17,10 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from .models import Essay, LayerResult
+from .utils import split_sentences
 
 
 @dataclass
@@ -39,7 +40,8 @@ class SegmentAnalyzer:
     and analyzes each independently.
     """
 
-    def __init__(self):
+    def __init__(self, model: str = "en_core_web_md"):
+        self._model = model
         self._nlp = None
         self._ta = None
 
@@ -47,14 +49,14 @@ class SegmentAnalyzer:
     def _analyzer(self):
         if self._ta is None:
             from lgram import TextAnalyzer
-            self._ta = TextAnalyzer("en_core_web_md", similarity_threshold=0.35)
+            self._ta = TextAnalyzer(self._model, similarity_threshold=0.35)
         return self._ta
 
     def segment(self, text: str) -> List[str]:
         """Split text into rhetorical segments by paragraphs."""
         raw = [p.strip() for p in text.split("\n\n") if p.strip()]
         if len(raw) <= 1:
-            sentences = _split_sentences(text)
+            sentences = split_sentences(text)
             n = len(sentences)
             if n <= 3:
                 return [text]
@@ -81,7 +83,7 @@ class SegmentAnalyzer:
             else:
                 seg_type = "body"
 
-            sents = _split_sentences(seg_text)
+            sents = split_sentences(seg_text)
             sent_count = len(sents)
 
             try:
@@ -130,8 +132,8 @@ class CohesionLayer:
     CONC_WEIGHT = 0.20
     FULL_WEIGHT = 1.0
 
-    def __init__(self):
-        self._segment_analyzer = SegmentAnalyzer()
+    def __init__(self, model: str = "en_core_web_md"):
+        self._segment_analyzer = SegmentAnalyzer(model=model)
 
     def evaluate(self, essay: Essay) -> LayerResult:
         segments = self._segment_analyzer.analyze_segments(essay.text)
@@ -189,7 +191,9 @@ class CohesionLayer:
             evidence.append("Intra-paragraph cohesion adequate across all segments")
 
         sem = _segment_sem(scores, weights)
-        ci = (max(0.0, normalized - sem * 2), min(1.0, normalized + sem * 2))
+        ci_lo = max(0.0, (normalized - sem * 2) * 100)
+        ci_hi = min(100.0, (normalized + sem * 2) * 100)
+        ci = (round(ci_lo, 1), round(ci_hi, 1))
 
         return LayerResult(
             layer_name="Cohesion & Organization",
@@ -217,12 +221,6 @@ class CohesionLayer:
             evidence=evidence,
             confidence_interval=ci,
         )
-
-
-def _split_sentences(text: str) -> List[str]:
-    import re
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if s.strip()]
 
 
 def _segment_sem(scores: List[float], weights: List[float]) -> float:

@@ -118,7 +118,7 @@ class ErrorTypology:
 
     def feed(
         self,
-        report: Any,
+        report: "CAEASReport",
         cefr_level: str = "unknown",
         l1_transfer_score: Optional[float] = None,
         triggers: Optional[List[str]] = None,
@@ -209,12 +209,12 @@ class ErrorTypology:
         for seg in segments:
             rough = seg.get("rough_shift_ratio", 0)
             if rough > 0.3:
-                for _ in range(int(rough * 10)):
-                    self._errors[ErrorCategory.MISSING_TRANSITION].append({
-                        "cefr": cefr_level,
-                        "evidence": f"Segment {seg.get('index', 0)} rough_shift={rough:.2f}",
-                        "l1_transfer": False,
-                    })
+                self._errors[ErrorCategory.MISSING_TRANSITION].append({
+                    "cefr": cefr_level,
+                    "evidence": f"Segment {seg.get('index', 0)} rough_shift={rough:.2f}",
+                    "l1_transfer": False,
+                    "weight": int(rough * 10),
+                })
 
             if seg.get("cohesion", 0) < 0.4:
                 self._errors[ErrorCategory.ABRUPT_TOPIC_SHIFT].append({
@@ -252,13 +252,13 @@ class ErrorTypology:
                     "evidence": t,
                     "l1_transfer": False,
                 })
-            if "cohesion" in t_lower and "low" in t_lower:
+            elif "cohesion" in t_lower and "low" in t_lower:
                 self._errors[ErrorCategory.MISSING_TRANSITION].append({
                     "cefr": cefr_level,
                     "evidence": t,
                     "l1_transfer": False,
                 })
-            if "l1" in t_lower or "transfer" in t_lower:
+            elif "l1" in t_lower or "transfer" in t_lower:
                 self._errors[ErrorCategory.SUBJECT_DROP].append({
                     "cefr": cefr_level,
                     "evidence": t,

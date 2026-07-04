@@ -14,12 +14,13 @@ Uses a pluggable ContentAnalyzer interface. Includes:
 from __future__ import annotations
 
 import math
-import re
 from typing import Any, Dict, List, Optional
 
 from .models import ContentAnalyzer, Essay, LayerResult, RubricCriterion
+from .utils import split_sentences as _get_sentences
 
 _CACHE: Dict[str, LayerResult] = {}
+_CACHE_MAX_SIZE = 256
 
 
 class MockContentAnalyzer(ContentAnalyzer):
@@ -92,6 +93,8 @@ class MockContentAnalyzer(ContentAnalyzer):
         )
 
         _CACHE[key] = result
+        if len(_CACHE) > _CACHE_MAX_SIZE:
+            _CACHE.pop(next(iter(_CACHE)))
         return result
 
     def _assess_thesis(self, sentences: List[str]) -> float:
@@ -168,9 +171,8 @@ class MockContentAnalyzer(ContentAnalyzer):
         return sum(1 for t in self._transition_phrases if t in text_lower)
 
 
-def _get_sentences(text: str) -> List[str]:
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if s.strip()]
+MockContentJudge = MockContentAnalyzer
+MockContentAnalyzer.evaluate = MockContentAnalyzer.analyze
 
 
 def _standard_error(values: List[float]) -> float:
@@ -180,7 +182,3 @@ def _standard_error(values: List[float]) -> float:
     mean = sum(values) / n
     variance = sum((x - mean) ** 2 for x in values) / (n - 1)
     return math.sqrt(variance / n)
-
-
-MockContentJudge = MockContentAnalyzer
-MockContentAnalyzer.evaluate = MockContentAnalyzer.analyze

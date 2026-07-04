@@ -19,6 +19,9 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from .utils import split_sentences
+from .metrics import quadratic_weighted_kappa, icc_multirater, has_multiple_raters, build_recalibration_bins
+
 
 @dataclass
 class LevelCalibration:
@@ -38,7 +41,7 @@ class LevelCalibration:
 class ComplexityProfile:
     sentence_count: int
     avg_sentence_length: float
-    avg_clause_depth: int
+    total_clause_markers: int
     subordination_ratio: float
     vocabulary_diversity: float
     complexity_level: str
@@ -90,8 +93,8 @@ class CEFRCalibrator:
             )
 
         avg_human = [sum(s) / len(s) for s in human_scores]
-        qwk = self._qwk(machine_scores, avg_human)
-        icc = self._icc(human_scores) if self._has_multiple_raters(human_scores) else 0.0
+        qwk = quadratic_weighted_kappa(machine_scores, avg_human)
+        icc = icc_multirater(human_scores) if has_multiple_raters(human_scores) else 0.0
 
         cohesion_threshold, rough_shift_tolerance = self._derive_thresholds(
             machine_scores, avg_human
@@ -114,7 +117,7 @@ class CEFRCalibrator:
         else:
             rec = f"NOT READY: {level} needs >= {self.MIN_SAMPLES_PER_LEVEL} samples. Current: {n}."
 
-        bins = self._build_bins(machine_scores, avg_human)
+        bins = build_recalibration_bins(machine_scores, avg_human)
 
         return LevelCalibration(
             level=level,
@@ -143,7 +146,7 @@ class CEFRCalibrator:
         }
         """
         results = {}
-        for level in ["B1", "B2", "C1"]:
+        for level in list(data.keys()):
             if level in data:
                 d = data[level]
                 results[level] = self.calibrate_level(
@@ -162,7 +165,7 @@ class CEFRCalibrator:
           - complexity_level: "low" | "medium" | "high"
           - adjustment_factor: 1.0 = no adjustment, >1.0 = more tolerance
         """
-        sentences = _split_sentences(text)
+        sentences = split_sentences(text)
         words = text.split()
         sent_count = len(sentences)
         word_count = len(words)
@@ -170,7 +173,7 @@ class CEFRCalibrator:
         if sent_count == 0:
             return ComplexityProfile(
                 sentence_count=0, avg_sentence_length=0,
-                avg_clause_depth=0, subordination_ratio=0,
+                total_clause_markers=0, subordination_ratio=0,
                 vocabulary_diversity=0, complexity_level="low",
                 adjustment_factor=1.0,
             )
@@ -201,7 +204,7 @@ class CEFRCalibrator:
         return ComplexityProfile(
             sentence_count=sent_count,
             avg_sentence_length=round(avg_len, 1),
-            avg_clause_depth=int(sub_ratio * sent_count),
+            total_clause_markers=int(sub_ratio * sent_count),
             subordination_ratio=round(sub_ratio, 3),
             vocabulary_diversity=round(vocab_div, 3),
             complexity_level=level,
@@ -238,83 +241,3 @@ class CEFRCalibrator:
                 result[level] = round(mean_diff, 1)
         return result
 
-    def _qwk(self, predicted: List[float], actual: List[float]) -> float:
-        n = len(predicted)
-        if n < 2:
-            return 0.0
-        min_v = min(min(predicted), min(actual))
-        max_v = max(max(predicted), max(actual))
-        bins = min(10, max(2, int(math.sqrt(n))))
-        if max_v == min_v:
-            return 1.0
-        bw = (max_v - min_v) / bins
-        if bw == 0:
-            return 1.0
-
-        def _bin(v: float) -> int:
-            return min(bins - 1, max(0, int((v - min_v) / bw)))
-
-        hist = [[0] * bins for _ in range(bins)]
-        for p, a in zip(predicted, actual):
-            hist[_bin(p)][_bin(a)] += 1
-
-        total = sum(sum(row) for row in hist)
-        if total == 0:
-            return 0.0
-
-        w = [[0.0] * bins for _ in range(bins)]
-        for i in range(bins):
-            for j in range(bins):
-                w[i][j] = ((i - j) / (bins - 1)) ** 2 if bins > 1 else 0.0
-
-        obs = sum(hist[i][j] * w[i][j] for i in range(bins) for j in range(bins)) / total
-        row_sums = [sum(row) for row in hist]
-        col_sums = [sum(hist[i][j] for i in range(bins)) for j in range(bins)]
-        exp = sum(
-            row_sums[i] * col_sums[j] * w[i][j]
-            for i in range(bins) for j in range(bins)
-        ) / (total * total)
-
-        return 1.0 - obs / exp if exp > 0 else 1.0
-
-    def _icc(self, scores: List[List[float]]) -> float:
-        n = len(scores)
-        if n < 2:
-            return 0.0
-        k = len(scores[0])
-        if k < 2:
-            return 0.0
-        gm = sum(sum(r) for r in scores) / (n * k)
-        ssb = sum(k * (sum(r) / k - gm) ** 2 for r in scores)
-        ssw = sum(sum((v - sum(r) / k) ** 2 for v in r) for r in scores)
-        msb = ssb / (n - 1) if n > 1 else 0.0
-        msw = ssw / (n * (k - 1)) if k > 1 else 0.0
-        if msw == 0:
-            return 1.0 if msb > 0 else 0.0
-        return max(0.0, min(1.0, (msb - msw) / (msb + (k - 1) * msw)))
-
-    def _has_multiple_raters(self, scores: List[List[float]]) -> bool:
-        return bool(scores) and all(len(s) >= 2 for s in scores)
-
-    def _build_bins(
-        self, machine: List[float], human: List[float]
-    ) -> List[Tuple[float, float]]:
-        n = min(10, max(2, len(machine) // 5))
-        if len(machine) < n * 2:
-            return []
-        min_v, max_v = min(machine), max(machine)
-        if max_v == min_v:
-            return [(min_v, sum(human) / len(human))]
-        bw = (max_v - min_v) / n
-        bins: List[Tuple[float, float]] = []
-        for i in range(n):
-            lo, hi = min_v + i * bw, min_v + (i + 1) * bw
-            in_bin = [h for m, h in zip(machine, human) if lo <= m < hi or (i == n - 1 and m == hi)]
-            if in_bin:
-                bins.append((round((lo + hi) / 2, 1), round(sum(in_bin) / len(in_bin), 1)))
-        return bins
-
-
-def _split_sentences(text: str) -> List[str]:
-    import re
-    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s.strip()]

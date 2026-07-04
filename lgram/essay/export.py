@@ -13,6 +13,7 @@ Aligned with ICLE/TOEFL11 conventions where possible.
 
 from __future__ import annotations
 
+import csv
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -55,11 +56,7 @@ class DataExporter:
         bundle = ExportBundle(total_essays=len(reports))
 
         for essay, report in zip(essays, reports):
-            cefr = "unknown"
-            for lr in report.layer_results:
-                rd = lr.raw_details
-                if "cefr" in rd:
-                    cefr = rd["cefr"].get("level", "unknown")
+            cefr = report.cefr_level or "unknown"
 
             bundle.cefr_distribution[cefr] = (
                 bundle.cefr_distribution.get(cefr, 0) + 1
@@ -105,8 +102,6 @@ class DataExporter:
     def to_csv_typology(
         self, bundle: ExportBundle, filepath: str
     ) -> None:
-        import csv
-
         rows = [["cefr", "score", "ci_low", "ci_high", "borderline", "triggers"]]
         for r in bundle.reports:
             ci = r.get("confidence_interval", [0, 0])

@@ -27,6 +27,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+from .utils import split_sentences, ARTICLE_RATIO_EXPECTED
+
 
 @dataclass
 class PreFilterReport:
@@ -79,16 +81,6 @@ class PreFilter:
          "Possible gender mismatch — if antecedent is female, 'he' should be 'she'"),
     ]
 
-    SUBJECT_DROP_PATTERNS = re.compile(
-        r"^[.!?]\s*(?:is|are|was|were|has|have|had|will|would|can|could|should|must|"
-        r"seems|feels|looks|becomes|gets)\s",
-        re.I,
-    )
-
-    ARTICLE_OMISSION_PATTERNS = re.compile(
-        r"\b(is\s+\w+\s+\w+)\b", re.I
-    )
-
     def __init__(self, use_language_tool: bool = True):
         self._lt = None
         self._lt_attempted = False
@@ -109,8 +101,10 @@ class PreFilter:
             return False
 
     def analyze(self, text: str) -> PreFilterReport:
+        if text is None:
+            raise ValueError("Text must not be None.")
         words = text.split()
-        sentences = _split_sentences(text)
+        sentences = split_sentences(text)
         word_count = len(words)
 
         report = PreFilterReport(
@@ -169,12 +163,12 @@ class PreFilter:
             1 for w in words if w.lower() in {"a", "an", "the"}
         )
         article_ratio = article_count / word_count
-        if article_ratio < 0.03:
+        if article_ratio < ARTICLE_RATIO_EXPECTED * 0.5:
             report.grammar_issues.append({
                 "index": 0,
                 "type": "article_deficiency",
                 "category": "grammar",
-                "description": f"Low article use ({article_ratio:.3f}, expected ~0.065)",
+                "description": f"Very low article use ({article_ratio:.3f}, expected ~{ARTICLE_RATIO_EXPECTED})",
                 "l1_transfer": "Turkish has no articles (a/an/the)",
                 "cohesion_impact": (
                     "Article omission can affect referent tracking — spaCy may "
@@ -257,8 +251,3 @@ class PreFilter:
 
         report.parse_confidence -= 0.05 * len(report.cohesion_risks)
         report.parse_confidence = max(0.1, report.parse_confidence)
-
-
-def _split_sentences(text: str) -> List[str]:
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    return [s.strip() for s in sentences if s.strip()]

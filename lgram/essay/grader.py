@@ -87,18 +87,19 @@ class CAEASGrader:
     ):
         self._content_analyzer = content_analyzer or MockContentAnalyzer()
         self._rubric = rubric or EFL_RUBRIC
-        self._cohesion = CohesionLayer()
+        self._cohesion = CohesionLayer(model=surface_model)
         self._surface = SurfaceLayer(model=surface_model)
         self.calibrator = PopulationCalibrator()
         self._cefr_calibrator = CEFRCalibrator()
         self._confidence = ConfidenceLayer(borderline_margin=borderline_margin)
         self._calibration: Optional[CalibrationReport] = None
-        self._l1_analyzer = L1TransferAnalyzer() if l1_language == "tr" else None
-        self._prefilter = PreFilter() if use_prefilter else None
 
         self.use_efl = True
         self.cefr_level: Optional[str] = cefr_level
         self.l1_language: Optional[str] = l1_language or "tr"
+
+        self._l1_analyzer = L1TransferAnalyzer() if self.l1_language == "tr" else None
+        self._prefilter = PreFilter() if use_prefilter else None
 
     @property
     def rubric(self) -> List[RubricCriterion]:
@@ -121,6 +122,11 @@ class CAEASGrader:
         if language == "tr":
             self._l1_analyzer = L1TransferAnalyzer()
             self.l1_language = language
+        else:
+            raise ValueError(
+                f"Unsupported L1 language: {language}. "
+                f"Currently supported: tr (Turkish)."
+            )
 
     def enable_prefilter(self) -> None:
         if self._prefilter is None:
@@ -164,14 +170,12 @@ class CAEASGrader:
         l3 = self._surface.evaluate(essay)
 
         if pf_report:
-            if pf_report.has_critical_grammar_issues:
-                l2.confidence_interval = (
-                    max(0, l2.confidence_interval[0] - 15) if l2.confidence_interval else None,
-                    l2.confidence_interval[1] if l2.confidence_interval else None,
-                )
+            if pf_report.has_critical_grammar_issues and l2.confidence_interval:
+                ci_lo, ci_hi = l2.confidence_interval
+                l2.confidence_interval = (max(0, ci_lo - 15), ci_hi)
 
         layer_results = [l1, l2, l3]
-        weights = [c.weight for c in self._rubric]
+        weights = [c.weight for c in self._rubric[:3]]
         total_w = sum(weights)
         if total_w > 0:
             weights = [w / total_w for w in weights]
@@ -273,6 +277,8 @@ class CAEASGrader:
             teacher_review_recommended=conf["human_review_recommended"],
             borderline=conf["borderline"],
             essay=essay,
+            cefr_level=cefr_level or "",
+            cefr_detected=detected_level is not None,
         )
 
     def _apply_calibration(self, raw_score: float) -> float:

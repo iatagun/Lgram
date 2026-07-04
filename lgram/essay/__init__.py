@@ -43,7 +43,7 @@ from .models import (
     ContentJudge,
 )
 from .grader import CAEASGrader
-from .layer1_content import MockContentAnalyzer as MockContentJudge
+from .layer1_content import MockContentAnalyzer, MockContentAnalyzer as MockContentJudge
 from .layer2_cohesion import CohesionLayer, SegmentAnalyzer
 from .layer3_surface import SurfaceLayer
 from .layer4_calibration import PopulationCalibrator, CalibrationReport
@@ -58,6 +58,7 @@ __all__ = [
     "CAEASReport",
     "ContentAnalyzer",
     "ContentJudge",
+    "MockContentAnalyzer",
     "MockContentJudge",
     "CAEASGrader",
     "CohesionLayer",
