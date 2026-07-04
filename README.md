@@ -259,7 +259,7 @@ docs/
 | Domain | Application |
 |---|---|
 | **LLM Evaluation** | Cohesion scoring for GPT/Claude/Llama output |
-| **Education** | Essay scoring, writing assistant feedback |
+| **Education** | Essay scoring, writing assistant feedback — **[CAEAS](lgram/essay/README.md)** EFL essay feedback tool |
 | **Linguistics** | Discourse analysis research |
 | **Content Quality** | Blog/news fluency audits |
 | **Translation** | Cross-language cohesion comparison |
