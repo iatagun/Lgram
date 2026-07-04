@@ -1,4 +1,4 @@
-# CAEAS — Cohesion-Aware Writing Feedback Tool
+# CAEAS — Cohesion-Aware Essay Analysis System
 
 **EFL essay feedback for teachers. Not a grading system.**
 

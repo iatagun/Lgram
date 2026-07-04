@@ -1,5 +1,5 @@
 """
-Data models for CAEAS — Cohesion-Aware Writing Feedback Tool.
+Data models for CAEAS — Cohesion-Aware Essay Analysis System.
 
 NOT an assessment system. NOT a grader.
 This tool provides evidence for teacher consideration.

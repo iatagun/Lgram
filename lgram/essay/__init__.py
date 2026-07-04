@@ -1,5 +1,5 @@
 """
-CAEAS: Cohesion-Aware Writing Feedback Tool.
+CAEAS: Cohesion-Aware Essay Analysis System.
 
 Target domain: EFL (English as a Foreign Language) writing.
 Primary L1: Turkish learners at CEFR B1-B2-C1 levels.
