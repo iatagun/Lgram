@@ -31,29 +31,38 @@ from typing import Any, Dict, List, Optional
 
 from .models import Essay, LayerResult, RubricCriterion
 
-_CONTENT_PROMPT = """You are an EFL writing evaluator. Analyze this student essay against the rubric criteria below. Output ONLY a JSON object. No markdown, no explanation.
-
-RUBRIC:
-{criteria}
+_CONTENT_PROMPT = """Rate this EFL student essay on a 0-100 scale. Evaluate thesis clarity, argument development, evidence quality, and topic relevance on 0.0-1.0 scales.
 
 ESSAY:
 {text}
 
-Output this exact JSON structure:
-{{
-  "thesis_clarity": 0.0-1.0,
-  "argument_development": 0.0-1.0,
-  "evidence_quality": 0.0-1.0,
-  "topic_relevance": 0.0-1.0,
-  "overall_score": 0-100,
-  "strengths": ["specific strength 1", "specific strength 2"],
-  "weaknesses": ["specific weakness 1"],
-  "cefr_estimate": "B1|B2|C1"
-}}
+RUBRIC:
+{criteria}"""
 
-Be strict but fair. This is EFL writing — accept minor language errors.
-Focus on content quality: thesis, argument, evidence, organization.
-Score on 0-100 scale where 50 is average EFL B1, 70 is solid B2, 85+ is C1."""
+_CONTENT_SCHEMA = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "essay_evaluation",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "overall_score": {"type": "integer", "minimum": 0, "maximum": 100},
+                "thesis_clarity": {"type": "number", "minimum": 0, "maximum": 1},
+                "argument_development": {"type": "number", "minimum": 0, "maximum": 1},
+                "evidence_quality": {"type": "number", "minimum": 0, "maximum": 1},
+                "topic_relevance": {"type": "number", "minimum": 0, "maximum": 1},
+                "strengths": {"type": "array", "items": {"type": "string"}},
+                "weaknesses": {"type": "array", "items": {"type": "string"}},
+                "cefr_estimate": {"type": "string", "enum": ["A1", "A2", "B1", "B2", "C1", "C2"]},
+            },
+            "required": ["overall_score", "thesis_clarity", "argument_development",
+                        "evidence_quality", "topic_relevance", "strengths", "weaknesses",
+                        "cefr_estimate"],
+            "additionalProperties": False,
+        }
+    }
+}
 
 _LOCAL_ENDPOINTS = [
     ("http://localhost:1234/v1", "lm-studio", "auto"),
@@ -160,17 +169,27 @@ class LLMContentAnalyzer:
             response = self._client.chat.completions.create(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": "Output ONLY valid JSON. No markdown, no explanation, no reasoning."},
+                    {"role": "system", "content": "You are an EFL essay evaluator. Be fair and constructive."},
                     {"role": "user", "content": prompt},
                 ],
+                response_format=_CONTENT_SCHEMA,
                 max_tokens=self._max_tokens,
                 temperature=self._temperature,
             )
-            content = response.choices[0].message.content or ""
-            if hasattr(response.choices[0].message, 'reasoning_content') and not content.strip():
-                content = response.choices[0].message.content or "{}"
+            msg = response.choices[0].message
 
-            data = self._parse_json(content)
+            raw = msg.content or ""
+            reasoning = getattr(msg, "reasoning_content", "") or ""
+
+            if not raw.strip() and reasoning.strip():
+                raw = reasoning
+
+            data = self._parse_json(raw)
+            if not data:
+                if reasoning.strip():
+                    data = self._parse_json(reasoning)
+                if not data and msg.content:
+                    data = self._parse_json(msg.content)
 
             score = float(data.get("overall_score", 0))
             if score == 0:

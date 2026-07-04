@@ -22,7 +22,7 @@ print("  Grammar(LanguageTool) + Content(heuristic) + Cohesion(Lgram)")
 print("  + Surface(readability) + Mechanics(spellchecker)")
 print("=" * 70)
 
-grader = CAEASGrader(l1_language="tr", use_llm=False)
+grader = CAEASGrader(l1_language="tr", use_llm=True)
 
 print("\n--- 5 LAYER SONUCLARI ---")
 report = grader.analyze(essay)
