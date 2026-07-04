@@ -161,6 +161,8 @@ class GrammarLayer:
             evidence.append("No grammar errors detected")
 
         sem = 3.0 / math.sqrt(max(combined_total, 1)) if combined_total > 0 else 3.0
+        if deep_total > 0:
+            sem = max(sem, 3.0)
         ci = (max(0, score - sem * 2), min(100, score + sem * 2))
 
         return LayerResult(
@@ -172,7 +174,6 @@ class GrammarLayer:
                 "language_tool_errors": lt_total,
                 "deep_grammar_errors": deep_total,
                 "error_rate_per_100_words": round(error_rate, 1),
-                "grammar_errors": issues.get("grammar_errors", 0),
                 "spelling_errors": issues.get("spelling_errors", 0),
                 "style_issues": issues.get("style_issues", 0),
                 "pronoun_errors": issues.get("pronoun_errors", 0),

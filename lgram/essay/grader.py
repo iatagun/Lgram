@@ -221,6 +221,7 @@ class CAEASGrader:
             weights = [w / total_w for w in weights]
 
         composite = sum(lr.score * w for lr, w in zip(layer_results, weights))
+        composite = composite * 0.5 + l_cohesion.score * 0.5
 
         if complexity.adjustment_factor != 1.0:
             composite *= complexity.adjustment_factor
