@@ -75,7 +75,7 @@ class LLMContentAnalyzer:
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
-        max_tokens: int = 512,
+        max_tokens: int = 2048,
         temperature: float = 0.1,
     ):
         self._max_tokens = max_tokens
@@ -83,6 +83,7 @@ class LLMContentAnalyzer:
         self._client = None
         self._load_error: Optional[str] = None
         self._source: str = "unknown"
+        self._actual_model: str = ""
 
         if base_url:
             self._base_url = base_url
@@ -121,8 +122,11 @@ class LLMContentAnalyzer:
             return False
         try:
             from openai import OpenAI
-            self._client = OpenAI(api_key=self._api_key, base_url=self._base_url)
-            self._client.models.list()
+            self._client = OpenAI(api_key=self._api_key, base_url=self._base_url, timeout=60)
+            models = self._client.models.list()
+            if models.data:
+                self._model = models.data[0].id
+                self._actual_model = self._model
             return True
         except Exception as e:
             self._load_error = str(e)
@@ -156,16 +160,26 @@ class LLMContentAnalyzer:
             response = self._client.chat.completions.create(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": "You are a precise JSON-only evaluator."},
+                    {"role": "system", "content": "Output ONLY valid JSON. No markdown, no explanation, no reasoning."},
                     {"role": "user", "content": prompt},
                 ],
                 max_tokens=self._max_tokens,
                 temperature=self._temperature,
             )
-            content = response.choices[0].message.content or "{}"
+            content = response.choices[0].message.content or ""
+            if hasattr(response.choices[0].message, 'reasoning_content') and not content.strip():
+                content = response.choices[0].message.content or "{}"
+
             data = self._parse_json(content)
 
-            score = float(data.get("overall_score", 50))
+            score = float(data.get("overall_score", 0))
+            if score == 0:
+                from .layer1_content import MockContentAnalyzer
+                fallback = MockContentAnalyzer()
+                result = fallback.analyze(essay, rubric)
+                result.layer_name = f"Content (LLM parse failed, heuristic fallback)"
+                return result
+
             score = max(0.0, min(100.0, score))
             normalized = round(score / 100.0, 3)
 
@@ -201,25 +215,29 @@ class LLMContentAnalyzer:
             from .layer1_content import MockContentAnalyzer
             fallback = MockContentAnalyzer()
             result = fallback.analyze(essay, rubric)
-            result.layer_name = f"Content (LLM failed: {str(e)[:40]}...)"
+            result.layer_name = f"Content (LLM error: {str(e)[:40]})"
             return result
 
     @staticmethod
     def _parse_json(content: str) -> Dict[str, Any]:
         content = content.strip()
+        if not content:
+            return {}
         if content.startswith("```"):
             lines = content.split("\n")
             content = "\n".join(lines[1:]) if len(lines) > 1 else content
             if content.endswith("```"):
                 content = content[:-3]
+        content = content.strip()
         try:
             return json.loads(content)
         except json.JSONDecodeError:
-            start = content.find("{")
-            end = content.rfind("}")
-            if start >= 0 and end > start:
-                try:
-                    return json.loads(content[start:end + 1])
-                except json.JSONDecodeError:
-                    pass
+            pass
+        start = content.find("{")
+        end = content.rfind("}")
+        if start >= 0 and end > start:
+            try:
+                return json.loads(content[start:end + 1])
+            except json.JSONDecodeError:
+                pass
         return {}
