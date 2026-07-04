@@ -198,6 +198,15 @@ class CAEASGrader:
         l_surface = self._surface.evaluate(essay)
         l_mechanics = self._mechanics.evaluate(essay) if self._mechanics else _placeholder("Mechanics")
 
+        if self.use_efl and "cefr_estimate" in l_content.raw_details:
+            llm_cefr = l_content.raw_details.get("cefr_estimate", "")
+            valid_cefr = {"A1", "A2", "B1", "B2", "C1", "C2"}
+            if llm_cefr and llm_cefr in valid_cefr:
+                if llm_cefr in ("A1", "A2"):
+                    llm_cefr = "B1"
+                cefr_level = llm_cefr
+                cefr_profile = get_cefr_profile(cefr_level)
+
         layer_results = [l_grammar, l_content, l_cohesion, l_surface, l_mechanics]
         weights = [c.weight for c in self._rubric]
         total_w = sum(weights)

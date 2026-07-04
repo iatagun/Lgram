@@ -33,7 +33,7 @@ class TestEFLRubric(unittest.TestCase):
 
     def test_organization_weight(self):
         org = [c for c in EFL_RUBRIC if c.name == "Organization"][0]
-        self.assertEqual(org.weight, 0.20)
+        self.assertEqual(org.weight, 0.30)
         self.assertIn("Centering Theory", org.description)
 
 

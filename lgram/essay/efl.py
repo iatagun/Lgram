@@ -35,7 +35,7 @@ from .utils import split_sentences, ARTICLE_RATIO_EXPECTED
 EFL_RUBRIC = [
     RubricCriterion(
         name="Grammar",
-        weight=0.20,
+        weight=0.15,
         description="Morphosyntactic accuracy, tense consistency, article/preposition use, "
                     "sentence structure correctness.",
     ),
@@ -47,7 +47,7 @@ EFL_RUBRIC = [
     ),
     RubricCriterion(
         name="Organization",
-        weight=0.20,
+        weight=0.30,
         description="Cohesion, paragraph structure, transition use, "
                     "logical flow between ideas — as modeled by Centering Theory "
                     "(surface-level cohesion, not deep coherence).",
@@ -60,7 +60,7 @@ EFL_RUBRIC = [
     ),
     RubricCriterion(
         name="Mechanics",
-        weight=0.20,
+        weight=0.15,
         description="Spelling, punctuation, capitalization, paragraph formatting, "
                     "word count adequacy.",
     ),
