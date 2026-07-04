@@ -78,11 +78,13 @@ class GrammarLayer:
         "HE_OR_SHE", "THEY_THEM", "IT_IS",
     }
 
-    def __init__(self, language: str = "en-US"):
+    def __init__(self, language: str = "en-US", llm_base_url: str = "", llm_model: str = ""):
         self._language = language
         self._lt = None
         self._load_error: Optional[str] = None
         self._init_attempted = False
+        self._llm_base_url = llm_base_url
+        self._llm_model = llm_model
 
     @property
     def available(self) -> bool:
@@ -104,37 +106,61 @@ class GrammarLayer:
         word_count = len(words)
         sent_count = max(len(split_sentences(essay.text)), 1)
 
-        if not self.available:
+        if not self.available and not self._llm_base_url:
             return LayerResult(
                 layer_name="Grammar",
-                score=50.0,
-                normalized_score=0.5,
+                score=50.0, normalized_score=0.5,
                 raw_details={
                     "error": f"LanguageTool not available: {self._load_error}",
                     "word_count": word_count,
                     "note": "Install language-tool-python and Java 8+ for grammar checking",
                 },
-                evidence=["Grammar checking unavailable — LanguageTool not loaded"],
+                evidence=["Grammar checking unavailable"],
                 confidence_interval=(40.0, 60.0),
             )
 
-        issues = self._check(text=essay.text, word_count=word_count)
-        grammar_errors = issues.get("grammar_errors", 0)
-        total = issues.get("total_errors", 0)
-        error_rate = total / max(word_count, 1) * 100
+        issues: Dict[str, Any] = {"total_errors": 0, "grammar_errors": 0, "spelling_errors": 0,
+                                    "style_issues": 0, "pronoun_errors": 0, "issues": []}
 
-        score = self._score_from_error_rate(error_rate)
+        if self.available and word_count >= 5:
+            issues = self._check(text=essay.text, word_count=word_count)
+
+        deep_errors: List[Dict[str, Any]] = []
+        if self._llm_base_url and self._llm_model and word_count >= 5:
+            try:
+                from .deep_grammar import DeepGrammarCheck
+                deep = DeepGrammarCheck(self._llm_base_url, self._llm_model)
+                deep_errors = deep.check(essay.text)
+            except Exception:
+                pass
+
+        lt_total = issues.get("total_errors", 0)
+        deep_total = len(deep_errors)
+        combined_total = lt_total + deep_total
+        error_rate = combined_total / max(word_count, 1) * 100
+
+        lt_score = self._score_from_error_rate(lt_total / max(word_count, 1) * 100)
+        if deep_total > 0:
+            deep_score = self._score_from_error_rate(deep_total / max(word_count, 1) * 200)
+            score = lt_score * 0.6 + deep_score * 0.4
+        else:
+            score = lt_score
+
+        if combined_total == 0 and not self.available:
+            score = 50.0
+
         normalized = round(score / 100.0, 3)
 
         evidence: List[str] = []
-        for iss in issues.get("issues", [])[:3]:
-            ctx = iss.get("sentence", "")[:80]
-            evidence.append(f"[{iss.get('rule_id', '?')}] {iss.get('message', '')[:100]} — '{ctx}'")
+        for iss in issues.get("issues", [])[:2]:
+            evidence.append(f"[LT:{iss.get('rule_id', '?')}] {iss.get('message', '')[:100]}")
+        for d in deep_errors[:3]:
+            evidence.append(f"[LLM:{d.get('rule', '?')}] {d.get('message', '')[:100]} -> {d.get('correction', '')[:60]}")
 
         if not evidence and word_count >= 20:
             evidence.append("No grammar errors detected")
 
-        sem = 3.0 / math.sqrt(max(total, 1)) if total > 0 else 3.0
+        sem = 3.0 / math.sqrt(max(combined_total, 1)) if combined_total > 0 else 3.0
         ci = (max(0, score - sem * 2), min(100, score + sem * 2))
 
         return LayerResult(
@@ -142,16 +168,18 @@ class GrammarLayer:
             score=round(score, 1),
             normalized_score=normalized,
             raw_details={
-                "total_errors": total,
+                "total_errors": combined_total,
+                "language_tool_errors": lt_total,
+                "deep_grammar_errors": deep_total,
                 "error_rate_per_100_words": round(error_rate, 1),
-                "grammar_errors": grammar_errors,
+                "grammar_errors": issues.get("grammar_errors", 0),
                 "spelling_errors": issues.get("spelling_errors", 0),
                 "style_issues": issues.get("style_issues", 0),
                 "pronoun_errors": issues.get("pronoun_errors", 0),
                 "word_count": word_count,
                 "sentence_count": sent_count,
             },
-            evidence=evidence[:3],
+            evidence=evidence[:4],
             confidence_interval=(round(ci[0], 1), round(ci[1], 1)),
         )
 

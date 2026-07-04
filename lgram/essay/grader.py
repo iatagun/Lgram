@@ -118,13 +118,20 @@ class CAEASGrader:
         self._grammar = GrammarLayer() if use_grammar and GrammarLayer else None
         self._mechanics = MechanicsLayer() if use_mechanics and MechanicsLayer else None
 
+        llm = None
         if use_llm and LLMContentAnalyzer:
             llm = LLMContentAnalyzer()
-            self._content_analyzer: ContentAnalyzer = (
-                llm if llm.available else (content_analyzer or MockContentAnalyzer())
-            )
+            if llm.available:
+                self._content_analyzer: ContentAnalyzer = llm
+            else:
+                self._content_analyzer = content_analyzer or MockContentAnalyzer()
+                llm = None
         else:
             self._content_analyzer = content_analyzer or MockContentAnalyzer()
+
+        if self._grammar and llm and llm.client:
+            self._grammar._llm_base_url = str(llm.client.base_url).rstrip("/")
+            self._grammar._llm_model = llm.model_name
 
         self.use_efl = True
         self.cefr_level: Optional[str] = cefr_level

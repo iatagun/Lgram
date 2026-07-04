@@ -142,6 +142,16 @@ class LLMContentAnalyzer:
             return False
 
     @property
+    def client(self):
+        if not self.available:
+            return None
+        return self._client
+
+    @property
+    def model_name(self) -> str:
+        return self._model
+
+    @property
     def source(self) -> str:
         return self._source
 
