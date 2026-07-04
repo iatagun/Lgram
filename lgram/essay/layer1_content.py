@@ -1,35 +1,36 @@
 """
-Layer 1: Content & Argument Assessment (LLM-judge).
+Layer 1: Content Analysis (pluggable analyzer interface).
 
-Evaluates essay content quality using rubric-specific criteria:
+Analyzes essay content quality using rubric-specific criteria:
 - Thesis clarity and argument structure
 - Evidence use and reasoning
-- Topic development and coherence of ideas
+- Topic development
 
-Uses a pluggable ContentJudge interface. Includes:
-- MockContentJudge (heuristic-based, no API needed — for testing/demo)
-- Designed for real LLM judges to be plugged in (OpenAI, Claude, etc.)
+Uses a pluggable ContentAnalyzer interface. Includes:
+- MockContentAnalyzer (heuristic-based, no API needed — testing/demo)
+- Designed for real LLM-based analyzers (OpenAI, Claude, etc.)
 """
 
 from __future__ import annotations
 
-import json
 import math
 import re
 from typing import Any, Dict, List, Optional
 
-from .models import ContentJudge, Essay, LayerResult, RubricCriterion
+from .models import ContentAnalyzer, Essay, LayerResult, RubricCriterion
 
 _CACHE: Dict[str, LayerResult] = {}
 
 
-class MockContentJudge(ContentJudge):
+class MockContentAnalyzer(ContentAnalyzer):
     """
-    Heuristic content judge using surface features as LLM proxy.
+    Heuristic content analyzer using surface features.
 
     WARNING: This is a stand-in for demonstration. A real deployment
-    MUST use a rubric-calibrated LLM judge. Surface heuristics correlate
-    weakly (r ~ 0.3-0.5) with human content scores.
+    MUST use a rubric-calibrated analyzer. Surface heuristics correlate
+    weakly (r ~ 0.3-0.5) with human content evaluations.
+
+    DEPRECATED alias: MockContentJudge = MockContentAnalyzer
     """
 
     def __init__(self):
@@ -41,7 +42,7 @@ class MockContentJudge(ContentJudge):
             "because", "although", "while", "whereas", "unless", "since",
         }
 
-    def evaluate(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
+    def analyze(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
         key = essay.text.strip()
         if key in _CACHE:
             return _CACHE[key]
@@ -179,3 +180,7 @@ def _standard_error(values: List[float]) -> float:
     mean = sum(values) / n
     variance = sum((x - mean) ** 2 for x in values) / (n - 1)
     return math.sqrt(variance / n)
+
+
+MockContentJudge = MockContentAnalyzer
+MockContentAnalyzer.evaluate = MockContentAnalyzer.analyze

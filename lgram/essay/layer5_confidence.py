@@ -1,16 +1,15 @@
 """
 Layer 5: Confidence & Transparency.
 
-Produces confidence information, justification text, and human-review
-triggers for every score. Ensures the system never claims authority —
-it provides evidence and knows when to defer to human judgment.
+Produces confidence information, observation text, and teacher-review
+recommendations. Ensures the system provides evidence — it never claims
+to make decisions. The teacher's judgment is final.
 
 Key outputs:
-  - Overall confidence interval (e.g., "72 ± 5")
-  - Borderline detection (near pass/fail boundaries)
-  - Human review triggers
-  - Traceable, citation-style justification
-  - Appeal mechanism readiness
+  - Overall confidence interval (e.g., "estimated indicator 72 ± 5")
+  - Borderline detection (near attention thresholds)
+  - Teacher review recommendations
+  - Traceable, citation-style evidence summary
 """
 
 from __future__ import annotations
@@ -113,7 +112,7 @@ class ConfidenceLayer:
     def _detect_borderline(
         self, score: float, ci: Tuple[float, float]
     ) -> bool:
-        """Detect if score is near a critical boundary (pass/fail, grade border)."""
+        """Detect if indicator is near a common decision threshold."""
         for boundary in self.CRITICAL_BOUNDARIES:
             if abs(score - boundary) <= self.BORDERLINE_MARGIN:
                 return True
@@ -126,7 +125,7 @@ class ConfidenceLayer:
     def _detect_triggers(
         self, overall_score: float, layer_results: List[LayerResult]
     ) -> List[str]:
-        """Detect conditions that should trigger human review."""
+        """Detect conditions that should trigger teacher review."""
         triggers = []
 
         scores = [lr.score for lr in layer_results]
@@ -139,15 +138,15 @@ class ConfidenceLayer:
                 if lr.score == min(scores):
                     smallest = lr.layer_name
             triggers.append(
-                f"Score gap > {self.REVIEW_SCORE_GAP:.0f} between "
+                f"Indicator gap > {self.REVIEW_SCORE_GAP:.0f} between "
                 f"'{largest}' ({max(scores):.0f}) and "
-                f"'{smallest}' ({min(scores):.0f})"
+                f"'{smallest}' ({min(scores):.0f}) — may warrant teacher attention"
             )
 
         for lr in layer_results:
             if lr.score < 40:
                 triggers.append(
-                    f"'{lr.layer_name}' critically low ({lr.score:.0f}/100)"
+                    f"'{lr.layer_name}' indicator notably low ({lr.score:.0f}/100)"
                 )
             elif lr.score < 55:
                 if lr.confidence_interval:
@@ -160,7 +159,7 @@ class ConfidenceLayer:
 
         if overall_score < 30:
             triggers.append(
-                f"Overall score critically low ({overall_score:.0f}/100)"
+                f"Overall cohesion indicator notably low ({overall_score:.0f}/100)"
             )
 
         return triggers
@@ -172,11 +171,12 @@ class ConfidenceLayer:
         layer_results: List[LayerResult],
         triggers: List[str],
     ) -> str:
-        """Build human-readable justification with traceable evidence."""
+        """Build traceable evidence summary for teacher review."""
         parts = [
-            f"Overall score: {overall_score:.1f}/100 (CI: {ci[0]:.0f}–{ci[1]:.0f}).",
+            f"Cohesion analysis complete. Estimated indicator: {overall_score:.1f}/100 "
+            f"(CI: {ci[0]:.0f}–{ci[1]:.0f}).",
             "",
-            "Layer scores:",
+            "Observations by dimension:",
         ]
 
         for lr in layer_results:
@@ -189,14 +189,15 @@ class ConfidenceLayer:
 
         if triggers:
             parts.append("")
-            parts.append("Triggers for review:")
+            parts.append("Suggested teacher review points:")
             for t in triggers:
                 parts.append(f"  [!] {t}")
 
         parts.append("")
         parts.append(
-            "NOTE: This score is evidence for human judgment, not a final decision. "
-            "No automated system can fully assess writing quality."
+            "NOTE: This is automated feedback for teacher consideration. "
+            "No automated tool can replace professional judgment in writing evaluation. "
+            "The teacher's assessment is the final authority."
         )
 
         return "\n".join(parts)

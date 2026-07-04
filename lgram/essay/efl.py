@@ -47,8 +47,9 @@ EFL_RUBRIC = [
     RubricCriterion(
         name="Organization",
         weight=0.20,
-        description="Cohesion, coherence, paragraph structure, transition use, "
-                    "logical flow between ideas — as modeled by Centering Theory.",
+        description="Cohesion, paragraph structure, transition use, "
+                    "logical flow between ideas — as modeled by Centering Theory "
+                    "(surface-level cohesion, not deep coherence).",
     ),
     RubricCriterion(
         name="Style & Expression",

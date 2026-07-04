@@ -116,7 +116,7 @@ class SegmentAnalyzer:
 
 class CohesionLayer:
     """
-    Cohesion assessment layer using segment-aware Lgram analysis.
+    Cohesion analysis layer using segment-aware Lgram analysis.
 
     Scoring:
       - Body paragraphs: 60% weight (main content)

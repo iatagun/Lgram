@@ -46,28 +46,17 @@ class TestModels(unittest.TestCase):
             evidence=["ok"],
             confidence_interval=(70.0, 80.0),
         )
-        report = type("CAEASReport", (), {
-            "overall_score": 75.0,
-            "confidence_interval": (70.0, 80.0),
-            "layer_results": [lr],
-            "verdict": "OK",
-            "justification": "test",
-            "triggers": [],
-            "human_review_recommended": False,
-            "borderline": False,
-            "essay": None,
-        })
         from lgram.essay.models import CAEASReport as CAEASReport_model
         r = CAEASReport_model(
-            overall_score=75.0,
+            overall_cohesion_indicator=75.0,
             confidence_interval=(70.0, 80.0),
             layer_results=[lr],
-            verdict="OK",
+            suggestion="OK",
             justification="test",
         )
         d = r.to_dict()
-        self.assertEqual(d["overall_score"], 75.0)
-        self.assertEqual(d["verdict"], "OK")
+        self.assertEqual(d["overall_cohesion_indicator"], 75.0)
+        self.assertEqual(d["suggestion"], "OK")
 
 
 class TestMockContentJudge(unittest.TestCase):
@@ -332,7 +321,7 @@ class TestConfidenceLayer(unittest.TestCase):
             ),
         ]
         result = self.conf.analyze(72.0, lrs)
-        self.assertIn("Overall score", result["justification"])
+        self.assertIn("Cohesion analysis complete", result["justification"])
 
 
 class TestCAEASGrader(unittest.TestCase):
@@ -378,9 +367,9 @@ class TestCAEASGrader(unittest.TestCase):
     def test_set_content_judge(self):
         grader = CAEASGrader()
         judge = MockContentJudge()
-        grader.set_content_judge(judge)
+        grader.set_content_analyzer(judge)
         essay = Essay(title="T", text="Hello world.")
-        report = grader.grade(essay)
+        report = grader.analyze(essay)
         self.assertIsNotNone(report)
 
     def test_uncalibrated_warning(self):

@@ -1,5 +1,9 @@
 """
-Data models for CAEAS essay assessment system.
+Data models for CAEAS — Cohesion-Aware Writing Feedback Tool.
+
+NOT an assessment system. NOT a grader.
+This tool provides evidence for teacher consideration.
+The teacher's professional judgment is the final authority.
 """
 
 from __future__ import annotations
@@ -37,29 +41,41 @@ class LayerResult:
 
 @dataclass
 class CAEASReport:
-    overall_score: float
+    overall_cohesion_indicator: float
     confidence_interval: Tuple[float, float]
     layer_results: List[LayerResult]
-    verdict: str
+    suggestion: str
     justification: str
     triggers: List[str] = field(default_factory=list)
-    human_review_recommended: bool = False
+    teacher_review_recommended: bool = False
     borderline: bool = False
     essay: Optional[Essay] = None
 
+    @property
+    def overall_score(self) -> float:
+        return self.overall_cohesion_indicator
+
+    @property
+    def human_review_recommended(self) -> bool:
+        return self.teacher_review_recommended
+
+    @property
+    def verdict(self) -> str:
+        return self.suggestion
+
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "overall_score": self.overall_score,
+            "overall_cohesion_indicator": self.overall_cohesion_indicator,
             "confidence_interval": list(self.confidence_interval),
-            "verdict": self.verdict,
+            "suggestion": self.suggestion,
             "justification": self.justification,
             "borderline": self.borderline,
-            "human_review_recommended": self.human_review_recommended,
+            "teacher_review_recommended": self.teacher_review_recommended,
             "triggers": self.triggers,
             "layers": [
                 {
                     "name": lr.layer_name,
-                    "score": lr.score,
+                    "indicator": lr.score,
                     "normalized": lr.normalized_score,
                     "confidence": (
                         list(lr.confidence_interval) if lr.confidence_interval else None
@@ -71,9 +87,11 @@ class CAEASReport:
         }
 
 
-class ContentJudge(ABC):
-    """Pluggable content/argument evaluator (Layer 1)."""
+class ContentAnalyzer(ABC):
+    """Pluggable content analysis interface (Layer 1)."""
 
     @abstractmethod
-    def evaluate(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
+    def analyze(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
         ...
+
+ContentJudge = ContentAnalyzer

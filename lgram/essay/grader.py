@@ -1,14 +1,19 @@
 """
-CAEAS Grader: Coherence-Aware Essay Assessment System.
+CAEAS: Cohesion-Aware Writing Feedback Tool.
 
-Target domain: EFL (English as a Foreign Language) writing assignments.
-Primary L1: Turkish.
+Target domain: EFL (English as a Foreign Language) writing.
+Primary L1: Turkish learners at CEFR B1-B2-C1 levels.
 
-Five-layer evidence-based essay scoring:
-  Layer 1: Content & Argument (LLM-judge, rubric-specific)
+THIS IS A FEEDBACK TOOL, NOT A GRADING SYSTEM.
+It provides evidence for teacher consideration. The teacher's
+professional judgment is the final authority.
+
+Architecture:
+  PreFilter: Grammar/cohesion disambiguation (optional LanguageTool)
+  Layer 1: Content Analysis (rubric-specific)
   Layer 2: Cohesion & Organization (Lgram, segment-aware)
   Layer 3: Surface Quality (grammar, vocab, readability)
-  Layer 4: Population/CEFR Calibration
+  Layer 4: CEFR / Population Calibration
   Layer 5: Confidence & Transparency
 
 Supplementary: L1 Transfer Analysis (Turkish-specific patterns)
@@ -16,10 +21,6 @@ Supplementary: L1 Transfer Analysis (Turkish-specific patterns)
   - Gender-neutral → he/she confusion
   - Article-less → a/an/the errors
   - SOV → verb-final transfer
-
-Architecture principle: The system is an EVIDENCE PROVIDER, not an AUTHORITY.
-Final decisions always rest with human reviewers. Borderline cases are
-automatically flagged for human review.
 
 Comparison benchmark: Yavuz (2025) — EFL teachers vs ChatGPT/Bard on
 5-dimension rubric (grammar, content, organization, style, mechanics).
@@ -29,6 +30,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from .cefr_calibration import CEFRCalibrator, ComplexityProfile
 from .efl import (
     CEFR_PROFILES,
     EFL_RUBRIC,
@@ -37,67 +39,62 @@ from .efl import (
     estimate_cefr_level,
     get_cefr_profile,
 )
-from .layer1_content import MockContentJudge
+from .layer1_content import MockContentAnalyzer
 from .layer2_cohesion import CohesionLayer
 from .layer3_surface import SurfaceLayer
 from .layer4_calibration import PopulationCalibrator, CalibrationReport
 from .layer5_confidence import ConfidenceLayer
 from .models import (
     CAEASReport,
-    ContentJudge,
+    ContentAnalyzer,
     Essay,
     LayerResult,
     RubricCriterion,
 )
+from .prefilter import PreFilter, PreFilterReport
 
 
 class CAEASGrader:
     """
-    Coherence-Aware Essay Assessment System for EFL writing.
+    Cohesion-Aware Writing Feedback Tool for EFL.
 
-    Default mode: EFL with 5-dimension rubric.
+    Default mode: EFL with 5-dimension rubric, CEFR-aware.
     Can also operate in general mode with custom rubric.
+
+    IMPORTANT: This tool provides EVIDENCE, not GRADES.
+    The numeric indicator is an estimate with a confidence interval.
+    Teacher judgment is always the final authority.
 
     Usage:
         # EFL mode (default) — Turkish L1, CEFR-aware
         grader = CAEASGrader()
-        report = grader.grade(Essay(text="...", title="My Essay"))
+        report = grader.analyze(Essay(text="...", title="My Essay"))
+        print(report.justification)  # teacher-facing evidence
 
-        # With CEFR level set explicitly
-        grader = CAEASGrader(cefr_level="B2")
-        report = grader.grade(essay)
-
-        # With population calibration:
-        cal = grader.calibrator.calibrate(
-            population_id="university_prep_b2",
-            machine_scores=[...],
-            human_scores=[[...], [...]],
-        )
-        if cal.ready:
-            grader.set_calibration(cal)
-
-        # General mode (no EFL defaults)
-        grader = CAEASGrader()
-        grader.use_efl = False
+        # With LanguageTool prefilter (more accurate grammar/cohesion split)
+        grader = CAEASGrader(use_prefilter=True)
     """
 
     def __init__(
         self,
-        content_judge: Optional[ContentJudge] = None,
+        content_analyzer: Optional[ContentAnalyzer] = None,
         rubric: Optional[List[RubricCriterion]] = None,
         surface_model: str = "en_core_web_md",
         borderline_margin: float = 5.0,
         cefr_level: Optional[str] = None,
         l1_language: Optional[str] = None,
+        use_prefilter: bool = False,
     ):
-        self._content_judge = content_judge or MockContentJudge()
+        self._content_analyzer = content_analyzer or MockContentAnalyzer()
         self._rubric = rubric or EFL_RUBRIC
         self._cohesion = CohesionLayer()
         self._surface = SurfaceLayer(model=surface_model)
         self.calibrator = PopulationCalibrator()
+        self._cefr_calibrator = CEFRCalibrator()
         self._confidence = ConfidenceLayer(borderline_margin=borderline_margin)
         self._calibration: Optional[CalibrationReport] = None
         self._l1_analyzer = L1TransferAnalyzer() if l1_language == "tr" else None
+        self._prefilter = PreFilter() if use_prefilter else None
 
         self.use_efl = True
         self.cefr_level: Optional[str] = cefr_level
@@ -114,8 +111,8 @@ class CAEASGrader:
     def set_calibration(self, report: CalibrationReport) -> None:
         self._calibration = report
 
-    def set_content_judge(self, judge: ContentJudge) -> None:
-        self._content_judge = judge
+    def set_content_analyzer(self, analyzer: ContentAnalyzer) -> None:
+        self._content_analyzer = analyzer
 
     def set_rubric(self, rubric: List[RubricCriterion]) -> None:
         self._rubric = rubric
@@ -125,14 +122,25 @@ class CAEASGrader:
             self._l1_analyzer = L1TransferAnalyzer()
             self.l1_language = language
 
+    def enable_prefilter(self) -> None:
+        if self._prefilter is None:
+            self._prefilter = PreFilter()
+
     def grade(self, essay: Essay) -> CAEASReport:
+        return self.analyze(essay)
+
+    def analyze(self, essay: Essay) -> CAEASReport:
         """
-        Run assessment layers and produce an EFL-calibrated report.
+        Analyze essay and produce evidence-based feedback.
+
+        Returns CAEASReport with estimated cohesion indicator,
+        confidence interval, and teacher-review recommendations.
 
         EFL mode adds:
           - CEFR level estimation (if not explicitly set)
-          - CEFR-aware thresholds for cohesion/rubric expectations
+          - CEFR-aware thresholds
           - L1 transfer analysis (Turkish, if enabled)
+          - PreFilter disambiguation (if enabled)
         """
         cefr_level = self.cefr_level
         detected_level = None
@@ -145,12 +153,24 @@ class CAEASGrader:
         if self.use_efl and cefr_level:
             cefr_profile = get_cefr_profile(cefr_level)
 
-        l1 = self._content_judge.evaluate(essay, self._rubric)
+        complexity = self._cefr_calibrator.assess_complexity(essay.text)
+
+        pf_report: Optional[PreFilterReport] = None
+        if self._prefilter:
+            pf_report = self._prefilter.analyze(essay.text)
+
+        l1 = self._content_analyzer.analyze(essay, self._rubric)
         l2 = self._cohesion.evaluate(essay)
         l3 = self._surface.evaluate(essay)
 
-        layer_results = [l1, l2, l3]
+        if pf_report:
+            if pf_report.has_critical_grammar_issues:
+                l2.confidence_interval = (
+                    max(0, l2.confidence_interval[0] - 15) if l2.confidence_interval else None,
+                    l2.confidence_interval[1] if l2.confidence_interval else None,
+                )
 
+        layer_results = [l1, l2, l3]
         weights = [c.weight for c in self._rubric]
         total_w = sum(weights)
         if total_w > 0:
@@ -158,14 +178,33 @@ class CAEASGrader:
 
         raw_score = sum(lr.score * w for lr, w in zip(layer_results, weights))
 
-        overall_score = raw_score
+        if complexity.adjustment_factor != 1.0:
+            raw_score *= complexity.adjustment_factor
+            raw_score = min(100.0, raw_score)
+
+        overall_indicator = raw_score
         if self._calibration and self._calibration.ready:
-            overall_score = self._apply_calibration(raw_score)
+            overall_indicator = self._apply_calibration(raw_score)
 
-        overall_score = round(overall_score, 1)
-        overall_score = max(0.0, min(100.0, overall_score))
+        overall_indicator = round(overall_indicator, 1)
+        overall_indicator = max(0.0, min(100.0, overall_indicator))
 
-        raw_details: Dict[str, Any] = {}
+        raw_details: Dict[str, Any] = {
+            "complexity": {
+                "level": complexity.complexity_level,
+                "adjustment": complexity.adjustment_factor,
+                "avg_sentence_length": complexity.avg_sentence_length,
+            },
+        }
+
+        if pf_report:
+            raw_details["prefilter"] = pf_report.to_dict()
+
+            if pf_report.cohesion_override_count > 0:
+                raw_details["cohesion_warning"] = (
+                    f"{pf_report.cohesion_override_count} grammar issues "
+                    f"may affect cohesion analysis (confidence: {pf_report.parse_confidence:.0%})"
+                )
 
         l1_transfer = None
         if self._l1_analyzer:
@@ -188,47 +227,53 @@ class CAEASGrader:
             }
 
         conf = self._confidence.analyze(
-            overall_score, layer_results, weights
+            overall_indicator, layer_results, weights
         )
 
-        verdict = self._build_efl_verdict(
-            overall_score, conf, cefr_level, cefr_profile, l1_transfer
+        suggestion = self._build_suggestion(
+            overall_indicator, conf, cefr_level, cefr_profile, l1_transfer
         )
 
         if not self.calibration_ready:
             if self.use_efl and cefr_profile:
                 conf["triggers"].insert(
                     0,
-                    f"INFO: Using general CEFR {cefr_level} thresholds. "
-                    f"Calibrate with {self.calibrator.HIGH_SAMPLES}+ human-scored "
-                    f"essays from your institution for production use."
+                    f"INFO: Using general CEFR {cefr_level} reference ranges. "
+                    f"Institution-specific calibration ({self.calibrator.HIGH_SAMPLES}+ "
+                    f"teacher-scored essays) recommended before production use."
                 )
             else:
                 conf["triggers"].insert(
                     0,
-                    "WARNING: No population calibration. General thresholds only. "
-                    "Do NOT use for high-stakes decisions without calibration."
+                    "INFO: No institution-specific calibration. General reference "
+                    "ranges only. Not suitable for high-stakes decisions."
                 )
 
         if l1_transfer and l1_transfer.overall_transfer_score < 0.5:
             conf["triggers"].append(
-                f"L1 transfer score low ({l1_transfer.overall_transfer_score:.2f}) — "
-                f"significant Turkish transfer patterns detected"
+                f"L1 transfer patterns detected (score: {l1_transfer.overall_transfer_score:.2f}) "
+                f"— some cohesion observations may reflect Turkish L1 transfer rather than "
+                f"writing quality issues"
             )
 
-        report = CAEASReport(
-            overall_score=overall_score,
+        if pf_report and pf_report.has_critical_grammar_issues:
+            conf["triggers"].append(
+                f"High grammar error rate detected — grammar feedback should take "
+                f"priority over cohesion review. Cohesion observations may be affected "
+                f"by grammatical errors."
+            )
+
+        return CAEASReport(
+            overall_cohesion_indicator=overall_indicator,
             confidence_interval=conf["confidence_interval"],
             layer_results=layer_results,
-            verdict=verdict,
+            suggestion=suggestion,
             justification=conf["justification"],
             triggers=conf["triggers"],
-            human_review_recommended=conf["human_review_recommended"],
+            teacher_review_recommended=conf["human_review_recommended"],
             borderline=conf["borderline"],
             essay=essay,
         )
-
-        return report
 
     def _apply_calibration(self, raw_score: float) -> float:
         if self._calibration is None:
@@ -251,55 +296,54 @@ class CAEASGrader:
 
         return raw_score
 
-    def _build_efl_verdict(
+    def _build_suggestion(
         self,
-        score: float,
+        indicator: float,
         conf: Dict[str, Any],
         cefr_level: Optional[str],
         cefr_profile: Optional[Dict[str, Any]],
         l1_transfer: Optional[L1TransferReport],
     ) -> str:
         if conf["human_review_recommended"]:
-            if conf["borderline"] and score >= 60:
+            if conf["borderline"] and indicator >= 60:
                 return (
-                    f"BORDERLINE ({score:.0f}/100) — near grade boundary. "
-                    f"Human review recommended."
+                    f"Estimated indicator {indicator:.0f}/100 is near a decision threshold. "
+                    f"Teacher review is recommended to determine the appropriate level."
                 )
-            elif score < 40:
+            elif indicator < 40:
                 return (
-                    f"REVIEW ({score:.0f}/100) — significant issues detected "
-                    f"across multiple dimensions."
+                    f"Cohesion indicators suggest multiple areas needing attention "
+                    f"({indicator:.0f}/100). Recommend focusing on grammar and paragraph "
+                    f"structure before addressing cohesion."
                 )
             else:
                 return (
-                    f"REVIEW ({score:.0f}/100) — inconsistencies or high "
-                    f"uncertainty detected."
+                    f"Inconsistent indicators detected ({indicator:.0f}/100). "
+                    f"Teacher review suggested to assess which dimensions need focus."
                 )
 
         suffix = ""
         if cefr_level and cefr_profile:
             lo, hi = cefr_profile["expected_score_range"]
-            if score >= hi:
-                above = "above" if score > hi + 5 else "at upper bound of"
-                suffix = f" ({above} {cefr_level} expectations)"
-            elif score < lo:
-                below = "below" if score < lo - 5 else "at lower bound of"
-                suffix = f" ({below} {cefr_level} expectations)"
+            if indicator >= hi:
+                suffix = f" (above typical {cefr_level} range)"
+            elif indicator < lo:
+                suffix = f" (below typical {cefr_level} range)"
             else:
-                suffix = f" (within {cefr_level} range)"
+                suffix = f" (within typical {cefr_level} range)"
 
-        if score >= 85:
-            return f"EXCELLENT ({score:.0f}/100){suffix} — strong performance across all dimensions."
-        elif score >= 70:
-            return f"GOOD ({score:.0f}/100){suffix} — solid performance with minor areas for improvement."
-        elif score >= 55:
-            return f"ADEQUATE ({score:.0f}/100){suffix} — meets baseline expectations with some weaknesses."
-        elif score >= 40:
-            return f"DEVELOPING ({score:.0f}/100){suffix} — several dimensions need attention."
+        if indicator >= 85:
+            return f"Strong cohesion indicators ({indicator:.0f}/100){suffix}."
+        elif indicator >= 70:
+            return f"Solid cohesion indicators ({indicator:.0f}/100){suffix} with minor areas to review."
+        elif indicator >= 55:
+            return f"Adequate cohesion ({indicator:.0f}/100){suffix} with some areas for development."
+        elif indicator >= 40:
+            return f"Developing cohesion ({indicator:.0f}/100){suffix} — several dimensions need attention."
         else:
-            return f"WEAK ({score:.0f}/100){suffix} — significant weaknesses across multiple dimensions."
+            return f"Limited cohesion indicators ({indicator:.0f}/100){suffix} — multiple dimensions need development."
 
-    def grade_batch(
-        self, essays: List[Essay]
-    ) -> List[CAEASReport]:
-        return [self.grade(e) for e in essays]
+    def analyze_batch(self, essays: List[Essay]) -> List[CAEASReport]:
+        return [self.analyze(e) for e in essays]
+
+    grade_batch = analyze_batch
