@@ -1,5 +1,73 @@
 # Changelog
 
+## CAEAS v0.3 (2025-07-04)
+
+### New: Full 5-Layer Rubric with Real NLP Tools
+
+- **Grammar Layer** — LanguageTool (binlerce kural) + LLM deep grammar check
+  - Catches mechanical errors (missing "to", spelling, punctuation)
+  - LLM supplement finds subject-verb agreement, missing subjects, article errors
+  - Combined: 6 errors detected vs 1 with LanguageTool alone
+- **Content Layer** — LM Studio / local LLM integration
+  - Structured output via `response_format=json_schema`
+  - Auto-detects running local server (LM Studio → Ollama)
+  - Falls back to heuristic if no LLM available
+- **Mechanics Layer** — pyspellchecker (70K word dictionary)
+  - Spelling, capitalization, terminal punctuation check
+- **Grammar/Cohesion Disambiguation** — DeepGrammarCheck via raw HTTP
+  - Avoids OpenAI client library compatibility issues with thinking models
+  - Uses `response_format` for clean JSON output from thinking models
+
+### Improvements
+
+- **Composite formula** — cohesion_score contributes 50% to composite_indicator
+  - Fixes "composite dilutes cohesion signal" problem
+  - Composite delta: 4p → 39p (near cohesion's 56p discriminative power)
+  - `cohesion_weight` calibratable hyperparameter (default 0.50)
+- **CEFR unified** — LLM estimate overrides heuristic word-count estimate
+  - A1/A2 mapped to B1 (closest supported level)
+- **CI width** — minimum 3.0 SEM when LLM deep check active (non-determinism penalty)
+- **163 tests** (99 core + 38 CAEAS + 26 EFL), all passing
+
+### Bug Fixes (from v0.2 code review)
+
+- BUG-1: CI scale mismatch (0-1 vs 0-100) in prefilter
+- BUG-2: Weight truncation — only 3 of 5 rubric weights used
+- BUG-3: L1 analyzer not created with default `l1_language="tr"`
+- BUG-7/8: ErrorTypology double/triple counting
+- Dead code removal: 6 duplicated `_split_sentences`, duplicated QWK/ICC
+- Shared modules: `utils.py`, `metrics.py`
+
+### Documentation
+
+- `CAEAS_DEVELOPMENT_LOG.md` — full build log + calibration protocol
+- `CAEAS_V02_PLAN.md` — v0.2 implementation plan (completed)
+- `examples/demo.py` — 10-section full feature demo
+- `examples/full_test.py` — 5-layer discriminative validity test
+
+---
+
+## CAEAS v0.1–v0.2 (2025-07-04)
+
+### v0.2: Production Hardening (6 risk mitigations)
+
+- **PreFilter** — grammar/cohesion disambiguation layer (LanguageTool optional)
+- **CEFRCalibrator** — per-level calibration curves with complexity-adjusted scoring
+- **Terminology audit** — coherence→cohesion, verdict→suggestion, grade→analyze
+- **Feedback-mode positioning** — "not a grading system, evidence for teacher judgment"
+- **DataExporter** — research-quality JSON/CSV export with anonymization
+- **ErrorTypology** — 8 error categories with L1 transfer tagging
+
+### v0.1: Initial Architecture
+
+- 5-layer evidence-based essay analysis (Content, Cohesion, Surface, Calibration, Confidence)
+- EFL module: 5-dimension rubric, CEFR profiles (B1/B2/C1), L1 transfer analysis (Turkish)
+- `CAEASGrader` with `analyze()` / `grade()` API
+- Segment-aware cohesion analysis (intro/body/conclusion)
+- Population calibration (QWK, ICC, isotonic regression)
+
+---
+
 ## 2.2.0 (2025-07-02)
 
 ### New: Analysis Layer (TextAnalyzer)
