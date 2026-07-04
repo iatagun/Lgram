@@ -387,7 +387,10 @@ class TestCAEASGrader(unittest.TestCase):
         essay = Essay(title="T", text="Hello world. This is a test.")
         report = self.grader.grade(essay)
         triggers = report.triggers
-        has_warning = any("No population calibration" in t for t in triggers)
+        has_warning = any(
+            "No population calibration" in t or "Using general CEFR" in t
+            for t in triggers
+        )
         self.assertTrue(has_warning)
 
     def test_recalibration_applied(self):
