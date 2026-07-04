@@ -7,6 +7,7 @@ as a plugin. TextAnalyzer discovers and invokes them through the registry.
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Type
@@ -53,7 +54,7 @@ class PluginRegistry:
                 plugin = plugin_cls()
                 results[name] = plugin.analyze(text, analyzer)
             except Exception:
-                pass
+                logging.getLogger(__name__).exception("Plugin %s failed", name)
         return results
 
     @property

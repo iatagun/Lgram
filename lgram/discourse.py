@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 
 _CONNECTIVE_MAP: Dict[str, str] = {
@@ -134,12 +134,13 @@ class DiscourseAnalyzer:
                         target_sentence=target,
                     ))
 
+        import re
         for i in range(len(sents)):
             text_lower = sents[i].text.lower()
             for phrase in ("as a result", "for this reason", "in addition",
                           "for example", "for instance", "in particular",
                           "in fact", "in contrast", "on the other hand"):
-                if phrase in text_lower:
+                if re.search(rf"\b{re.escape(phrase)}\b", text_lower):
                     rel_type = _CONNECTIVE_MAP.get(phrase, "EXPANSION")
                     relations.append(DiscourseRelation(
                         connective=phrase,

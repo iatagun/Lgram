@@ -3,8 +3,6 @@ Brown Corpus calibration — run GenreCalibrator on NLTK Brown Corpus.
 Produces empirically-derived genre thresholds with HIGH confidence (n=30/genre).
 """
 
-from nltk.corpus import brown
-
 from .genre_calibrator import GenreCalibrator
 
 # Map Brown categories to our genres
@@ -19,6 +17,7 @@ SAMPLE_SIZE = 30  # per genre
 
 def load_brown_corpus() -> dict:
     """Extract texts from Brown Corpus, mapped to our genre types."""
+    from nltk.corpus import brown
     corpus = {}
     for genre, cats in GENRE_MAP.items():
         texts = []

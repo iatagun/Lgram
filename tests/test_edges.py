@@ -142,8 +142,8 @@ class TestFalsePositives(unittest.TestCase):
         ct = _make_ct()
         ct.update_discourse("Alice and Bob arrived.")
         s = ct.update_discourse("They sat down.")
-        # "They" should resolve to plural antecedent
         self.assertIsNotNone(s.backward_center)
+        self.assertIn(s.backward_center.lower(), ("alice", "bob", "alice and bob"))
 
     def test_demonstrative_not_a_center(self):
         ct = _make_ct()

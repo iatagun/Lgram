@@ -42,7 +42,7 @@ def fetch_wikipedia_corpus(max_articles: int = 30) -> list[str]:
                 text = page.get("extract", "")
                 # clean references
                 text = re.sub(r"\[[^\]]*\]", "", text)
-                text = re.sub(r"\([^)]*\)", "", text)
+                text = re.sub(r"\([^)]*\b(?:pronounced|known as|also called|Latin|French|German|Italian|Spanish|lit\.|abbreviation for|short for|formerly|born|died|fl\.)\s[^)]*\)", "", text, flags=re.IGNORECASE)
                 text = re.sub(r"\s+", " ", text).strip()
                 if len(text.split()) >= 50:
                     texts.append(text)

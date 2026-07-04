@@ -1,19 +1,24 @@
 """
 GCDC Benchmark Integration (Lai & Tetreault 2018).
 
-Evaluates cohesion scoring against Grounded Coherence Detection Corpus.
-The corpus contains coherent and incoherent (permuted) documents across
-4 domains: Yahoo, Clinton, Enron, Yelp.
+Evaluates entity-grid coherence against the Grounded Coherence Detection Corpus
+(Lai & Tetreault, SIGDIAL 2018).  GCDC requires an active Yahoo L6 license
+and author permission (see https://github.com/aylai/GCDC-corpus), so this
+module ships an embedded 16-sample subset for illustration / smoke-testing.
 
-Supports two modes:
-- Embedded: 16-sample subset shipped with the library (zero extra deps)
-- Full: loads complete GCDC via `datasets` library (pip install datasets)
+Literature baselines on the *full* GCDC (thousands of examples):
+  - Entity grid (Barzilay & Lapata 2005):  56-74% accuracy
+  - SentAvg / ParSeq (Lai & Tetreault 2018):  65-87%
+  - Neural models consistently outperform entity grid.
+  
+This benchmark only tests entity-grid performance and should NOT be cited
+as a claim about the full centering-theory pipeline.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from .analyzer import TextAnalyzer
 
@@ -78,7 +83,7 @@ class GCDCResult:
 class GCDCBenchmark:
     """Evaluate cohesion scoring against GCDC binary classification task."""
 
-    PASS_THRESHOLD = 0.50
+    PASS_THRESHOLD = 0.55
 
     def __init__(self, analyzer: Optional[TextAnalyzer] = None):
         self.ta = analyzer or TextAnalyzer()
@@ -141,32 +146,20 @@ class GCDCBenchmark:
         return results
 
     def run_full(self) -> List[GCDCResult]:
-        """Run GCDC evaluation using the full dataset from HuggingFace."""
-        try:
-            from datasets import load_dataset
-        except ImportError:
-            raise ImportError(
-                "Full GCDC requires `datasets` library. "
-                "Install with: pip install datasets"
-            )
-        results: List[GCDCResult] = []
-        for domain in ["yahoo", "clinton", "enron", "yelp"]:
-            try:
-                ds = load_dataset("coherence/gcdc", domain, split="test", trust_remote_code=True)
-            except Exception:
-                continue
-            coherent = []
-            incoherent = []
-            for item in ds:
-                text = item["text"]
-                if item["label"] == 1:
-                    coherent.append(text)
-                else:
-                    incoherent.append(text)
-            if coherent and incoherent:
-                result = self.evaluate_domain(domain, coherent, incoherent)
-                results.append(result)
-        return results
+        """Run GCDC evaluation using the full dataset (requires access from Grammarly).
+
+        The full GCDC dataset is not publicly downloadable.  To obtain it:
+        1. Request Yahoo L6 corpus (free for research)
+        2. Forward the acknowledgment to Grammarly (peng.wang@grammarly.com)
+           with your affiliation and use-case description.
+        
+        See https://github.com/aylai/GCDC-corpus for details.
+        """
+        raise RuntimeError(
+            "Full GCDC dataset requires access from Grammarly "
+            "(see https://github.com/aylai/GCDC-corpus). "
+            "Use run_embedded() for the built-in 16-sample subset."
+        )
 
     def run_all(self) -> List[GCDCResult]:
         """Run embedded evaluation (always available)."""

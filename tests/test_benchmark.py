@@ -26,7 +26,7 @@ class TestCohesionBenchmark(unittest.TestCase):
 
     def test_cross_method_agreement_positive(self):
         result = self.bench.test_cross_method()
-        self.assertIn("agreement", result.summary.lower() or "agreement")
+        self.assertIn("agreement", result.summary.lower())
         self.assertIsInstance(result.passed, bool)
 
     def test_classification_discriminates(self):
@@ -62,6 +62,7 @@ class TestCohesionBenchmark(unittest.TestCase):
             "Alice went to the park. She sat on a bench. Alice read a book. She enjoyed it very much. The weather was beautiful. Alice stayed until sunset.",
         ]
         result = self.bench.test_permutation(custom)
+        self.assertGreater(len(result.details), 0)
         all_ok = all(d["passed"] for d in result.details)
         self.assertTrue(all_ok)
 

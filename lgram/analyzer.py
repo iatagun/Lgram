@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import spacy
 
@@ -960,12 +960,14 @@ class TextAnalyzer:
         raw_paras = text.split("\n\n")
         paragraphs: List[List[str]] = []
         all_sents = list(doc.sents)
+        search_start = 0
 
         for raw in raw_paras:
             if not raw.strip():
                 continue
-            start_char = text.index(raw.strip())
+            start_char = text.index(raw.strip(), search_start)
             end_char = start_char + len(raw.strip())
+            search_start = end_char
             para_sents = [
                 s.text.strip() for s in all_sents
                 if s.start_char >= start_char and s.end_char <= end_char

@@ -13,10 +13,11 @@ from __future__ import annotations
 import json
 import logging
 import pickle
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import spacy
 from spacy.tokens import Doc, Token
@@ -192,6 +193,7 @@ class EnhancedCenteringTheory:
     _object_pronouns = frozenset({"it", "its"})
     _plural_pronouns = frozenset({"they", "them", "their", "theirs"})
     _all_pronouns: frozenset = _person_pronouns | _object_pronouns | _plural_pronouns
+    _executor = ThreadPoolExecutor(max_workers=4)
 
     _gender_map_cache: Optional[Dict[str, str]] = None
 
@@ -385,7 +387,7 @@ class EnhancedCenteringTheory:
             return TransitionType.RETAIN
 
         cb_same = self._are_coreferent_cached(
-            cb, prev_cb, prev_state._entity_map, prev_state._entity_map
+            cb, prev_cb, current_state._entity_map, prev_state._entity_map
         )
         cp_same_as_cb = self._are_coreferent_cached(
             cb, cp, prev_state._entity_map, current_state._entity_map
@@ -644,24 +646,25 @@ class EnhancedCenteringTheory:
         saved = list(self.discourse_history)
         self.discourse_history = []
 
-        transition_counts: Dict[TransitionType, int] = {}
-        transitions: List[Dict[str, Any]] = []
-        for clause_text, clause_type in clauses:
-            state = self.update_discourse(clause_text)
-            t = state.transition
-            if t:
-                transition_counts[t] = transition_counts.get(t, 0) + 1
-                transitions.append({
-                    "clause": clause_text,
-                    "type": clause_type,
-                    "transition": t.value,
-                    "cp": state.preferred_center,
-                    "cb": state.backward_center,
-                })
+        try:
+            transition_counts: Dict[TransitionType, int] = {}
+            transitions: List[Dict[str, Any]] = []
+            for clause_text, clause_type in clauses:
+                state = self.update_discourse(clause_text)
+                t = state.transition
+                if t:
+                    transition_counts[t] = transition_counts.get(t, 0) + 1
+                    transitions.append({
+                        "clause": clause_text,
+                        "type": clause_type,
+                        "transition": t.value,
+                        "cp": state.preferred_center,
+                        "cb": state.backward_center,
+                    })
 
-        score, dist = self._score_transitions(transition_counts)
-
-        self.discourse_history = saved
+            score, dist = self._score_transitions(transition_counts)
+        finally:
+            self.discourse_history = saved
 
         return {
             "sentence": sentence,
@@ -996,9 +999,7 @@ class EnhancedCenteringTheory:
         """Async wrapper around stream_feed."""
         import asyncio
         loop = asyncio.get_running_loop()
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            return await loop.run_in_executor(pool, self.stream_feed, utterance)
+        return await loop.run_in_executor(self._executor, self.stream_feed, utterance)
 
     async def astream_text(self, text: str) -> List[Dict[str, Any]]:
         """Async analysis of a multi-sentence text, yielding per-sentence results."""

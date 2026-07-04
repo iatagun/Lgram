@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 from .analyzer import TextAnalyzer
 
@@ -88,10 +88,7 @@ class CohesionBenchmark:
                 "passed": ok,
             })
 
-        summary = f"Permutation: {'PASS' if passed else 'FAIL'} ({sum(1 for r in results if r['passed'])}/{len(results)} texts)"
-        # pass if majority of texts pass
         passed = sum(1 for r in results if r["passed"]) >= len(results) / 2
-
         summary = f"Permutation: {'PASS' if passed else 'FAIL'} ({sum(1 for r in results if r['passed'])}/{len(results)} texts)"
         return BenchmarkResult(
             name="permutation",
