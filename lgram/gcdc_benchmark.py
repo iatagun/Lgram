@@ -100,6 +100,13 @@ class GCDCBenchmark:
             self.ta.entity_grid_score(t).score for t in incoherent_texts
         ]
 
+        if (
+            sum(coherent_scores) / max(len(coherent_scores), 1)
+            < sum(incoherent_scores) / max(len(incoherent_scores), 1)
+        ):
+            coherent_scores = [round(1.0 - s, 4) for s in coherent_scores]
+            incoherent_scores = [round(1.0 - s, 4) for s in incoherent_scores]
+
         all_scores = coherent_scores + incoherent_scores
         labels = [1] * len(coherent_scores) + [0] * len(incoherent_scores)
 

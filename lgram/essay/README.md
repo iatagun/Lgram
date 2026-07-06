@@ -46,6 +46,7 @@ print(report.suggestion)           # teacher-facing recommendation
 
 1. Download [LM Studio](https://lmstudio.ai), load any model, start server on port 1234
 2. System auto-detects and uses it for content + grammar analysis — free, offline, private
+3. LLM calls are gated and cached; long essays are compressed to high-signal sentence excerpts
 
 ```python
 grader = CAEASGrader(use_llm=True)
@@ -54,7 +55,7 @@ grader = CAEASGrader(use_llm=True)
 ## Test Status
 
 ```
-163 tests passing (99 core + 38 CAEAS + 26 EFL)
+167 tests passing (99 core + 42 CAEAS + 26 EFL)
 ```
 
 ## Scope
@@ -73,6 +74,8 @@ Prototype functional. Seeking pilot institution for real-world calibration with 
 - [Development Log](../../docs/CAEAS_DEVELOPMENT_LOG.md) — full build history + calibration protocol
 - [CHANGELOG](../../CHANGELOG.md) — version history
 - [V02 Plan](../../docs/CAEAS_V02_PLAN.md) — implementation plan (completed)
+- [Model Completeness Report](../../MODEL_COMPLETENESS_REPORT.md) — token optimization + test coverage
+- [Production Readiness](../../PRODUCTION_READINESS_ASSESSMENT.md) — SaaS viability assessment
 - [examples/demo.py](../../examples/demo.py) — full feature demo
 - [examples/full_test.py](../../examples/full_test.py) — 5-layer discriminative test
 

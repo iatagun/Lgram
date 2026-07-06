@@ -14,6 +14,7 @@ import json
 import logging
 import pickle
 from concurrent.futures import ThreadPoolExecutor
+from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -75,6 +76,7 @@ class EnhancedCenteringTheory:
         self.history_limit = history_limit
         self.similarity_threshold = similarity_threshold
         self._custom_similarity = custom_similarity
+        self._has_vectors = bool(getattr(self.nlp.vocab, "vectors_length", 0))
 
         self.salience_weights = salience_weights or {
             "nsubj": 4.0,
@@ -95,6 +97,8 @@ class EnhancedCenteringTheory:
         }
 
         self._gender_lookup = gender_map if gender_map is not None else dict(self._load_gender_map())
+        if not self._has_vectors and self._custom_similarity is None:
+            self.similarity_threshold = min(self.similarity_threshold, 0.45)
 
     def _resolve_gender(self, token: Token) -> str:
         text = token.text.lower()
@@ -289,16 +293,40 @@ class EnhancedCenteringTheory:
             except Exception:
                 logger.debug("custom_similarity failed for %r / %r", e1, e2)
         if not getattr(self.nlp.vocab, "vectors_length", 0):
-            return 0.0
+            return self._lexical_similarity(e1, e2)
         try:
             d1 = self.nlp(e1)
             d2 = self.nlp(e2)
             if not d1.vector_norm or not d2.vector_norm:
-                return 0.0
+                return self._lexical_similarity(e1, e2)
             return float(d1.similarity(d2))
         except Exception:
             logger.debug("vector_similarity failed for %r / %r", e1, e2)
+            return self._lexical_similarity(e1, e2)
+
+    def _lexical_similarity(self, e1: str, e2: str) -> float:
+        doc1 = self.nlp(e1)
+        doc2 = self.nlp(e2)
+        tokens1 = [
+            (t.lemma_.lower().strip() if t.lemma_ else t.text.lower())
+            for t in doc1
+            if t.is_alpha and not t.is_stop
+        ]
+        tokens2 = [
+            (t.lemma_.lower().strip() if t.lemma_ else t.text.lower())
+            for t in doc2
+            if t.is_alpha and not t.is_stop
+        ]
+        if not tokens1 or not tokens2:
             return 0.0
+
+        c1 = Counter(tokens1)
+        c2 = Counter(tokens2)
+        overlap = sum(min(c1[t], c2[t]) for t in c1.keys() & c2.keys())
+        total = max(sum(c1.values()), sum(c2.values()), 1)
+        jaccard = len(c1.keys() & c2.keys()) / max(len(c1.keys() | c2.keys()), 1)
+        score = 0.7 * (overlap / total) + 0.3 * jaccard
+        return round(min(1.0, max(0.0, score)), 4)
 
     def _are_coreferent_cached(
         self,

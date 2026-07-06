@@ -25,13 +25,16 @@ Configuration via environment variables (optional):
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from typing import Any, Dict, List, Optional
 
 from .models import Essay, LayerResult, RubricCriterion
+from .utils import split_sentences
 
-_CONTENT_PROMPT = """Rate this EFL student essay on a 0-100 scale. Evaluate thesis clarity, argument development, evidence quality, and topic relevance on 0.0-1.0 scales.
+_CONTENT_PROMPT = """Rate this EFL student essay on a 0-100 scale.
+Return JSON only.
 
 ESSAY:
 {text}
@@ -64,6 +67,9 @@ _CONTENT_SCHEMA = {
     }
 }
 
+_CACHE: Dict[str, LayerResult] = {}
+_CACHE_MAX_SIZE = 128
+
 _LOCAL_ENDPOINTS = [
     ("http://localhost:1234/v1", "lm-studio", "auto"),
     ("http://localhost:11434/v1", "ollama", "auto"),
@@ -84,7 +90,7 @@ class LLMContentAnalyzer:
         base_url: Optional[str] = None,
         api_key: Optional[str] = None,
         model: Optional[str] = None,
-        max_tokens: int = 2048,
+        max_tokens: int = 1024,
         temperature: float = 0.1,
     ):
         self._max_tokens = max_tokens
@@ -158,21 +164,25 @@ class LLMContentAnalyzer:
     def analyze(
         self, essay: Essay, rubric: List[RubricCriterion]
     ) -> LayerResult:
+        cache_key = self._cache_key(essay.text, rubric)
+        cached = _CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+
         if not self.available:
             from .layer1_content import MockContentAnalyzer
             fallback = MockContentAnalyzer()
             result = fallback.analyze(essay, rubric)
             result.layer_name = "Content (heuristic — no local LLM found)"
+            _CACHE[cache_key] = result
             return result
 
-        criteria_text = "\n".join(
-            f"  - {c.name} ({c.weight*100:.0f}%): {c.description}"
-            for c in rubric
-        )
+        criteria_text = self._compact_rubric(rubric)
+        excerpt = self._select_focus_text(essay.text)
 
         prompt = _CONTENT_PROMPT.format(
             criteria=criteria_text,
-            text=essay.text[:3000],
+            text=excerpt,
         )
 
         try:
@@ -207,6 +217,7 @@ class LLMContentAnalyzer:
                 fallback = MockContentAnalyzer()
                 result = fallback.analyze(essay, rubric)
                 result.layer_name = f"Content (LLM parse failed, heuristic fallback)"
+                _CACHE[cache_key] = result
                 return result
 
             score = max(0.0, min(100.0, score))
@@ -223,7 +234,7 @@ class LLMContentAnalyzer:
             ci_margin = 8.0
             ci = (max(0, score - ci_margin), min(100, score + ci_margin))
 
-            return LayerResult(
+            result = LayerResult(
                 layer_name=f"Content (LLM: {self._source})",
                 score=round(score, 1),
                 normalized_score=normalized,
@@ -239,13 +250,71 @@ class LLMContentAnalyzer:
                 evidence=evidence,
                 confidence_interval=(round(ci[0], 1), round(ci[1], 1)),
             )
+            _CACHE[cache_key] = result
+            return result
 
         except Exception as e:
             from .layer1_content import MockContentAnalyzer
             fallback = MockContentAnalyzer()
             result = fallback.analyze(essay, rubric)
             result.layer_name = f"Content (LLM error: {str(e)[:40]})"
+            _CACHE[cache_key] = result
             return result
+
+    @staticmethod
+    def _cache_key(text: str, rubric: List[RubricCriterion]) -> str:
+        norm_text = " ".join(text.split())
+        rubric_bits = "|".join(
+            f"{c.name}:{c.weight:.3f}:{c.description[:120]}"
+            for c in rubric
+        )
+        digest = hashlib.sha256(f"{norm_text}\n{rubric_bits}".encode("utf-8")).hexdigest()
+        return digest
+
+    @staticmethod
+    def _compact_rubric(rubric: List[RubricCriterion]) -> str:
+        lines = []
+        for c in rubric:
+            desc = " ".join(c.description.split())
+            if len(desc) > 120:
+                desc = desc[:117].rstrip() + "..."
+            lines.append(f"- {c.name} ({c.weight * 100:.0f}%): {desc}")
+        return "\n".join(lines)
+
+    @staticmethod
+    def _select_focus_text(text: str, max_sentences: int = 6, max_chars: int = 1800) -> str:
+        text = " ".join(text.split())
+        if len(text) <= max_chars:
+            return text
+
+        sentences = split_sentences(text)
+        if len(sentences) <= max_sentences:
+            excerpt = " ".join(sentences)
+            return excerpt[:max_chars]
+
+        head = sentences[:2]
+        tail = sentences[-2:]
+        middle_start = max(2, (len(sentences) // 2) - 1)
+        middle = sentences[middle_start:middle_start + 2]
+
+        selected: List[str] = []
+        for sent in head + tail + middle:
+            if sent not in selected:
+                selected.append(sent)
+
+        excerpt = " ".join(selected)
+        if len(excerpt) <= max_chars:
+            return excerpt
+
+        clipped: List[str] = []
+        total = 0
+        for sent in selected:
+            extra = len(sent) + (1 if clipped else 0)
+            if clipped and total + extra > max_chars:
+                break
+            clipped.append(sent)
+            total += extra
+        return " ".join(clipped)[:max_chars]
 
     @staticmethod
     def _parse_json(content: str) -> Dict[str, Any]:

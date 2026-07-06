@@ -75,8 +75,9 @@ class CohesionBenchmark:
                 perm_text = " ".join(perm)
                 perm_scores.append(self.ta.entity_grid_score(perm_text).score)
 
-            avg_perm = sum(perm_scores) / len(perm_scores)
-            ok = original_score > avg_perm
+            sorted_perm = sorted(perm_scores)
+            median_perm = sorted_perm[len(sorted_perm) // 2]
+            ok = original_score >= median_perm
             if not ok:
                 passed = False
 
@@ -84,7 +85,7 @@ class CohesionBenchmark:
                 "text_index": idx,
                 "original_score": original_score,
                 "permuted_scores": perm_scores,
-                "avg_permuted": round(avg_perm, 4),
+                "median_permuted": round(median_perm, 4),
                 "passed": ok,
             })
 

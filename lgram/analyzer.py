@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import math
+import warnings
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -59,6 +61,7 @@ class TextReport:
     segments: List[int]
     quality: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+    warnings: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -66,6 +69,7 @@ class EntityGrid:
     entities: List[str]
     matrix: List[List[str]]
     score: float
+    transition_probabilities: Dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -90,16 +94,45 @@ class TextAnalyzer:
     ):
         self.nlp = spacy.load(model)
         self.model_name = model
+        self._runtime_warnings: List[str] = []
         self._st_model = None
         if use_sentence_transformers:
             try:
                 from sentence_transformers import SentenceTransformer
                 self._st_model = SentenceTransformer("all-MiniLM-L6-v2")
-            except ImportError:
-                pass
+            except ImportError as e:
+                msg = (
+                    "sentence-transformers requested but not installed; "
+                    "falling back to spaCy/lexical similarity."
+                )
+                self._runtime_warnings.append(msg)
+                warnings.warn(msg, RuntimeWarning)
+            except Exception as e:
+                msg = f"sentence-transformers initialization failed: {e}"
+                self._runtime_warnings.append(msg)
+                warnings.warn(msg, RuntimeWarning)
+
+        self._vectors_available = bool(getattr(self.nlp.vocab, "vectors_length", 0))
+        if self._st_model:
+            self._similarity_mode = "sentence-transformers"
+        elif self._vectors_available:
+            self._similarity_mode = "spacy-vectors"
+        else:
+            self._similarity_mode = "lexical"
+            msg = (
+                "No word vectors are available in the selected spaCy model; "
+                "using lexical similarity fallback."
+            )
+            self._runtime_warnings.append(msg)
+            warnings.warn(msg, RuntimeWarning)
 
         if similarity_threshold is None:
-            similarity_threshold = 0.35 if self._st_model else 0.65
+            if self._st_model:
+                similarity_threshold = 0.35
+            elif self._vectors_available:
+                similarity_threshold = 0.65
+            else:
+                similarity_threshold = 0.45
 
         self._ct_kwargs = {
             "similarity_threshold": similarity_threshold,
@@ -132,13 +165,64 @@ class TextAnalyzer:
                 return float(sum(x*y for x, y in zip(a, b)) / (
                     math.sqrt(sum(x*x for x in a)) * math.sqrt(sum(x*x for x in b))
                 ))
-            except Exception:
-                pass  # fall through to spaCy similarity
-        da = self.nlp(text_a)
-        db = self.nlp(text_b)
-        if da.vector_norm and db.vector_norm:
-            return float(da.similarity(db))
-        return 0.5
+            except Exception as e:
+                warnings.warn(
+                    f"sentence-transformer similarity failed; using fallback similarity: {e}",
+                    RuntimeWarning,
+                )
+        if self._vectors_available:
+            da = self.nlp(text_a)
+            db = self.nlp(text_b)
+            if da.vector_norm and db.vector_norm:
+                try:
+                    return float(da.similarity(db))
+                except Exception as e:
+                    warnings.warn(
+                        f"spaCy similarity failed; using lexical fallback: {e}",
+                        RuntimeWarning,
+                    )
+        try:
+            return float(self.nlp(text_a).similarity(self.nlp(text_b)))
+        except Exception as e:
+            warnings.warn(
+                f"spaCy structural similarity failed; using lexical fallback: {e}",
+                RuntimeWarning,
+            )
+            return self._lexical_similarity(text_a, text_b)
+
+    def _lexical_similarity(self, text_a: str, text_b: str) -> float:
+        tokens_a = self._content_tokens(text_a)
+        tokens_b = self._content_tokens(text_b)
+        if not tokens_a or not tokens_b:
+            return 0.0
+
+        ca = Counter(tokens_a)
+        cb = Counter(tokens_b)
+        shared = sum(min(ca[t], cb[t]) for t in ca.keys() & cb.keys())
+        total = max(sum(ca.values()), sum(cb.values()), 1)
+        jaccard = len(ca.keys() & cb.keys()) / max(len(ca.keys() | cb.keys()), 1)
+        overlap = shared / total
+        return round(min(1.0, 0.7 * overlap + 0.3 * jaccard), 4)
+
+    def _content_tokens(self, text: str) -> List[str]:
+        doc = self.nlp(text)
+        tokens: List[str] = []
+        for token in doc:
+            if not token.is_alpha:
+                continue
+            if token.is_stop:
+                continue
+            lemma = token.lemma_.lower().strip()
+            if lemma and lemma != "-pron-":
+                tokens.append(lemma)
+            else:
+                tokens.append(token.text.lower())
+        return tokens
+
+    def _runtime_notes(self) -> List[str]:
+        notes = list(self._runtime_warnings)
+        notes.append(f"similarity_mode={self._similarity_mode}")
+        return notes
 
     # ------------------------------------------------------------------
     # Single text analysis
@@ -163,6 +247,7 @@ class TextAnalyzer:
                 segments=[0] if all_sentences_flat else [],
                 quality="insufficient_data",
                 metadata={"model": self.model_name, "warning": "Need at least 2 sentences"},
+                warnings=self._runtime_notes(),
             )
 
         paragraph_results: List[ParagraphAnalysis] = []
@@ -253,7 +338,8 @@ class TextAnalyzer:
             paragraphs=paragraph_results,
             segments=all_boundaries,
             quality=quality,
-            metadata={"model": self.model_name},
+            metadata={"model": self.model_name, "similarity_mode": self._similarity_mode},
+            warnings=self._runtime_notes(),
         )
 
     # ------------------------------------------------------------------
@@ -377,29 +463,29 @@ class TextAnalyzer:
         doc = self.nlp(text)
         sentences_str = [s.text.strip() for s in doc.sents if s.text.strip()]
 
+        sent_states = [ct.update_discourse(sent_text) for sent_text in sentences_str]
         resolved_roles: List[Dict[str, str]] = []
+        pronoun_sentences = 0
+        supported_pronoun_sentences = 0
+        for sent_span, state in zip(doc.sents, sent_states):
+            has_pronoun = any(token.pos_ == "PRON" for token in sent_span)
+            if has_pronoun:
+                pronoun_sentences += 1
+                if state.backward_center is not None:
+                    supported_pronoun_sentences += 1
 
-        for sent_text in sentences_str:
-            ct.update_discourse(sent_text)
-
-        for sent_idx, sent_span in enumerate(doc.sents):
-            sent_text = sent_span.text.strip()
-            if not sent_text:
-                continue
-            state = ct.discourse_history[sent_idx] if sent_idx < len(ct.discourse_history) else None
             roles: Dict[str, str] = {}
             seen: set = set()
-
             for token in sent_span:
                 if token.pos_ not in ("NOUN", "PROPN", "PRON"):
                     continue
-                key = token.text.lower()
-                if key in seen:
+                key = token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
+                if not key or key in seen:
                     continue
                 seen.add(key)
 
                 entity_key = key
-                if token.pos_ == "PRON" and state and state.backward_center:
+                if token.pos_ == "PRON" and state.backward_center:
                     entity_key = state.backward_center
 
                 dep = token.dep_.split(":")[0]
@@ -431,24 +517,117 @@ class TextAnalyzer:
             matrix.append(row)
 
         if not matrix or len(matrix) < 2:
-            return EntityGrid(entities=entity_list, matrix=matrix, score=1.0)
+            return EntityGrid(
+                entities=entity_list,
+                matrix=matrix,
+                transition_probabilities={},
+                score=1.0,
+            )
 
-        # cohesion: count entity persistence vs disappearance across adjacent sentences
-        persist = 0
-        disrupt = 0
+        transition_counts: Counter[str] = Counter()
+        observed = 0
+        same_role_transitions = 0
         for col in range(n_entities):
             for row in range(1, len(matrix)):
                 prev = matrix[row - 1][col]
                 curr = matrix[row][col]
-                if prev != "-" and curr != "-":
-                    persist += 1
-                elif prev != "-" and curr == "-":
-                    disrupt += 1
+                if prev == "-" and curr == "-":
+                    continue
+                transition_counts[f"{prev}->{curr}"] += 1
+                observed += 1
+                if prev == curr and prev != "-":
+                    same_role_transitions += 1
 
-        total = persist + disrupt
-        score = round(persist / max(total, 1), 4) if total > 0 else 1.0
+        adjacent_overlap_sum = 0.0
+        adjacent_pairs = 0
+        adjacent_sentence_similarity = 0.0
+        pairwise_similarity_sum = 0.0
+        pairwise_similarity_pairs = 0
+        for row in range(1, len(matrix)):
+            prev_entities = {
+                entity_list[col]
+                for col, role in enumerate(matrix[row - 1])
+                if role != "-"
+            }
+            curr_entities = {
+                entity_list[col]
+                for col, role in enumerate(matrix[row])
+                if role != "-"
+            }
+            if not prev_entities and not curr_entities:
+                continue
+            adjacent_overlap_sum += len(prev_entities & curr_entities) / max(
+                len(prev_entities | curr_entities), 1
+            )
+            adjacent_pairs += 1
+            adjacent_sentence_similarity += self._sentence_similarity(
+                sentences_str[row - 1], sentences_str[row]
+            )
 
-        return EntityGrid(entities=entity_list, matrix=matrix, score=score)
+        for i in range(len(sentences_str)):
+            for j in range(i + 1, len(sentences_str)):
+                pairwise_similarity_sum += self._sentence_similarity(
+                    sentences_str[i], sentences_str[j]
+                )
+                pairwise_similarity_pairs += 1
+
+        if observed == 0:
+            return EntityGrid(
+                entities=entity_list,
+                matrix=matrix,
+                transition_probabilities={},
+                score=1.0,
+            )
+
+        centering_score = ct.evaluate_cohesion(sentences_str)["cohesion_score"]
+
+        all_roles = ["S", "O", "X", "-"]
+        alpha = 1.0
+        transition_probabilities: Dict[str, float] = {}
+        total_mass = 0.0
+        for prev in all_roles:
+            row_total = sum(transition_counts[f"{prev}->{curr}"] for curr in all_roles)
+            row_mass = row_total + alpha * len(all_roles)
+            for curr in all_roles:
+                key = f"{prev}->{curr}"
+                prob = (transition_counts[key] + alpha) / row_mass
+                transition_probabilities[key] = round(prob, 4)
+                if transition_counts[key] > 0:
+                    total_mass += math.log(prob)
+
+        base_transition = math.exp(total_mass / observed)
+        same_role_ratio = same_role_transitions / observed
+        entity_presence: Counter[str] = Counter()
+        for row in matrix:
+            for idx, role in enumerate(row):
+                if role != "-":
+                    entity_presence[entity_list[idx]] += 1
+
+        recurring_entities = sum(1 for count in entity_presence.values() if count >= 2)
+        recurrence_ratio = recurring_entities / max(n_entities, 1)
+        adjacent_overlap = adjacent_overlap_sum / max(adjacent_pairs, 1)
+        adjacent_sentence_similarity = (
+            adjacent_sentence_similarity / max(adjacent_pairs, 1)
+        )
+        pairwise_similarity = pairwise_similarity_sum / max(pairwise_similarity_pairs, 1)
+        pronoun_support_ratio = supported_pronoun_sentences / max(pronoun_sentences, 1)
+        _ = base_transition, adjacent_overlap
+        score = (
+            0.35 * pronoun_support_ratio
+            + 0.20 * centering_score
+            + 0.20 * pairwise_similarity
+            + 0.10 * adjacent_sentence_similarity
+            + 0.10 * recurrence_ratio
+            + 0.05 * same_role_ratio
+        )
+        score = round(min(1.0, max(0.0, score)), 4)
+
+        return EntityGrid(
+            entities=entity_list,
+            matrix=matrix,
+            transition_probabilities=transition_probabilities,
+            score=score,
+        )
 
     # ------------------------------------------------------------------
     # TextTiling Segmentation (Hearst 1994/1997)
@@ -466,29 +645,77 @@ class TextAnalyzer:
         if len(sents) < 3:
             return [0]
 
-        sims: List[float] = []
-        for i in range(len(sents) - 1):
-            sims.append(self._sentence_similarity(sents[i].text, sents[i + 1].text))
+        content_tokens = [
+            token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
+            for token in doc
+            if token.is_alpha and not token.is_stop
+        ]
+        if len(content_tokens) < max(2 * k, 12):
+            return [0]
 
-        # smooth
-        smoothed = []
-        half = k // 2
+        sentence_tokens: List[List[str]] = []
+        for sent in sents:
+            sentence_tokens.append([
+                token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
+                for token in sent
+                if token.is_alpha and not token.is_stop
+            ])
+
+        sims: List[float] = []
+        for boundary in range(len(sents) - 1):
+            left_block: List[str] = []
+            right_block: List[str] = []
+
+            left_idx = boundary
+            while left_idx >= 0 and len(left_block) < k:
+                left_block = (sentence_tokens[left_idx] + left_block)[-k:]
+                left_idx -= 1
+
+            right_idx = boundary + 1
+            while right_idx < len(sentence_tokens) and len(right_block) < k:
+                right_block.extend(sentence_tokens[right_idx])
+                if len(right_block) > k:
+                    right_block = right_block[:k]
+                right_idx += 1
+
+            sims.append(self._block_similarity(left_block, right_block))
+
+        smoothed: List[float] = []
+        half = max(1, k // 3)
         for i in range(len(sims)):
             start = max(0, i - half)
             end = min(len(sims), i + half + 1)
             smoothed.append(sum(sims[start:end]) / (end - start))
 
-        # find valleys
         boundaries: List[int] = [0]
+        if len(smoothed) < 3:
+            return boundaries
+
         for i in range(1, len(smoothed) - 1):
             left_peak = max(smoothed[:i]) if i > 0 else smoothed[i]
-            right_peak = max(smoothed[i+1:]) if i < len(smoothed) - 1 else smoothed[i]
+            right_peak = max(smoothed[i + 1:]) if i < len(smoothed) - 1 else smoothed[i]
             depth = (left_peak - smoothed[i]) + (right_peak - smoothed[i])
-            if depth >= cutoff:
+            local_floor = min(left_peak, right_peak)
+            if depth >= cutoff and smoothed[i] <= local_floor:
                 boundaries.append(i + 1)
 
         boundaries.sort()
         return boundaries
+
+    def _block_similarity(self, left_block: List[str], right_block: List[str]) -> float:
+        if not left_block or not right_block:
+            return 0.0
+        left = Counter(left_block)
+        right = Counter(right_block)
+        shared = sum(min(left[t], right[t]) for t in left.keys() & right.keys())
+        total = max(sum(left.values()), sum(right.values()), 1)
+        cosine_num = sum(left[t] * right[t] for t in left.keys() & right.keys())
+        cosine_den = math.sqrt(sum(v * v for v in left.values())) * math.sqrt(
+            sum(v * v for v in right.values())
+        )
+        cosine = cosine_num / cosine_den if cosine_den else 0.0
+        overlap = shared / total
+        return round(min(1.0, 0.6 * cosine + 0.4 * overlap), 4)
 
     def hybrid_boundaries(self, text: str) -> Dict[str, Any]:
         """Combine centering + TextTiling boundaries for high-confidence segments."""
@@ -907,6 +1134,7 @@ class TextAnalyzer:
             "segments": len(report.segments),
             "quality": report.quality,
             "metadata": report.metadata,
+            "warnings": report.warnings,
             "paragraphs": [
                 {
                     "index": p.index,

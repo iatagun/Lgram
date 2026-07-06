@@ -126,7 +126,7 @@ class GrammarLayer:
             issues = self._check(text=essay.text, word_count=word_count)
 
         deep_errors: List[Dict[str, Any]] = []
-        if self._llm_base_url and self._llm_model and word_count >= 5:
+        if self._llm_base_url and self._llm_model and self._should_run_deep_check(issues, word_count):
             try:
                 from .deep_grammar import DeepGrammarCheck
                 deep = DeepGrammarCheck(self._llm_base_url, self._llm_model)
@@ -183,6 +183,22 @@ class GrammarLayer:
             evidence=evidence[:4],
             confidence_interval=(round(ci[0], 1), round(ci[1], 1)),
         )
+
+    def _should_run_deep_check(self, issues: Dict[str, Any], word_count: int) -> bool:
+        if word_count < 10:
+            return False
+
+        if not self.available:
+            return True
+
+        total_errors = int(issues.get("total_errors", 0) or 0)
+        grammar_errors = int(issues.get("grammar_errors", 0) or 0)
+        pronoun_errors = int(issues.get("pronoun_errors", 0) or 0)
+
+        if total_errors == 0:
+            return False
+
+        return grammar_errors > 0 or pronoun_errors > 0
 
     def _check(self, text: str, word_count: int) -> Dict[str, Any]:
         if self._lt is None or word_count < 5:

@@ -2,6 +2,12 @@
 
 ## CAEAS v0.3 (2025-07-04)
 
+### Improvements (2025-07-06)
+- **Token optimization** — LLM calls gated and cached; long essays compressed to high-signal sentence excerpts
+- **Core library** — analyzer.py (+314 lines), centering_theory.py (+32 lines), benchmark.py, gcdc_benchmark.py updates
+- **167 tests** (+4 token-conscious efficiency tests), all passing
+- **New reports** — `MODEL_COMPLETENESS_REPORT.md`, `PRODUCTION_READINESS_ASSESSMENT.md`
+
 ### New: Full 5-Layer Rubric with Real NLP Tools
 
 - **Grammar Layer** — LanguageTool (binlerce kural) + LLM deep grammar check
