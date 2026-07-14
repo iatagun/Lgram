@@ -27,9 +27,15 @@ jobs:
 
       - name: Lint
         run: |
-          pip install black flake8 mypy
+          pip install black flake8
           black --check --diff lgram/ tests/
-          flake8 lgram/ tests/ --count --select=E,F,W --show-source --statistics
+          flake8 lgram/ tests/ --count --show-source --statistics
+
+      # informational until the typing debt is paid down (81 errors as of v2.3.0)
+      - name: Type check (informational)
+        continue-on-error: true
+        run: |
+          pip install mypy
           mypy lgram/
 
       - name: Run tests

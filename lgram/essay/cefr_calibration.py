@@ -14,13 +14,17 @@ Key concept: Complexity-Adjusted Scoring
 
 from __future__ import annotations
 
-import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from .utils import split_sentences
-from .metrics import quadratic_weighted_kappa, icc_multirater, has_multiple_raters, build_recalibration_bins
+from .metrics import (
+    quadratic_weighted_kappa,
+    icc_multirater,
+    has_multiple_raters,
+    build_recalibration_bins,
+)
 
 
 @dataclass
@@ -100,14 +104,19 @@ class CEFRCalibrator:
             machine_scores, avg_human
         )
 
-        complexity_adj = self._compute_complexity_adjustment(
-            text_complexities, machine_scores, avg_human
-        ) if text_complexities else {}
+        complexity_adj = (
+            self._compute_complexity_adjustment(
+                text_complexities, machine_scores, avg_human
+            )
+            if text_complexities
+            else {}
+        )
 
         ready = (
             n >= self.HIGH_SAMPLES_PER_LEVEL
             and qwk >= self.READY_THRESHOLD_QWK
-            and icc >= (self.READY_THRESHOLD_ICC if icc > 0 else self.READY_THRESHOLD_QWK)
+            and icc
+            >= (self.READY_THRESHOLD_ICC if icc > 0 else self.READY_THRESHOLD_QWK)
         )
 
         if ready:
@@ -172,19 +181,39 @@ class CEFRCalibrator:
 
         if sent_count == 0:
             return ComplexityProfile(
-                sentence_count=0, avg_sentence_length=0,
-                total_clause_markers=0, subordination_ratio=0,
-                vocabulary_diversity=0, complexity_level="low",
+                sentence_count=0,
+                avg_sentence_length=0,
+                total_clause_markers=0,
+                subordination_ratio=0,
+                vocabulary_diversity=0,
+                complexity_level="low",
                 adjustment_factor=1.0,
             )
 
         avg_len = word_count / sent_count
         clause_count = sum(
-            1 for sent in sentences
+            1
+            for sent in sentences
             for w in sent.lower().split()
-            if w in {"because", "although", "while", "whereas", "unless",
-                     "since", "which", "who", "whom", "whose", "that",
-                     "after", "before", "when", "if", "though"}
+            if w
+            in {
+                "because",
+                "although",
+                "while",
+                "whereas",
+                "unless",
+                "since",
+                "which",
+                "who",
+                "whom",
+                "whose",
+                "that",
+                "after",
+                "before",
+                "when",
+                "if",
+                "though",
+            }
         )
         sub_ratio = clause_count / max(sent_count, 1)
 
@@ -240,4 +269,3 @@ class CEFRCalibrator:
                 mean_diff = sum(diffs) / len(diffs)
                 result[level] = round(mean_diff, 1)
         return result
-

@@ -25,7 +25,9 @@ class Essay:
             raise ValueError("Essay text must be non-empty.")
 
     def __repr__(self) -> str:
-        preview = self.text[:80].replace("\n", " ") + ("..." if len(self.text) > 80 else "")
+        preview = self.text[:80].replace("\n", " ") + (
+            "..." if len(self.text) > 80 else ""
+        )
         return f"Essay(title={self.title!r}, text={preview!r})"
 
 
@@ -107,7 +109,7 @@ class ContentAnalyzer(ABC):
     """Pluggable content analysis interface (Layer 1)."""
 
     @abstractmethod
-    def analyze(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
-        ...
+    def analyze(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult: ...
+
 
 ContentJudge = ContentAnalyzer

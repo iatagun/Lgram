@@ -1,5 +1,47 @@
 # Changelog
 
+## v2.3.0 (2026-07-14)
+
+### Fixed
+- **Packaging:** `lgram/data/gender_map.json` was missing from both wheel and sdist
+  (package-data and MANIFEST.in only included `*.py`), so pip installs silently ran
+  with an empty gender map. Now shipped.
+- **C2 crash:** an LLM CEFR estimate of "C2" crashed `CAEASGrader.analyze()`
+  (`CEFR_PROFILES` only covers B1-C1). C2 now clamps to C1, mirroring the A1/A2→B1 clamp.
+- **Gender-alternation detector:** the regex counted `he...he` sequences as "he/she
+  alternation", flagging all-male-pronoun texts. Now counts actual he↔she switches.
+- **Pro-drop detector:** no longer flags questions ("Is this correct?") as
+  missing-subject sentences.
+- **Suffix-based gender heuristic:** now applies only to NER PERSON tokens, so
+  "London"/"China" are no longer treated as gendered persons in pronoun matching.
+- **LLM content cache:** `_CACHE_MAX_SIZE` was defined but never enforced; the cache
+  now evicts oldest entries like the other layers.
+- **Composite indicator:** cohesion was double-counted (30% Organization rubric weight
+  plus 50% blend). The rubric-weighted half now excludes Organization; cohesion
+  contributes exactly `cohesion_weight` (50%).
+- **Custom rubrics:** layer weights are now matched to rubric criteria by name instead
+  of positional zip, so a rubric passed in a different order gets correct weights.
+
+### Changed
+- **save()/load() use JSON** instead of pickle (safe to share and inspect; pickle
+  could execute arbitrary code on load).
+- **GCDC benchmark methodology:** accuracy is now computed at a fixed midpoint
+  threshold between class means instead of scanning for the accuracy-optimal
+  threshold on the evaluation data. Inverted score direction is reported via
+  `GCDCResult.inverted` instead of being silently flipped — the embedded `enron`
+  subset is a known inverted domain.
+- **CEFR estimation** now combines lexical diversity (Guiraud), complex discourse
+  marker rate, and sentence length; word count only gates the level ceiling and
+  confidence, instead of being the sole proxy.
+- **spaCy models are cached per process** — repeated `TextAnalyzer` construction no
+  longer reloads the model from disk.
+- **Python floor raised to 3.9** (3.8 is EOL; CI matrix already started at 3.9).
+- `tests` package no longer installed into site-packages.
+- Repo-wide `black` formatting; flake8 clean with black-compatible config (`.flake8`);
+  mypy is informational in CI until typing debt (81 errors) is paid down.
+- Marketing/assessment docs moved from repo root to `docs/`.
+- README tests badge now reflects actual CI status instead of a static number.
+
 ## CAEAS v0.3 (2025-07-04)
 
 ### Improvements (2025-07-06)

@@ -17,9 +17,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
-from .metrics import quadratic_weighted_kappa, icc_multirater, has_multiple_raters, build_recalibration_bins
+from .metrics import (
+    quadratic_weighted_kappa,
+    icc_multirater,
+    has_multiple_raters,
+    build_recalibration_bins,
+)
 
 
 @dataclass
@@ -98,7 +103,9 @@ class PopulationCalibrator:
 
         errors = [m - h for m, h in zip(machine_scores, avg_human)]
         mean_error = sum(errors) / n
-        variance = sum((e - mean_error) ** 2 for e in errors) / (n - 1) if n > 1 else 0.0
+        variance = (
+            sum((e - mean_error) ** 2 for e in errors) / (n - 1) if n > 1 else 0.0
+        )
         std_error = math.sqrt(variance)
 
         icc_ok = icc >= self.READY_THRESHOLD_ICC
@@ -142,13 +149,30 @@ class PopulationCalibrator:
             details={
                 "machine_mean": round(sum(machine_scores) / n, 1),
                 "machine_std": round(
-                    math.sqrt(sum((x - sum(machine_scores) / n) ** 2 for x in machine_scores) / (n - 1))
-                    if n > 1 else 0, 1
+                    (
+                        math.sqrt(
+                            sum(
+                                (x - sum(machine_scores) / n) ** 2
+                                for x in machine_scores
+                            )
+                            / (n - 1)
+                        )
+                        if n > 1
+                        else 0
+                    ),
+                    1,
                 ),
                 "human_mean": round(sum(avg_human) / n, 1),
                 "human_std": round(
-                    math.sqrt(sum((x - sum(avg_human) / n) ** 2 for x in avg_human) / (n - 1))
-                    if n > 1 else 0, 1
+                    (
+                        math.sqrt(
+                            sum((x - sum(avg_human) / n) ** 2 for x in avg_human)
+                            / (n - 1)
+                        )
+                        if n > 1
+                        else 0
+                    ),
+                    1,
                 ),
                 "error_distribution": {
                     "within_5": sum(1 for e in errors if abs(e) <= 5) / n,
@@ -159,4 +183,3 @@ class PopulationCalibrator:
                 "qwk_acceptable": qwk >= self.ACCEPTABLE_THRESHOLD_QWK,
             },
         )
-

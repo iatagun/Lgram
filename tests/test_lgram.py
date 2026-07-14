@@ -2,15 +2,24 @@
 Test suite for Centering-Lgram.
 """
 
+import functools
 import os
 import tempfile
 import unittest
+
+
+@functools.lru_cache(maxsize=None)
+def _shared_nlp(model="en_core_web_sm"):
+    import spacy
+
+    return spacy.load(model)
 
 
 class TestCentering(unittest.TestCase):
 
     def test_import(self):
         import lgram
+
         self.assertTrue(hasattr(lgram, "__version__"))
         self.assertTrue(hasattr(lgram, "EnhancedCenteringTheory"))
         self.assertTrue(hasattr(lgram, "TransitionType"))
@@ -19,6 +28,7 @@ class TestCentering(unittest.TestCase):
 
     def test_transition_enum(self):
         from lgram import TransitionType
+
         self.assertIn(TransitionType.ESTABLISH, list(TransitionType))
         self.assertEqual(TransitionType.CONTINUE.value, "Continue")
         self.assertEqual(TransitionType.RETAIN.value, "Retain")
@@ -27,6 +37,7 @@ class TestCentering(unittest.TestCase):
 
     def test_centering_state(self):
         from lgram import CenteringState, TransitionType
+
         state = CenteringState(
             utterance="John went to the store.",
             forward_centers=["john", "store"],
@@ -38,10 +49,10 @@ class TestCentering(unittest.TestCase):
         self.assertEqual(len(state.forward_centers), 2)
 
     def test_first_utterance_establish(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory, TransitionType
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
         state = ct.analyze_utterance("John went to the store.")
@@ -49,10 +60,10 @@ class TestCentering(unittest.TestCase):
         self.assertEqual(state.transition, TransitionType.ESTABLISH)
 
     def test_continue_transition(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory, TransitionType
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
         ct.update_discourse("John went to the store.")
@@ -60,28 +71,30 @@ class TestCentering(unittest.TestCase):
         self.assertEqual(state.transition, TransitionType.CONTINUE)
 
     def test_cohesion_scoring(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
-        result = ct.evaluate_cohesion([
-            "John went to the store.",
-            "He bought milk.",
-            "The store was busy.",
-            "Then John left.",
-        ])
+        result = ct.evaluate_cohesion(
+            [
+                "John went to the store.",
+                "He bought milk.",
+                "The store was busy.",
+                "Then John left.",
+            ]
+        )
         self.assertIn("cohesion_score", result)
         self.assertIn("transition_distribution", result)
         self.assertGreaterEqual(result["cohesion_score"], 0.0)
         self.assertLessEqual(result["cohesion_score"], 1.0)
 
     def test_evaluate_does_not_destroy_state(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
         ct.update_discourse("Alice went to the park.")
@@ -89,24 +102,26 @@ class TestCentering(unittest.TestCase):
 
         before = len(ct.discourse_history)
 
-        ct.evaluate_cohesion([
-            "Unrelated text about weather.",
-            "It was sunny outside.",
-        ])
+        ct.evaluate_cohesion(
+            [
+                "Unrelated text about weather.",
+                "It was sunny outside.",
+            ]
+        )
 
         self.assertEqual(len(ct.discourse_history), before)
         self.assertEqual(ct.discourse_history[0].utterance, "Alice went to the park.")
 
     def test_save_load(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
         ct.update_discourse("John went to the store.")
         ct.update_discourse("He bought milk.")
 
-        with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             tmp = f.name
         try:
             ct.save(tmp)
@@ -122,10 +137,10 @@ class TestCentering(unittest.TestCase):
             os.unlink(tmp)
 
     def test_custom_weights(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(
             nlp,
             salience_weights={"nsubj": 10.0},
@@ -136,13 +151,14 @@ class TestCentering(unittest.TestCase):
 
     def test_logging(self):
         from lgram.utils import setup_logging
+
         setup_logging("WARNING")  # smoke test
 
     def test_extract_clauses(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
         clauses = ct.extract_clauses(
@@ -151,10 +167,10 @@ class TestCentering(unittest.TestCase):
         self.assertGreaterEqual(len(clauses), 2)
 
     def test_intra_sentential_analysis(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
         result = ct.analyze_intra_sentential(
@@ -165,10 +181,10 @@ class TestCentering(unittest.TestCase):
         self.assertGreaterEqual(result["clause_count"], 2)
 
     def test_analyze_full(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
 
         result = ct.analyze_full(
@@ -179,10 +195,10 @@ class TestCentering(unittest.TestCase):
         self.assertGreaterEqual(result["sentence_count"], 1)
 
     def test_get_coherent_next_center(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
         self.assertIsNone(ct.get_coherent_next_center())
 
@@ -191,10 +207,10 @@ class TestCentering(unittest.TestCase):
         self.assertIsNotNone(center)
 
     def test_get_discourse_summary(self):
-        import spacy
+
         from lgram import EnhancedCenteringTheory
 
-        nlp = spacy.load("en_core_web_sm")
+        nlp = _shared_nlp()
         ct = EnhancedCenteringTheory(nlp)
         summary = ct.get_discourse_summary()
         self.assertIn("message", summary)

@@ -47,9 +47,7 @@ class ConfidenceLayer:
           - human_review_recommended: bool
           - justification: str
         """
-        ci = self._aggregate_confidence(
-            overall_score, layer_results, rubric_weights
-        )
+        ci = self._aggregate_confidence(overall_score, layer_results, rubric_weights)
         borderline = self._detect_borderline(overall_score, ci)
         triggers = self._detect_triggers(overall_score, layer_results)
         review = borderline or bool(triggers)
@@ -86,7 +84,7 @@ class ConfidenceLayer:
             w = rubric_weights[i] if i < len(rubric_weights) else 1.0
             total_weight += w
             sem = self._layer_sem(lr)
-            weighted_variance += w * (sem ** 2)
+            weighted_variance += w * (sem**2)
 
         if total_weight > 0:
             weighted_variance /= total_weight
@@ -109,9 +107,7 @@ class ConfidenceLayer:
             return 5.0
         return (ci[1] - ci[0]) / 4.0
 
-    def _detect_borderline(
-        self, score: float, ci: Tuple[float, float]
-    ) -> bool:
+    def _detect_borderline(self, score: float, ci: Tuple[float, float]) -> bool:
         """Detect if indicator is near a common decision threshold."""
         for boundary in self.CRITICAL_BOUNDARIES:
             if abs(score - boundary) <= self._borderline_margin:

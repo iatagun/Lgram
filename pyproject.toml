@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "centering-lgram"
-version = "2.2.0"
+version = "2.3.0"
 authors = [
     {name = "Ilker Atagun", email = "ilker.atagun@gmail.com"},
 ]
 description = "Discourse Cohesion Analysis Library Based on Centering Theory"
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -19,7 +19,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing :: Linguistic",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -65,17 +64,18 @@ centering-lgram = "lgram.cli:main"
 lgram = "lgram.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["lgram*", "tests*"]
+include = ["lgram*"]
 
 [tool.setuptools.package-data]
 lgram = [
     "*.py",
     "models/*.py",
+    "data/*.json",
 ]
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(

@@ -15,7 +15,7 @@ links, while coherence (tutarlilik) concerns deeper semantic unity. This library
 implements local discourse cohesion as modeled by Centering Theory.
 """
 
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 __author__ = "Ilker Atagun"
 __email__ = "ilker.atagun@gmail.com"
 __license__ = "MIT"
@@ -33,6 +33,7 @@ try:
         TransitionType,
     )
     from .analyzer import TextAnalyzer, TextReport, SentenceAnalysis, ParagraphAnalysis
+
     _import_success = True
 except ImportError as e:
     _import_success = False
@@ -80,6 +81,7 @@ __all__ = [
 try:
     from .essay.grader import CAEASGrader
     from .essay.models import Essay, CAEASReport
+
     __all__ += ["CAEASGrader", "Essay", "CAEASReport"]
 except ImportError:
     pass

@@ -26,8 +26,8 @@ Architecture:
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
@@ -72,13 +72,25 @@ class GrammarLayer:
     """
 
     COHESION_RULE_PATTERNS = {
-        "PRP", "PRONOUN", "AGREEMENT", "GENDER", "ANAPHORA",
-        "REFLEXIVE", "RELATIVE", "WH_WORD", "POSSESSIVE",
-        "MORFOLOGIK_RULE_EN_US", "CONFUSION_OF_HE",
-        "HE_OR_SHE", "THEY_THEM", "IT_IS",
+        "PRP",
+        "PRONOUN",
+        "AGREEMENT",
+        "GENDER",
+        "ANAPHORA",
+        "REFLEXIVE",
+        "RELATIVE",
+        "WH_WORD",
+        "POSSESSIVE",
+        "MORFOLOGIK_RULE_EN_US",
+        "CONFUSION_OF_HE",
+        "HE_OR_SHE",
+        "THEY_THEM",
+        "IT_IS",
     }
 
-    def __init__(self, language: str = "en-US", llm_base_url: str = "", llm_model: str = ""):
+    def __init__(
+        self, language: str = "en-US", llm_base_url: str = "", llm_model: str = ""
+    ):
         self._language = language
         self._lt = None
         self._load_error: Optional[str] = None
@@ -95,6 +107,7 @@ class GrammarLayer:
         self._init_attempted = True
         try:
             import language_tool_python
+
             self._lt = language_tool_python.LanguageTool(self._language)
             return True
         except Exception as e:
@@ -109,7 +122,8 @@ class GrammarLayer:
         if not self.available and not self._llm_base_url:
             return LayerResult(
                 layer_name="Grammar",
-                score=50.0, normalized_score=0.5,
+                score=50.0,
+                normalized_score=0.5,
                 raw_details={
                     "error": f"LanguageTool not available: {self._load_error}",
                     "word_count": word_count,
@@ -119,16 +133,27 @@ class GrammarLayer:
                 confidence_interval=(40.0, 60.0),
             )
 
-        issues: Dict[str, Any] = {"total_errors": 0, "grammar_errors": 0, "spelling_errors": 0,
-                                    "style_issues": 0, "pronoun_errors": 0, "issues": []}
+        issues: Dict[str, Any] = {
+            "total_errors": 0,
+            "grammar_errors": 0,
+            "spelling_errors": 0,
+            "style_issues": 0,
+            "pronoun_errors": 0,
+            "issues": [],
+        }
 
         if self.available and word_count >= 5:
             issues = self._check(text=essay.text, word_count=word_count)
 
         deep_errors: List[Dict[str, Any]] = []
-        if self._llm_base_url and self._llm_model and self._should_run_deep_check(issues, word_count):
+        if (
+            self._llm_base_url
+            and self._llm_model
+            and self._should_run_deep_check(issues, word_count)
+        ):
             try:
                 from .deep_grammar import DeepGrammarCheck
+
                 deep = DeepGrammarCheck(self._llm_base_url, self._llm_model)
                 deep_errors = deep.check(essay.text)
             except Exception:
@@ -141,7 +166,9 @@ class GrammarLayer:
 
         lt_score = self._score_from_error_rate(lt_total / max(word_count, 1) * 100)
         if deep_total > 0:
-            deep_score = self._score_from_error_rate(deep_total / max(word_count, 1) * 200)
+            deep_score = self._score_from_error_rate(
+                deep_total / max(word_count, 1) * 200
+            )
             score = lt_score * 0.6 + deep_score * 0.4
         else:
             score = lt_score
@@ -153,9 +180,13 @@ class GrammarLayer:
 
         evidence: List[str] = []
         for iss in issues.get("issues", [])[:2]:
-            evidence.append(f"[LT:{iss.get('rule_id', '?')}] {iss.get('message', '')[:100]}")
+            evidence.append(
+                f"[LT:{iss.get('rule_id', '?')}] {iss.get('message', '')[:100]}"
+            )
         for d in deep_errors[:3]:
-            evidence.append(f"[LLM:{d.get('rule', '?')}] {d.get('message', '')[:100]} -> {d.get('correction', '')[:60]}")
+            evidence.append(
+                f"[LLM:{d.get('rule', '?')}] {d.get('message', '')[:100]} -> {d.get('correction', '')[:60]}"
+            )
 
         if not evidence and word_count >= 20:
             evidence.append("No grammar errors detected")
@@ -202,14 +233,26 @@ class GrammarLayer:
 
     def _check(self, text: str, word_count: int) -> Dict[str, Any]:
         if self._lt is None or word_count < 5:
-            return {"total_errors": 0, "grammar_errors": 0, "spelling_errors": 0,
-                    "style_issues": 0, "pronoun_errors": 0, "issues": []}
+            return {
+                "total_errors": 0,
+                "grammar_errors": 0,
+                "spelling_errors": 0,
+                "style_issues": 0,
+                "pronoun_errors": 0,
+                "issues": [],
+            }
 
         try:
             matches = self._lt.check(text)
         except Exception:
-            return {"total_errors": 0, "grammar_errors": 0, "spelling_errors": 0,
-                    "style_issues": 0, "pronoun_errors": 0, "issues": []}
+            return {
+                "total_errors": 0,
+                "grammar_errors": 0,
+                "spelling_errors": 0,
+                "style_issues": 0,
+                "pronoun_errors": 0,
+                "issues": [],
+            }
 
         grammar_count = 0
         spelling_count = 0
@@ -227,11 +270,12 @@ class GrammarLayer:
 
             sentence = ""
             if offset < len(text):
-                sentence = text[max(0, offset - 20):min(len(text), offset + length + 40)]
+                sentence = text[
+                    max(0, offset - 20) : min(len(text), offset + length + 40)
+                ]
 
             is_pronoun_related = any(
-                p in rule.upper() or p in cat
-                for p in self.COHESION_RULE_PATTERNS
+                p in rule.upper() or p in cat for p in self.COHESION_RULE_PATTERNS
             )
 
             if "SPELL" in cat or "TYPO" in cat or "CASING" in cat:
@@ -244,16 +288,18 @@ class GrammarLayer:
             if is_pronoun_related:
                 pronoun_count += 1
 
-            issue_list.append({
-                "rule_id": rule,
-                "category": cat,
-                "message": msg,
-                "offset": offset,
-                "length": length,
-                "replacements": reps,
-                "sentence": sentence.strip(),
-                "affects_cohesion": is_pronoun_related,
-            })
+            issue_list.append(
+                {
+                    "rule_id": rule,
+                    "category": cat,
+                    "message": msg,
+                    "offset": offset,
+                    "length": length,
+                    "replacements": reps,
+                    "sentence": sentence.strip(),
+                    "affects_cohesion": is_pronoun_related,
+                }
+            )
 
         return {
             "total_errors": len(matches),

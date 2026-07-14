@@ -4,15 +4,13 @@ Centering Theory Implementation (Grosz, Joshi, Weinstein 1983/1995)
 Provides discourse cohesion analysis through center computation,
 transition classification, and cohesion scoring.
 
-Note: save()/load() use pickle for serialization. Only load files
-from trusted sources, as pickle can execute arbitrary code.
+save()/load() use JSON for serialization (safe to share and inspect).
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import pickle
 from concurrent.futures import ThreadPoolExecutor
 from collections import Counter
 from dataclasses import dataclass, field
@@ -29,11 +27,11 @@ _GENDER_MAP_PATH = Path(__file__).resolve().parent.parent / "data" / "gender_map
 
 
 class TransitionType(Enum):
-    ESTABLISH = "Establish"        # No previous utterance (first in discourse)
-    CONTINUE = "Continue"          # Cb(Ui) = Cb(Ui-1) = Cp(Ui)
-    RETAIN = "Retain"              # Cb(Ui) = Cb(Ui-1) != Cp(Ui)
+    ESTABLISH = "Establish"  # No previous utterance (first in discourse)
+    CONTINUE = "Continue"  # Cb(Ui) = Cb(Ui-1) = Cp(Ui)
+    RETAIN = "Retain"  # Cb(Ui) = Cb(Ui-1) != Cp(Ui)
     SMOOTH_SHIFT = "Smooth-Shift"  # Cb(Ui) != Cb(Ui-1) = Cp(Ui)
-    ROUGH_SHIFT = "Rough-Shift"    # Cb(Ui) != Cb(Ui-1) != Cp(Ui)
+    ROUGH_SHIFT = "Rough-Shift"  # Cb(Ui) != Cb(Ui-1) != Cp(Ui)
 
 
 @dataclass
@@ -96,7 +94,9 @@ class EnhancedCenteringTheory:
             "NOUN": 1.0,
         }
 
-        self._gender_lookup = gender_map if gender_map is not None else dict(self._load_gender_map())
+        self._gender_lookup = (
+            gender_map if gender_map is not None else dict(self._load_gender_map())
+        )
         if not self._has_vectors and self._custom_similarity is None:
             self.similarity_threshold = min(self.similarity_threshold, 0.45)
 
@@ -111,10 +111,17 @@ class EnhancedCenteringTheory:
             if text in self._titles_female:
                 return "female"
 
-        # suffix-based heuristics for unknown names (only for PROPN tokens)
-        if not gender and token.pos_ == "PROPN" and len(text) > 3:
+        # suffix-based heuristics for unknown names — only when NER says
+        # this is a person; otherwise places like "London"/"China" would
+        # be treated as gendered persons and corrupt pronoun matching
+        if (
+            not gender
+            and token.pos_ == "PROPN"
+            and token.ent_type_ == "PERSON"
+            and len(text) > 3
+        ):
             for suffix in self._female_suffixes:
-                if text.endswith(suffix) and text[-len(suffix)-1] not in "aeiou":
+                if text.endswith(suffix) and text[-len(suffix) - 1] not in "aeiou":
                     gender = "female"
                     break
             if not gender:
@@ -129,7 +136,9 @@ class EnhancedCenteringTheory:
     # Core – center computation
     # ------------------------------------------------------------------
 
-    def compute_forward_centers(self, utterance: str) -> Tuple[List[str], Dict[str, DiscourseEntity]]:
+    def compute_forward_centers(
+        self, utterance: str
+    ) -> Tuple[List[str], Dict[str, DiscourseEntity]]:
         doc = self.nlp(utterance)
         return self._compute_centers_from_doc(doc)
 
@@ -144,8 +153,20 @@ class EnhancedCenteringTheory:
             return False
 
         if token.pos_ == "PRON":
-            _allowed = {"he", "she", "it", "i", "we", "they", "you",
-                        "him", "her", "them", "us", "me"}
+            _allowed = {
+                "he",
+                "she",
+                "it",
+                "i",
+                "we",
+                "they",
+                "you",
+                "him",
+                "her",
+                "them",
+                "us",
+                "me",
+            }
             if token.text.lower() in _allowed:
                 return True
             return False
@@ -207,7 +228,9 @@ class EnhancedCenteringTheory:
             return cls._gender_map_cache
         try:
             if _GENDER_MAP_PATH.exists():
-                cls._gender_map_cache = json.loads(_GENDER_MAP_PATH.read_text(encoding="utf-8"))
+                cls._gender_map_cache = json.loads(
+                    _GENDER_MAP_PATH.read_text(encoding="utf-8")
+                )
                 return cls._gender_map_cache
         except Exception:
             logger.warning("Could not load gender_map.json, using empty map")
@@ -215,18 +238,41 @@ class EnhancedCenteringTheory:
         return cls._gender_map_cache
 
     # name suffixes that strongly indicate gender
-    _female_suffixes = frozenset({
-        "a", "ia", "na", "ica", "ina", "ela", "ella", "ette", "ine", "lyn",
-    })
-    _male_suffixes = frozenset({
-        "us", "er", "or", "an", "en", "on", "os",
-    })
+    _female_suffixes = frozenset(
+        {
+            "a",
+            "ia",
+            "na",
+            "ica",
+            "ina",
+            "ela",
+            "ella",
+            "ette",
+            "ine",
+            "lyn",
+        }
+    )
+    _male_suffixes = frozenset(
+        {
+            "us",
+            "er",
+            "or",
+            "an",
+            "en",
+            "on",
+            "os",
+        }
+    )
 
     _titles_male = frozenset({"mr", "sir", "lord", "king", "duke", "prince"})
-    _titles_female = frozenset({"mrs", "ms", "miss", "lady", "queen", "duchess", "princess"})
+    _titles_female = frozenset(
+        {"mrs", "ms", "miss", "lady", "queen", "duchess", "princess"}
+    )
 
     def compute_backward_center(
-        self, current_cf: List[str], current_entity_map: Dict[str, DiscourseEntity],
+        self,
+        current_cf: List[str],
+        current_entity_map: Dict[str, DiscourseEntity],
         current_utterance: Optional[str] = None,
     ) -> Optional[str]:
         doc = self.nlp(current_utterance) if current_utterance else None
@@ -330,7 +376,8 @@ class EnhancedCenteringTheory:
 
     def _are_coreferent_cached(
         self,
-        e1: str, e2: str,
+        e1: str,
+        e2: str,
         map1: Dict[str, DiscourseEntity],
         map2: Dict[str, DiscourseEntity],
     ) -> bool:
@@ -394,8 +441,10 @@ class EnhancedCenteringTheory:
         if cb is None and prev_cb is None:
             if cp and prev_state.preferred_center:
                 if self._are_coreferent_cached(
-                    cp, prev_state.preferred_center,
-                    current_state._entity_map, prev_state._entity_map,
+                    cp,
+                    prev_state.preferred_center,
+                    current_state._entity_map,
+                    prev_state._entity_map,
                 ):
                     return TransitionType.CONTINUE
                 return TransitionType.ROUGH_SHIFT
@@ -409,7 +458,10 @@ class EnhancedCenteringTheory:
             # Cb comes from prev Cf, cp from current Cf.
             # CONTINUE if they refer to the same entity.
             if cp and self._are_coreferent_cached(
-                cb, cp, prev_state._entity_map, current_state._entity_map,
+                cb,
+                cp,
+                prev_state._entity_map,
+                current_state._entity_map,
             ):
                 return TransitionType.CONTINUE
             return TransitionType.RETAIN
@@ -462,10 +514,15 @@ class EnhancedCenteringTheory:
                 g = self._resolve_gender(token)
                 is_p = token.ent_type_ == "PERSON" or g in ("male", "female")
                 entity_map[key] = DiscourseEntity(
-                    text=token.text, dep=token.dep_, pos=token.pos_,
-                    ent_type=token.ent_type_, tag=token.tag_,
+                    text=token.text,
+                    dep=token.dep_,
+                    pos=token.pos_,
+                    ent_type=token.ent_type_,
+                    tag=token.tag_,
                     is_plural=token.tag_ in ("NNS", "NNPS"),
-                    is_person=is_p, gender=g, is_female=g == "female",
+                    is_person=is_p,
+                    gender=g,
+                    is_female=g == "female",
                 )
             salience = self._calculate_salience(token, token_count)
             centers.append((key, salience, token.i))
@@ -473,11 +530,15 @@ class EnhancedCenteringTheory:
         seen, unique = set(), []
         for c, _, _ in centers:
             if c not in seen:
-                seen.add(c); unique.append(c)
+                seen.add(c)
+                unique.append(c)
         return unique[:5], entity_map
 
     def _compute_backward_from_doc(
-        self, current_cf: List[str], current_entity_map: Dict[str, DiscourseEntity], doc: Optional[Doc] = None,
+        self,
+        current_cf: List[str],
+        current_entity_map: Dict[str, DiscourseEntity],
+        doc: Optional[Doc] = None,
     ) -> Optional[str]:
         if not self.discourse_history or not current_cf:
             return None
@@ -512,7 +573,9 @@ class EnhancedCenteringTheory:
         for cc in current_cf:
             cc_lower = cc.lower()
             if cc_lower in self._plural_pronouns:
-                persons = [pc for pc in prev_cf if prev_map.get(pc) and prev_map[pc].is_person]
+                persons = [
+                    pc for pc in prev_cf if prev_map.get(pc) and prev_map[pc].is_person
+                ]
                 if len(persons) >= 2:
                     return persons[0]
         return None
@@ -527,7 +590,7 @@ class EnhancedCenteringTheory:
         state.transition = self.determine_transition(state)
         self.discourse_history.append(state)
         if len(self.discourse_history) > self.history_limit:
-            self.discourse_history = self.discourse_history[-self.history_limit:]
+            self.discourse_history = self.discourse_history[-self.history_limit :]
         return state
 
     def get_coherent_next_center(self) -> Optional[str]:
@@ -549,8 +612,9 @@ class EnhancedCenteringTheory:
             for u in utterance_sequence:
                 state = self.update_discourse(u)
                 if state.transition:
-                    transition_counts[state.transition] = \
+                    transition_counts[state.transition] = (
                         transition_counts.get(state.transition, 0) + 1
+                    )
 
             score, dist = self._score_transitions(transition_counts)
             return {
@@ -682,13 +746,15 @@ class EnhancedCenteringTheory:
                 t = state.transition
                 if t:
                     transition_counts[t] = transition_counts.get(t, 0) + 1
-                    transitions.append({
-                        "clause": clause_text,
-                        "type": clause_type,
-                        "transition": t.value,
-                        "cp": state.preferred_center,
-                        "cb": state.backward_center,
-                    })
+                    transitions.append(
+                        {
+                            "clause": clause_text,
+                            "type": clause_type,
+                            "transition": t.value,
+                            "cp": state.preferred_center,
+                            "cb": state.backward_center,
+                        }
+                    )
 
             score, dist = self._score_transitions(transition_counts)
         finally:
@@ -760,19 +826,28 @@ class EnhancedCenteringTheory:
             annotations: List[Dict[str, Any]] = []
             for i, sent in enumerate(sentences):
                 state = self.update_discourse(sent)
-                annotations.append({
-                    "index": i,
-                    "utterance": sent,
-                    "transition": state.transition.value if state.transition else None,
-                    "preferred_center": state.preferred_center,
-                    "backward_center": state.backward_center,
-                    "forward_centers": state.forward_centers,
-                    "entities": {
-                        k: {"text": v.text, "pos": v.pos, "dep": v.dep,
-                            "is_person": v.is_person, "gender": v.gender}
-                        for k, v in state._entity_map.items()
-                    },
-                })
+                annotations.append(
+                    {
+                        "index": i,
+                        "utterance": sent,
+                        "transition": (
+                            state.transition.value if state.transition else None
+                        ),
+                        "preferred_center": state.preferred_center,
+                        "backward_center": state.backward_center,
+                        "forward_centers": state.forward_centers,
+                        "entities": {
+                            k: {
+                                "text": v.text,
+                                "pos": v.pos,
+                                "dep": v.dep,
+                                "is_person": v.is_person,
+                                "gender": v.gender,
+                            }
+                            for k, v in state._entity_map.items()
+                        },
+                    }
+                )
             return annotations
         finally:
             self.discourse_history = saved
@@ -812,11 +887,13 @@ class EnhancedCenteringTheory:
                         break
 
                 if not cb_in_prev:
-                    violations.append({
-                        "utterance_index": i,
-                        "rule": "Rule 1",
-                        "desc": f"Cb '{curr.backward_center}' not found in Cf(Ui-1) {prev.forward_centers}",
-                    })
+                    violations.append(
+                        {
+                            "utterance_index": i,
+                            "rule": "Rule 1",
+                            "desc": f"Cb '{curr.backward_center}' not found in Cf(Ui-1) {prev.forward_centers}",
+                        }
+                    )
 
             # Rule 2: pronoun realization constraint
             for i in range(1, len(states)):
@@ -826,13 +903,17 @@ class EnhancedCenteringTheory:
                     if pc not in curr.forward_centers:
                         for cc in curr.forward_centers:
                             if cc.lower() in self._all_pronouns:
-                                if self._pronoun_matches_entity(cc.lower(), pc, prev._entity_map):
+                                if self._pronoun_matches_entity(
+                                    cc.lower(), pc, prev._entity_map
+                                ):
                                     if curr.backward_center != pc:
-                                        violations.append({
-                                            "utterance_index": i,
-                                            "rule": "Rule 2",
-                                            "desc": f"'{pc}' pronominalized as '{cc}' but Cb is '{curr.backward_center}'",
-                                        })
+                                        violations.append(
+                                            {
+                                                "utterance_index": i,
+                                                "rule": "Rule 2",
+                                                "desc": f"'{pc}' pronominalized as '{cc}' but Cb is '{curr.backward_center}'",
+                                            }
+                                        )
 
             score, dist = self._score_transitions(
                 {t: sum(1 for s in states if s.transition == t) for t in TransitionType}
@@ -897,13 +978,17 @@ class EnhancedCenteringTheory:
                     rough_streak = max(0, rough_streak - 1)
 
                 # utterance line
-                display = sent if len(sent) <= max_len else sent[:max_len - 3] + "..."
+                display = sent if len(sent) <= max_len else sent[: max_len - 3] + "..."
                 lines.append(f"{symbol} [{i:02d}] {t_name:12s} | {display}")
 
                 # center line
                 cp = state.preferred_center or "."
                 cb = state.backward_center or "."
-                cf = ", ".join(state.forward_centers[:3]) if state.forward_centers else "."
+                cf = (
+                    ", ".join(state.forward_centers[:3])
+                    if state.forward_centers
+                    else "."
+                )
                 lines.append(f"  {'':12s} | Cp: {cp:12s} Cb: {cb:12s} Cf: [{cf}]")
 
                 if i < len(sentences) - 1:
@@ -935,18 +1020,20 @@ class EnhancedCenteringTheory:
             doc = self.nlp(text)
             sents = [s.text.strip() for s in doc.sents if s.text.strip()]
             r = self.evaluate_cohesion(sents)
-            results.append({
-                "label": labels[i] if labels and i < len(labels) else f"text_{i+1}",
-                "cohesion": r["cohesion_score"],
-                "segments": len(self.detect_boundaries(sents)),
-                "sentences": len(sents),
-                "transitions": r["transition_distribution"],
-                "quality": (
-                    "high" if r["cohesion_score"] >= 0.80
-                    else "medium" if r["cohesion_score"] >= 0.55
-                    else "low"
-                ),
-            })
+            results.append(
+                {
+                    "label": labels[i] if labels and i < len(labels) else f"text_{i+1}",
+                    "cohesion": r["cohesion_score"],
+                    "segments": len(self.detect_boundaries(sents)),
+                    "sentences": len(sents),
+                    "transitions": r["transition_distribution"],
+                    "quality": (
+                        "high"
+                        if r["cohesion_score"] >= 0.80
+                        else "medium" if r["cohesion_score"] >= 0.55 else "low"
+                    ),
+                }
+            )
 
         best = max(results, key=lambda x: x["cohesion"])
         worst = min(results, key=lambda x: x["cohesion"])
@@ -955,7 +1042,9 @@ class EnhancedCenteringTheory:
             "count": len(texts),
             "best": best,
             "worst": worst,
-            "mean_cohesion": round(sum(r["cohesion"] for r in results) / len(results), 4),
+            "mean_cohesion": round(
+                sum(r["cohesion"] for r in results) / len(results), 4
+            ),
             "rankings": sorted(results, key=lambda x: x["cohesion"], reverse=True),
         }
 
@@ -1026,6 +1115,7 @@ class EnhancedCenteringTheory:
     async def astream_feed(self, utterance: str) -> Dict[str, Any]:
         """Async wrapper around stream_feed."""
         import asyncio
+
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(self._executor, self.stream_feed, utterance)
 
@@ -1047,20 +1137,66 @@ class EnhancedCenteringTheory:
     # ------------------------------------------------------------------
 
     def save(self, path: str) -> None:
-        with open(path, "wb") as f:
-            pickle.dump({
-                "history": self.discourse_history,
-                "salience_weights": self.salience_weights,
-                "pos_weights": self.pos_weights,
-                "history_limit": self.history_limit,
-                "similarity_threshold": self.similarity_threshold,
-                "gender_lookup": self._gender_lookup,
-            }, f)
+        """Serialize discourse state to JSON (safe to share, unlike pickle)."""
+        history = [
+            {
+                "utterance": s.utterance,
+                "forward_centers": s.forward_centers,
+                "backward_center": s.backward_center,
+                "preferred_center": s.preferred_center,
+                "transition": s.transition.value if s.transition else None,
+                "entity_map": {
+                    k: {
+                        "text": e.text,
+                        "dep": e.dep,
+                        "pos": e.pos,
+                        "ent_type": e.ent_type,
+                        "tag": e.tag,
+                        "is_plural": e.is_plural,
+                        "is_person": e.is_person,
+                        "gender": e.gender,
+                        "is_female": e.is_female,
+                    }
+                    for k, e in s._entity_map.items()
+                },
+            }
+            for s in self.discourse_history
+        ]
+        payload = {
+            "format": "centering-lgram-json-v1",
+            "history": history,
+            "salience_weights": self.salience_weights,
+            "pos_weights": self.pos_weights,
+            "history_limit": self.history_limit,
+            "similarity_threshold": self.similarity_threshold,
+            "gender_lookup": self._gender_lookup,
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
 
     def load(self, path: str) -> None:
-        with open(path, "rb") as f:
-            data = pickle.load(f)
-        self.discourse_history = data["history"]
+        """Load discourse state saved by save(). JSON format only."""
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        transitions_by_value = {t.value: t for t in TransitionType}
+        history: List[CenteringState] = []
+        for s in data.get("history", []):
+            entity_map = {
+                k: DiscourseEntity(**e) for k, e in s.get("entity_map", {}).items()
+            }
+            history.append(
+                CenteringState(
+                    utterance=s["utterance"],
+                    forward_centers=s.get("forward_centers", []),
+                    backward_center=s.get("backward_center"),
+                    preferred_center=s.get("preferred_center"),
+                    transition=transitions_by_value.get(s.get("transition")),
+                    _entity_map=entity_map,
+                )
+            )
+
+        self.discourse_history = history
         self.salience_weights = data.get("salience_weights", self.salience_weights)
         self.pos_weights = data.get("pos_weights", self.pos_weights)
         self.history_limit = data.get("history_limit", self.history_limit)

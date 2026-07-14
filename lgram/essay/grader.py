@@ -30,9 +30,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .cefr_calibration import CEFRCalibrator, ComplexityProfile
+from .cefr_calibration import CEFRCalibrator
 from .efl import (
-    CEFR_PROFILES,
     EFL_RUBRIC,
     L1TransferAnalyzer,
     L1TransferReport,
@@ -54,6 +53,7 @@ from .models import (
 
 try:
     from .layer_grammar import GrammarLayer
+
     _grammar_available = True
 except ImportError:
     GrammarLayer = None
@@ -61,6 +61,7 @@ except ImportError:
 
 try:
     from .layer_mechanics import MechanicsLayer
+
     _mechanics_available = True
 except ImportError:
     MechanicsLayer = None
@@ -68,10 +69,23 @@ except ImportError:
 
 try:
     from .layer_llm_content import LLMContentAnalyzer
+
     _llm_available = True
 except ImportError:
     LLMContentAnalyzer = None
     _llm_available = False
+
+# Fixed layer order used in analyze(): grammar, content, cohesion, surface,
+# mechanics. Rubric criteria are matched to these slots by name keywords so a
+# custom rubric passed in a different order still gets the right weights.
+_LAYER_CRITERION_KEYWORDS = [
+    ("grammar",),
+    ("content",),
+    ("organization", "cohesion"),
+    ("style", "expression"),
+    ("mechanics",),
+]
+_COHESION_LAYER_IDX = 2
 
 
 class CAEASGrader:
@@ -200,29 +214,51 @@ class CAEASGrader:
 
         complexity = self._cefr_calibrator.assess_complexity(essay.text)
 
-        l_grammar = self._grammar.evaluate(essay) if self._grammar else _placeholder("Grammar")
+        l_grammar = (
+            self._grammar.evaluate(essay) if self._grammar else _placeholder("Grammar")
+        )
         l_content = self._content_analyzer.analyze(essay, self._rubric)
         l_cohesion = self._cohesion.evaluate(essay)
         l_surface = self._surface.evaluate(essay)
-        l_mechanics = self._mechanics.evaluate(essay) if self._mechanics else _placeholder("Mechanics")
+        l_mechanics = (
+            self._mechanics.evaluate(essay)
+            if self._mechanics
+            else _placeholder("Mechanics")
+        )
 
         if self.use_efl and "cefr_estimate" in l_content.raw_details:
             llm_cefr = l_content.raw_details.get("cefr_estimate", "")
             valid_cefr = {"A1", "A2", "B1", "B2", "C1", "C2"}
             if llm_cefr and llm_cefr in valid_cefr:
+                # CEFR_PROFILES only covers B1-C1 (the target population);
+                # clamp out-of-range estimates instead of crashing.
                 if llm_cefr in ("A1", "A2"):
                     llm_cefr = "B1"
+                elif llm_cefr == "C2":
+                    llm_cefr = "C1"
                 cefr_level = llm_cefr
                 cefr_profile = get_cefr_profile(cefr_level)
 
         layer_results = [l_grammar, l_content, l_cohesion, l_surface, l_mechanics]
-        weights = [c.weight for c in self._rubric]
-        total_w = sum(weights)
-        if total_w > 0:
-            weights = [w / total_w for w in weights]
+        weights = self._layer_weights()
 
-        composite = sum(lr.score * w for lr, w in zip(layer_results, weights))
-        composite = composite * (1.0 - self._cohesion_weight) + l_cohesion.score * self._cohesion_weight
+        # Cohesion enters the composite only through the explicit blend below;
+        # the rubric-weighted half excludes the Organization criterion so the
+        # cohesion signal isn't counted twice.
+        non_cohesion = [
+            (lr, w)
+            for i, (lr, w) in enumerate(zip(layer_results, weights))
+            if i != _COHESION_LAYER_IDX
+        ]
+        w_rest = sum(w for _, w in non_cohesion)
+        if w_rest > 0:
+            rest_score = sum(lr.score * w for lr, w in non_cohesion) / w_rest
+        else:
+            rest_score = l_cohesion.score
+        composite = (
+            rest_score * (1.0 - self._cohesion_weight)
+            + l_cohesion.score * self._cohesion_weight
+        )
 
         if complexity.adjustment_factor != 1.0:
             composite *= complexity.adjustment_factor
@@ -275,9 +311,7 @@ class CAEASGrader:
                 "cohesion_threshold": cefr_profile["cohesion_threshold"],
             }
 
-        conf = self._confidence.analyze(
-            cohesion_score, layer_results, weights
-        )
+        conf = self._confidence.analyze(cohesion_score, layer_results, weights)
 
         suggestion = self._build_suggestion(
             cohesion_score, conf, cefr_level, cefr_profile, l1_transfer
@@ -289,13 +323,13 @@ class CAEASGrader:
                     0,
                     f"INFO: Using general CEFR {cefr_level} reference ranges. "
                     f"Institution-specific calibration ({self.calibrator.HIGH_SAMPLES}+ "
-                    f"teacher-scored essays) recommended before production use."
+                    f"teacher-scored essays) recommended before production use.",
                 )
             else:
                 conf["triggers"].insert(
                     0,
                     "INFO: No institution-specific calibration. General reference "
-                    "ranges only. Not suitable for high-stakes decisions."
+                    "ranges only. Not suitable for high-stakes decisions.",
                 )
 
         if l1_transfer and l1_transfer.overall_transfer_score < 0.5:
@@ -319,6 +353,35 @@ class CAEASGrader:
             cefr_level=cefr_level or "",
             cefr_detected=detected_level is not None,
         )
+
+    def _layer_weights(self) -> List[float]:
+        """Normalized per-layer weights, matched to rubric criteria by name.
+
+        Criteria whose names match no layer keyword fall back to rubric
+        order for the remaining unmatched slots.
+        """
+        weights: List[Optional[float]] = [None] * len(_LAYER_CRITERION_KEYWORDS)
+        used: set = set()
+        for li, keywords in enumerate(_LAYER_CRITERION_KEYWORDS):
+            for ci, criterion in enumerate(self._rubric):
+                if ci in used:
+                    continue
+                name = criterion.name.lower()
+                if any(k in name for k in keywords):
+                    weights[li] = criterion.weight
+                    used.add(ci)
+                    break
+
+        remaining = [c.weight for ci, c in enumerate(self._rubric) if ci not in used]
+        for li in range(len(weights)):
+            if weights[li] is None:
+                weights[li] = remaining.pop(0) if remaining else 0.0
+
+        resolved = [w if w is not None else 0.0 for w in weights]
+        total = sum(resolved)
+        if total > 0:
+            return [w / total for w in resolved]
+        return [1.0 / len(resolved)] * len(resolved)
 
     def _apply_calibration(self, raw_score: float) -> float:
         if self._calibration is None:

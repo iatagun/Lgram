@@ -14,7 +14,9 @@ class TestTextAnalyzer(unittest.TestCase):
         cls.ta = TextAnalyzer()
 
     def test_analyze(self):
-        r = self.ta.analyze("John went to the store. He bought milk. John paid. He left.")
+        r = self.ta.analyze(
+            "John went to the store. He bought milk. John paid. He left."
+        )
         self.assertGreater(r.sentence_count, 0)
         self.assertIn(r.quality, ("high", "medium", "low", "insufficient_data"))
 
@@ -36,7 +38,9 @@ class TestTextAnalyzer(unittest.TestCase):
         self.assertIn(0, b)
 
     def test_hybrid_boundaries(self):
-        h = self.ta.hybrid_boundaries("John went. He bought. The weather changed. Stocks fell.")
+        h = self.ta.hybrid_boundaries(
+            "John went. He bought. The weather changed. Stocks fell."
+        )
         self.assertIn("centering", h)
         self.assertIn("texttile", h)
         self.assertIn("high_confidence", h)
@@ -54,12 +58,17 @@ class TestTextAnalyzer(unittest.TestCase):
         self.assertLess(s2, 1.0)
 
     def test_cohesion_trend(self):
-        t = self.ta.cohesion_trend("John went. He bought. John paid. He left.", window=2)
+        t = self.ta.cohesion_trend(
+            "John went. He bought. John paid. He left.", window=2
+        )
         self.assertIn(t["trend"], ("improving", "declining", "stable"))
         self.assertGreater(len(t["windows"]), 0)
 
     def test_cohesion_heatmap(self):
-        h = self.ta.cohesion_heatmap("John went to the store. He bought milk. John paid with cash.", ascii_render=True)
+        h = self.ta.cohesion_heatmap(
+            "John went to the store. He bought milk. John paid with cash.",
+            ascii_render=True,
+        )
         self.assertGreater(len(h["matrix"]), 0)
 
     def test_readability_score(self):
@@ -81,7 +90,9 @@ class TestTextAnalyzer(unittest.TestCase):
         self.assertIn("WEAK", a)
 
     def test_diff_cohesion(self):
-        d = self.ta.diff_cohesion("John went. He bought. John paid.", "John went. He bought.")
+        d = self.ta.diff_cohesion(
+            "John went. He bought. John paid.", "John went. He bought."
+        )
         self.assertIn(d["verdict"], ("improved", "declined", "similar"))
         self.assertIn("delta", d)
 

@@ -16,7 +16,7 @@ Architecture:
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from .models import Essay, LayerResult
@@ -49,6 +49,7 @@ class SegmentAnalyzer:
     def _analyzer(self):
         if self._ta is None:
             from lgram import TextAnalyzer
+
             self._ta = TextAnalyzer(self._model, similarity_threshold=0.35)
         return self._ta
 
@@ -64,7 +65,7 @@ class SegmentAnalyzer:
             return [
                 " ".join(sentences[:third]),
                 " ".join(sentences[third : n - third]),
-                " ".join(sentences[n - third:]),
+                " ".join(sentences[n - third :]),
             ]
         return raw
 
@@ -98,20 +99,28 @@ class SegmentAnalyzer:
             if cohesion < 0.5:
                 try:
                     suggestions = self._analyzer.suggest_improvements(seg_text)
-                    weak = [{"index": s.get("index", i), "issue": s.get("issue", ""),
-                             "suggestion": s.get("suggestion", "")} for s in suggestions[:3]]
+                    weak = [
+                        {
+                            "index": s.get("index", i),
+                            "issue": s.get("issue", ""),
+                            "suggestion": s.get("suggestion", ""),
+                        }
+                        for s in suggestions[:3]
+                    ]
                 except Exception:
                     pass
 
-            results.append(SegmentAnalysis(
-                index=i,
-                segment_type=seg_type,
-                text=seg_text[:200] + "..." if len(seg_text) > 200 else seg_text,
-                sentence_count=sent_count,
-                cohesion_score=round(cohesion, 3),
-                transition_distribution=dist,
-                weak_points=weak,
-            ))
+            results.append(
+                SegmentAnalysis(
+                    index=i,
+                    segment_type=seg_type,
+                    text=seg_text[:200] + "..." if len(seg_text) > 200 else seg_text,
+                    sentence_count=sent_count,
+                    cohesion_score=round(cohesion, 3),
+                    transition_distribution=dist,
+                    weak_points=weak,
+                )
+            )
 
         return results
 
@@ -207,8 +216,12 @@ class CohesionLayer:
                         "type": s.segment_type,
                         "sentences": s.sentence_count,
                         "cohesion": s.cohesion_score,
-                        "continue_ratio": round(s.transition_distribution.get("Continue", 0), 3),
-                        "rough_shift_ratio": round(s.transition_distribution.get("Rough-Shift", 0), 3),
+                        "continue_ratio": round(
+                            s.transition_distribution.get("Continue", 0), 3
+                        ),
+                        "rough_shift_ratio": round(
+                            s.transition_distribution.get("Rough-Shift", 0), 3
+                        ),
                         "weak_points": len(s.weak_points),
                     }
                     for s in segments
@@ -229,5 +242,7 @@ def _segment_sem(scores: List[float], weights: List[float]) -> float:
         return 0.15
     weighted = sum(s * w for s, w in zip(scores, weights))
     variance = sum(w * (s - weighted) ** 2 for s, w in zip(scores, weights))
-    effective_n = 1.0 / sum(w * w for w in weights) if sum(w * w for w in weights) > 0 else n
+    effective_n = (
+        1.0 / sum(w * w for w in weights) if sum(w * w for w in weights) > 0 else n
+    )
     return math.sqrt(variance / effective_n) if variance > 0 else 0.05

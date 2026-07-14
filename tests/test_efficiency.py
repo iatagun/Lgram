@@ -26,9 +26,7 @@ class TestTokenConsciousHelpers(unittest.TestCase):
 
     def test_deep_grammar_focus_text_keeps_structure(self):
         text = (
-            "Opening idea. "
-            + "Body sentence. " * 30
-            + "Final idea. Closing sentence."
+            "Opening idea. " + "Body sentence. " * 30 + "Final idea. Closing sentence."
         )
         excerpt = DeepGrammarCheck._select_focus_text(text, max_chars=160)
         self.assertLessEqual(len(excerpt), 160)

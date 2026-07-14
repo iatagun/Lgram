@@ -12,12 +12,14 @@ import spacy
 def _make_ct():
     nlp = spacy.load("en_core_web_sm")
     from lgram import EnhancedCenteringTheory
+
     return EnhancedCenteringTheory(nlp)
 
 
 # =============================================================================
 # Edge cases – basic API
 # =============================================================================
+
 
 class TestEdgeCases(unittest.TestCase):
 
@@ -27,6 +29,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_empty_input(self):
         from lgram import EnhancedCenteringTheory
+
         ct = EnhancedCenteringTheory(self.nlp)
         state = ct.analyze_utterance("")
         self.assertEqual(state.preferred_center, None)
@@ -35,6 +38,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_single_word(self):
         from lgram import EnhancedCenteringTheory
+
         ct = EnhancedCenteringTheory(self.nlp)
         state = ct.analyze_utterance("Hello.")
         self.assertEqual(state.preferred_center, None)
@@ -74,6 +78,7 @@ class TestEdgeCases(unittest.TestCase):
 # Transition truth table
 # =============================================================================
 
+
 class TestTransitionCorrectness(unittest.TestCase):
 
     def test_Continue_Cb_equals_Cp(self):
@@ -107,6 +112,7 @@ class TestTransitionCorrectness(unittest.TestCase):
 # False positive prevention
 # =============================================================================
 
+
 class TestFalsePositives(unittest.TestCase):
 
     def test_different_person_pronoun_not_coreferent(self):
@@ -116,7 +122,8 @@ class TestFalsePositives(unittest.TestCase):
         # NOTE: without gender model, "he" may match first person entity (alice).
         # This is a known limitation, not a bug.
         self.assertIn(
-            s.backward_center, ("bob", "alice"),
+            s.backward_center,
+            ("bob", "alice"),
             "Cb should be bob (correct) or alice (known limitation)",
         )
 
@@ -127,7 +134,8 @@ class TestFalsePositives(unittest.TestCase):
         # NOTE: spaCy small model lacks gender detection. "she" may falsely
         # match "bob" because both are person entities.
         self.assertIn(
-            s.backward_center, (None, "bob"),
+            s.backward_center,
+            (None, "bob"),
             "None = strict (correct), bob = known limitation",
         )
 
@@ -167,6 +175,7 @@ class TestFalsePositives(unittest.TestCase):
 # Clause extraction edge cases
 # =============================================================================
 
+
 class TestClauseExtraction(unittest.TestCase):
 
     def test_simple_sentence_one_clause(self):
@@ -205,22 +214,19 @@ class TestClauseExtraction(unittest.TestCase):
 
     def test_nested_clauses(self):
         ct = _make_ct()
-        clauses = ct.extract_clauses(
-            "I think that John said that Mary left."
-        )
+        clauses = ct.extract_clauses("I think that John said that Mary left.")
         self.assertGreaterEqual(len(clauses), 2)
 
     def test_relative_clause_detected(self):
         ct = _make_ct()
-        clauses = ct.extract_clauses(
-            "The book that I read was interesting."
-        )
+        clauses = ct.extract_clauses("The book that I read was interesting.")
         self.assertGreaterEqual(len(clauses), 2)
 
 
 # =============================================================================
 # Pronoun resolution edge cases
 # =============================================================================
+
 
 class TestPronounResolution(unittest.TestCase):
 
@@ -255,6 +261,7 @@ class TestPronounResolution(unittest.TestCase):
 # State isolation
 # =============================================================================
 
+
 class TestStateIsolation(unittest.TestCase):
 
     def test_analyze_utterance_does_not_change_history(self):
@@ -285,6 +292,7 @@ class TestStateIsolation(unittest.TestCase):
 # Serialization
 # =============================================================================
 
+
 class TestSerialization(unittest.TestCase):
 
     def test_roundtrip_with_history(self):
@@ -292,7 +300,7 @@ class TestSerialization(unittest.TestCase):
         ct.update_discourse("John went to the store.")
         ct.update_discourse("He bought milk.")
 
-        with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             tmp = f.name
         try:
             ct.save(tmp)
@@ -300,7 +308,9 @@ class TestSerialization(unittest.TestCase):
             ct2 = _make_ct()
             ct2.load(tmp)
             self.assertEqual(len(ct2.discourse_history), 2)
-            self.assertEqual(ct2.discourse_history[0].utterance, "John went to the store.")
+            self.assertEqual(
+                ct2.discourse_history[0].utterance, "John went to the store."
+            )
             # Verify the loaded instance works
             s = ct2.update_discourse("The milk was fresh.")
             self.assertIsNotNone(s.transition)

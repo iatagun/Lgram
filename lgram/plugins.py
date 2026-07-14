@@ -27,8 +27,7 @@ class AnalysisPlugin(ABC):
     description: str = ""
 
     @abstractmethod
-    def analyze(self, text: str, analyzer: Any) -> AnalysisResult:
-        ...
+    def analyze(self, text: str, analyzer: Any) -> AnalysisResult: ...
 
 
 class PluginRegistry:
@@ -168,6 +167,7 @@ class DiscoursePlugin(AnalysisPlugin):
 
     def analyze(self, text: str, analyzer: Any) -> AnalysisResult:
         from lgram.discourse import DiscourseAnalyzer
+
         da = DiscourseAnalyzer(analyzer.nlp)
         result = da.analyze(text)
         return AnalysisResult(

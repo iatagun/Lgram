@@ -81,13 +81,15 @@ class CohesionBenchmark:
             if not ok:
                 passed = False
 
-            results.append({
-                "text_index": idx,
-                "original_score": original_score,
-                "permuted_scores": perm_scores,
-                "median_permuted": round(median_perm, 4),
-                "passed": ok,
-            })
+            results.append(
+                {
+                    "text_index": idx,
+                    "original_score": original_score,
+                    "permuted_scores": perm_scores,
+                    "median_permuted": round(median_perm, 4),
+                    "passed": ok,
+                }
+            )
 
         passed = sum(1 for r in results if r["passed"]) >= len(results) / 2
         summary = f"Permutation: {'PASS' if passed else 'FAIL'} ({sum(1 for r in results if r['passed'])}/{len(results)} texts)"
@@ -128,13 +130,15 @@ class CohesionBenchmark:
             if not ok:
                 passed = False
 
-            results.append({
-                "text_index": idx,
-                "full_score": full_score,
-                "shortened_score": short_score,
-                "drop": round(drop, 4),
-                "passed": ok,
-            })
+            results.append(
+                {
+                    "text_index": idx,
+                    "full_score": full_score,
+                    "shortened_score": short_score,
+                    "drop": round(drop, 4),
+                    "passed": ok,
+                }
+            )
 
         summary = f"Degradation: {'PASS' if passed else 'FAIL'} ({sum(1 for r in results if r['passed'])}/{len(results)} texts)"
         return BenchmarkResult(
@@ -180,17 +184,20 @@ class CohesionBenchmark:
                 med_a = sorted(a)[len(a) // 2]
                 med_b = sorted(b)[len(b) // 2]
                 matches = sum(
-                    1 for ai, bi in zip(a, b)
-                    if (ai >= med_a) == (bi >= med_b)
+                    1 for ai, bi in zip(a, b) if (ai >= med_a) == (bi >= med_b)
                 )
                 rate = matches / max(len(a), 1)
-                agreements.append({
-                    "method_a": names[i],
-                    "method_b": names[j],
-                    "agreement_rate": round(rate, 3),
-                })
+                agreements.append(
+                    {
+                        "method_a": names[i],
+                        "method_b": names[j],
+                        "agreement_rate": round(rate, 3),
+                    }
+                )
 
-        avg_agreement = sum(r["agreement_rate"] for r in agreements) / max(len(agreements), 1)
+        avg_agreement = sum(r["agreement_rate"] for r in agreements) / max(
+            len(agreements), 1
+        )
         passed = avg_agreement >= 0.4  # methods should not anti-correlate
 
         summary = f"Cross-Method: {'PASS' if passed else 'FAIL'} (avg agreement {avg_agreement:.2f})"
@@ -243,13 +250,19 @@ class CohesionBenchmark:
         return BenchmarkResult(
             name="classification",
             passed=passed,
-            details=[{
-                "coherent_mean": round(sum(coherent_scores) / len(coherent_scores), 4),
-                "incoherent_mean": round(sum(incoherent_scores) / len(incoherent_scores), 4),
-                "accuracy": round(accuracy, 3),
-                "threshold": best_threshold,
-                "total_samples": len(scores),
-            }],
+            details=[
+                {
+                    "coherent_mean": round(
+                        sum(coherent_scores) / len(coherent_scores), 4
+                    ),
+                    "incoherent_mean": round(
+                        sum(incoherent_scores) / len(incoherent_scores), 4
+                    ),
+                    "accuracy": round(accuracy, 3),
+                    "threshold": best_threshold,
+                    "total_samples": len(scores),
+                }
+            ],
             summary=summary,
         )
 

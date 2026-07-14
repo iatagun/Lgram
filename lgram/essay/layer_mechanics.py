@@ -14,9 +14,8 @@ Requires: pip install pyspellchecker
 
 from __future__ import annotations
 
-import math
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
@@ -50,6 +49,7 @@ class MechanicsLayer:
         self._init_attempted = True
         try:
             from spellchecker import SpellChecker
+
             self._spell = SpellChecker(language=self._language)
             return True
         except Exception as e:

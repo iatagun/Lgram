@@ -74,8 +74,8 @@ Prototype functional. Seeking pilot institution for real-world calibration with 
 - [Development Log](../../docs/CAEAS_DEVELOPMENT_LOG.md) — full build history + calibration protocol
 - [CHANGELOG](../../CHANGELOG.md) — version history
 - [V02 Plan](../../docs/CAEAS_V02_PLAN.md) — implementation plan (completed)
-- [Model Completeness Report](../../MODEL_COMPLETENESS_REPORT.md) — token optimization + test coverage
-- [Production Readiness](../../PRODUCTION_READINESS_ASSESSMENT.md) — SaaS viability assessment
+- [Model Completeness Report](../../docs/MODEL_COMPLETENESS_REPORT.md) — token optimization + test coverage
+- [Production Readiness](../../docs/PRODUCTION_READINESS_ASSESSMENT.md) — SaaS viability assessment
 - [examples/demo.py](../../examples/demo.py) — full feature demo
 - [examples/full_test.py](../../examples/full_test.py) — 5-layer discriminative test
 

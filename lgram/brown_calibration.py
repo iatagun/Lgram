@@ -18,6 +18,7 @@ SAMPLE_SIZE = 30  # per genre
 def load_brown_corpus() -> dict:
     """Extract texts from Brown Corpus, mapped to our genre types."""
     from nltk.corpus import brown
+
     corpus = {}
     for genre, cats in GENRE_MAP.items():
         texts = []

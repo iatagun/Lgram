@@ -43,16 +43,17 @@ def quadratic_weighted_kappa(predicted: List[float], actual: List[float]) -> flo
         for j in range(bins):
             weights[i][j] = ((i - j) / (bins - 1)) ** 2 if bins > 1 else 0.0
 
-    observed = sum(
-        hist[i][j] * weights[i][j]
-        for i in range(bins) for j in range(bins)
-    ) / total
+    observed = (
+        sum(hist[i][j] * weights[i][j] for i in range(bins) for j in range(bins))
+        / total
+    )
 
     row_sums = [sum(row) for row in hist]
     col_sums = [sum(hist[i][j] for i in range(bins)) for j in range(bins)]
     expected = sum(
         row_sums[i] * col_sums[j] * weights[i][j]
-        for i in range(bins) for j in range(bins)
+        for i in range(bins)
+        for j in range(bins)
     ) / (total * total)
 
     return 1.0 - observed / expected if expected > 0 else 1.0
@@ -120,7 +121,8 @@ def build_recalibration_bins(
         lo = min_val + i * bw
         hi = lo + bw
         in_bin = [
-            h for m, h in zip(machine_scores, human_scores)
+            h
+            for m, h in zip(machine_scores, human_scores)
             if lo <= m < hi or (i == num_bins - 1 and m == hi)
         ]
         if in_bin:

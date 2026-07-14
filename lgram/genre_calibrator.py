@@ -9,8 +9,7 @@ and recommended thresholds for genre-aware analysis.
 from __future__ import annotations
 
 import math
-from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List
 
 from .analyzer import TextAnalyzer
@@ -52,9 +51,7 @@ class GenreCalibrator:
     def __init__(self, model: str = "en_core_web_md"):
         self.ta = TextAnalyzer(model, similarity_threshold=0.35)
 
-    def calibrate(
-        self, corpus: Dict[str, List[str]]
-    ) -> List[GenreProfile]:
+    def calibrate(self, corpus: Dict[str, List[str]]) -> List[GenreProfile]:
         """
         corpus: {genre_name: [text1, text2, ...]}
 
@@ -99,7 +96,9 @@ class GenreCalibrator:
             profile.p75_rough = round(self._percentile(sorted(roughs), 75), 3)
             profile.iqr_rough = round(profile.p75_rough - profile.p25_rough, 3)
             # Tukey's fence: p75 + 1.5 * IQR (standard outlier detection)
-            profile.tukey_upper = round(min(profile.p75_rough + 1.5 * profile.iqr_rough, 1.0), 3)
+            profile.tukey_upper = round(
+                min(profile.p75_rough + 1.5 * profile.iqr_rough, 1.0), 3
+            )
             profile.mean_continue = round(self._mean(continues), 3)
             profile.mean_retain = round(self._mean(retains), 3)
             profile.mean_smooth = round(self._mean(smooths), 3)
@@ -145,8 +144,10 @@ class GenreCalibrator:
 
             # Rough-Shift distribution
             rough_bar = self._histogram(p.rough_shifts, width=40)
-            lines.append(f"  Rough-Shift:  mean={p.mean_rough:.3f}  std={p.std_rough:.3f}  "
-                        f"p25={p.p25_rough:.3f}  p75={p.p75_rough:.3f}")
+            lines.append(
+                f"  Rough-Shift:  mean={p.mean_rough:.3f}  std={p.std_rough:.3f}  "
+                f"p25={p.p25_rough:.3f}  p75={p.p75_rough:.3f}"
+            )
             lines.append(f"                {rough_bar}")
 
             # Other metrics
@@ -160,16 +161,20 @@ class GenreCalibrator:
         # Cross-genre comparison
         if len(profiles) >= 2:
             lines.append(f"\n{'='*70}")
-            lines.append(f"  CROSS-GENRE COMPARISON")
+            lines.append("  CROSS-GENRE COMPARISON")
             lines.append(f"{'='*70}")
-            lines.append(f"\n  {'Genre':15s} {'n':>4s} {'Rough mean':>8s} {'Rough std':>8s} "
-                        f"{'p25':>6s} {'p75':>6s} {'Continue mean':>10s}")
+            lines.append(
+                f"\n  {'Genre':15s} {'n':>4s} {'Rough mean':>8s} {'Rough std':>8s} "
+                f"{'p25':>6s} {'p75':>6s} {'Continue mean':>10s}"
+            )
             lines.append(f"  {'-'*60}")
             for p in sorted(profiles, key=lambda x: x.mean_rough):
-                lines.append(f"  {p.name:15s} {p.sample_count:>4d} "
-                            f"{p.mean_rough:>8.1%} {p.std_rough:>8.1%} "
-                            f"{p.p25_rough:>6.1%} {p.p75_rough:>6.1%} "
-                            f"{p.mean_continue:>10.1%}")
+                lines.append(
+                    f"  {p.name:15s} {p.sample_count:>4d} "
+                    f"{p.mean_rough:>8.1%} {p.std_rough:>8.1%} "
+                    f"{p.p25_rough:>6.1%} {p.p75_rough:>6.1%} "
+                    f"{p.mean_continue:>10.1%}"
+                )
 
         return "\n".join(lines)
 
@@ -208,7 +213,5 @@ class GenreCalibrator:
             bins[idx] += 1
         max_bin = max(bins) or 1
         chars = "_.-:=+*#"
-        bar = "".join(
-            chars[min(int(b / max_bin * 7), 7)] for b in bins
-        )
+        bar = "".join(chars[min(int(b / max_bin * 7), 7)] for b in bins)
         return bar

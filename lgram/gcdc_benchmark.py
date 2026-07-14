@@ -10,9 +10,14 @@ Literature baselines on the *full* GCDC (thousands of examples):
   - Entity grid (Barzilay & Lapata 2005):  56-74% accuracy
   - SentAvg / ParSeq (Lai & Tetreault 2018):  65-87%
   - Neural models consistently outperform entity grid.
-  
+
 This benchmark only tests entity-grid performance and should NOT be cited
 as a claim about the full centering-theory pipeline.
+
+Methodology note: accuracy is computed at a fixed midpoint threshold
+between the class means (in-sample, descriptive). With n=4 per domain this
+is a smoke test of score direction and separation, not a validated
+classification result.
 """
 
 from __future__ import annotations
@@ -78,6 +83,7 @@ class GCDCResult:
     incoherent_scores: List[float] = field(default_factory=list)
     total_samples: int = 0
     passed: bool = False
+    inverted: bool = False  # True if coherent texts scored LOWER than incoherent
 
 
 class GCDCBenchmark:
@@ -89,38 +95,36 @@ class GCDCBenchmark:
         self.ta = analyzer or TextAnalyzer()
 
     def evaluate_domain(
-        self, domain: str,
+        self,
+        domain: str,
         coherent_texts: List[str],
         incoherent_texts: List[str],
     ) -> GCDCResult:
-        coherent_scores = [
-            self.ta.entity_grid_score(t).score for t in coherent_texts
-        ]
+        coherent_scores = [self.ta.entity_grid_score(t).score for t in coherent_texts]
         incoherent_scores = [
             self.ta.entity_grid_score(t).score for t in incoherent_texts
         ]
 
-        if (
-            sum(coherent_scores) / max(len(coherent_scores), 1)
-            < sum(incoherent_scores) / max(len(incoherent_scores), 1)
-        ):
-            coherent_scores = [round(1.0 - s, 4) for s in coherent_scores]
-            incoherent_scores = [round(1.0 - s, 4) for s in incoherent_scores]
+        coh_mean = sum(coherent_scores) / max(len(coherent_scores), 1)
+        inc_mean = sum(incoherent_scores) / max(len(incoherent_scores), 1)
+
+        # Entity-grid scores should be HIGHER for coherent texts. If not,
+        # the metric failed on this domain — flag it instead of silently
+        # flipping scores, and never mark an inverted domain as passed.
+        inverted = coh_mean < inc_mean
+
+        # Fixed midpoint threshold between class means. This is a
+        # descriptive in-sample discrimination measure, NOT a classifier
+        # tuned by scanning for the accuracy-optimal threshold.
+        threshold = (coh_mean + inc_mean) / 2.0
 
         all_scores = coherent_scores + incoherent_scores
         labels = [1] * len(coherent_scores) + [0] * len(incoherent_scores)
 
-        best_accuracy = 0.0
-        best_threshold = 0.5
-        for t in [x / 100 for x in range(0, 101)]:
-            preds = [1 if s >= t else 0 for s in all_scores]
-            correct = sum(1 for p, l in zip(preds, labels) if p == l)
-            accuracy = correct / len(all_scores)
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
-                best_threshold = t
+        preds = [1 if s >= threshold else 0 for s in all_scores]
+        correct = sum(1 for p, l in zip(preds, labels) if p == l)
+        accuracy = correct / max(len(all_scores), 1)
 
-        preds = [1 if s >= best_threshold else 0 for s in all_scores]
         tp = sum(1 for p, l in zip(preds, labels) if p == 1 and l == 1)
         fp = sum(1 for p, l in zip(preds, labels) if p == 1 and l == 0)
         fn = sum(1 for p, l in zip(preds, labels) if p == 0 and l == 1)
@@ -131,15 +135,16 @@ class GCDCBenchmark:
 
         return GCDCResult(
             domain=domain,
-            accuracy=round(best_accuracy, 4),
+            accuracy=round(accuracy, 4),
             precision=round(precision, 4),
             recall=round(recall, 4),
             f1=round(f1, 4),
-            threshold=round(best_threshold, 4),
+            threshold=round(threshold, 4),
             coherent_scores=coherent_scores,
             incoherent_scores=incoherent_scores,
             total_samples=len(all_scores),
-            passed=best_accuracy >= self.PASS_THRESHOLD,
+            passed=accuracy >= self.PASS_THRESHOLD and not inverted,
+            inverted=inverted,
         )
 
     def run_embedded(self) -> List[GCDCResult]:
@@ -147,7 +152,9 @@ class GCDCBenchmark:
         results: List[GCDCResult] = []
         for domain, data in _GCDC_SAMPLES.items():
             result = self.evaluate_domain(
-                domain, data["coherent"], data["incoherent"],
+                domain,
+                data["coherent"],
+                data["incoherent"],
             )
             results.append(result)
         return results
@@ -159,7 +166,7 @@ class GCDCBenchmark:
         1. Request Yahoo L6 corpus (free for research)
         2. Forward the acknowledgment to Grammarly (peng.wang@grammarly.com)
            with your affiliation and use-case description.
-        
+
         See https://github.com/aylai/GCDC-corpus for details.
         """
         raise RuntimeError(
@@ -183,13 +190,18 @@ class GCDCBenchmark:
         ]
         for r in results:
             status = "PASS" if r.passed else "FAIL"
-            lines.append(f"\n  [{status}] {r.domain} (n={r.total_samples})")
+            inv = "  [INVERTED SCORES]" if r.inverted else ""
+            lines.append(f"\n  [{status}] {r.domain} (n={r.total_samples}){inv}")
             lines.append(f"  {'-'*45}")
             lines.append(f"  Accuracy:  {r.accuracy:.3f}  |  F1: {r.f1:.3f}")
             lines.append(f"  Precision: {r.precision:.3f}  |  Recall: {r.recall:.3f}")
             lines.append(f"  Threshold: {r.threshold:.3f}")
-            lines.append(f"  Coherent mean:   {sum(r.coherent_scores)/max(len(r.coherent_scores),1):.3f}")
-            lines.append(f"  Incoherent mean: {sum(r.incoherent_scores)/max(len(r.incoherent_scores),1):.3f}")
+            lines.append(
+                f"  Coherent mean:   {sum(r.coherent_scores)/max(len(r.coherent_scores),1):.3f}"
+            )
+            lines.append(
+                f"  Incoherent mean: {sum(r.incoherent_scores)/max(len(r.incoherent_scores),1):.3f}"
+            )
         lines.append(f"\n{'=' * 60}")
         passed = sum(1 for r in results if r.passed)
         lines.append(f"  Result: {passed}/{len(results)} domains passed")

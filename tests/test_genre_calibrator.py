@@ -62,8 +62,7 @@ class TestGenreCalibrator(unittest.TestCase):
                 "Another text. Another sentence.",
             ],
             "large": [
-                f"Text number {i}. Continuing with more words."
-                for i in range(25)
+                f"Text number {i}. Continuing with more words." for i in range(25)
             ],
         }
         profiles = self.calibrator.calibrate(corpus)

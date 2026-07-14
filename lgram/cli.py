@@ -30,8 +30,11 @@ Examples:
     analyze.add_argument("--text", "-t", type=str, help="Text to analyze")
     analyze.add_argument("--file", "-f", type=Path, help="File to analyze")
     analyze.add_argument(
-        "--model", "-m", type=str, default="en_core_web_sm",
-        help="SpaCy model (default: en_core_web_sm)"
+        "--model",
+        "-m",
+        type=str,
+        default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)",
     )
     analyze.add_argument("--verbose", "-v", action="store_true")
 
@@ -39,8 +42,11 @@ Examples:
     score.add_argument("--text", "-t", type=str)
     score.add_argument("--file", "-f", type=Path)
     score.add_argument(
-        "--model", "-m", type=str, default="en_core_web_sm",
-        help="SpaCy model (default: en_core_web_sm)"
+        "--model",
+        "-m",
+        type=str,
+        default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)",
     )
 
     clauses_parser = subparsers.add_parser(
@@ -49,8 +55,11 @@ Examples:
     clauses_parser.add_argument("--text", "-t", type=str, help="Sentence to analyze")
     clauses_parser.add_argument("--file", "-f", type=Path, help="File to analyze")
     clauses_parser.add_argument(
-        "--model", "-m", type=str, default="en_core_web_sm",
-        help="SpaCy model (default: en_core_web_sm)"
+        "--model",
+        "-m",
+        type=str,
+        default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)",
     )
 
     full_parser = subparsers.add_parser(
@@ -59,8 +68,11 @@ Examples:
     full_parser.add_argument("--text", "-t", type=str, help="Text to analyze")
     full_parser.add_argument("--file", "-f", type=Path, help="File to analyze")
     full_parser.add_argument(
-        "--model", "-m", type=str, default="en_core_web_sm",
-        help="SpaCy model (default: en_core_web_sm)"
+        "--model",
+        "-m",
+        type=str,
+        default="en_core_web_sm",
+        help="SpaCy model (default: en_core_web_sm)",
     )
 
     subparsers.add_parser("info", help="Show package info")
@@ -101,12 +113,14 @@ def _read(args) -> str:
 
 def _version(_args) -> int:
     from lgram import __version__, __author__
+
     print(f"v{__version__}  {__author__}")
     return 0
 
 
 def _info(_args) -> int:
     from lgram import show_info
+
     show_info()
     return 0
 
@@ -196,7 +210,9 @@ def _clauses(args) -> int:
         result = ct.analyze_intra_sentential(sent_text)
         print(f"  Intra-sentential cohesion: {result['cohesion_score']:.3f}")
         for t in result["transitions"]:
-            print(f"    {t['transition']:12s}  Cp={t['cp'] or '-':8s}  Cb={t['cb'] or '-'}  [{t['clause']}]")
+            print(
+                f"    {t['transition']:12s}  Cp={t['cp'] or '-':8s}  Cb={t['cb'] or '-'}  [{t['clause']}]"
+            )
         print()
     return 0
 
@@ -212,7 +228,9 @@ def _full(args) -> int:
     result = ct.analyze_full(text)
 
     print(f"Sentence count: {result['sentence_count']}")
-    print(f"Inter-sentential cohesion: {result['inter_sentential']['cohesion_score']:.3f}")
+    print(
+        f"Inter-sentential cohesion: {result['inter_sentential']['cohesion_score']:.3f}"
+    )
     print(f"  {result['inter_sentential']['transition_distribution']}")
     print()
 
@@ -221,7 +239,7 @@ def _full(args) -> int:
         score = intra["cohesion_score"]
         clauses = intra["clause_count"]
         if clauses >= 2:
-            print(f"  [{i+1}] {sent[:60]}{'...' if len(sent)>60 else ''}")
+            print(f"  [{i+1}] {sent[:60]}{'...' if len(sent) > 60 else ''}")
             print(f"       clauses={clauses}  cohesion={score:.3f}")
             for t in intra["transitions"]:
                 print(f"         {t['transition']:12s}  {t['clause'][:40]}")

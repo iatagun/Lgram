@@ -26,43 +26,42 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
-from .models import Essay, LayerResult, RubricCriterion
+from .models import RubricCriterion
 from .utils import split_sentences, ARTICLE_RATIO_EXPECTED
-
 
 EFL_RUBRIC = [
     RubricCriterion(
         name="Grammar",
         weight=0.15,
         description="Morphosyntactic accuracy, tense consistency, article/preposition use, "
-                    "sentence structure correctness.",
+        "sentence structure correctness.",
     ),
     RubricCriterion(
         name="Content",
         weight=0.25,
         description="Thesis clarity, argument development, evidence use, topic relevance, "
-                    "critical thinking depth.",
+        "critical thinking depth.",
     ),
     RubricCriterion(
         name="Organization",
         weight=0.30,
         description="Cohesion, paragraph structure, transition use, "
-                    "logical flow between ideas — as modeled by Centering Theory "
-                    "(surface-level cohesion, not deep coherence).",
+        "logical flow between ideas — as modeled by Centering Theory "
+        "(surface-level cohesion, not deep coherence).",
     ),
     RubricCriterion(
         name="Style & Expression",
         weight=0.15,
         description="Vocabulary range, register appropriateness, collocation naturalness, "
-                    "idiomaticity, avoidance of L1 transfer calques.",
+        "idiomaticity, avoidance of L1 transfer calques.",
     ),
     RubricCriterion(
         name="Mechanics",
         weight=0.15,
         description="Spelling, punctuation, capitalization, paragraph formatting, "
-                    "word count adequacy.",
+        "word count adequacy.",
     ),
 ]
 
@@ -180,14 +179,18 @@ class L1TransferAnalyzer:
             3,
         )
 
-        parts = [f"L1 Transfer: {report.overall_transfer_score:.2f} (1.0 = minimal L1 influence)"]
+        parts = [
+            f"L1 Transfer: {report.overall_transfer_score:.2f} (1.0 = minimal L1 influence)"
+        ]
         if miss:
             parts.append(f"  Pro-drop: {len(miss)} potential missing-subject sentences")
         if gender:
             parts.append(f"  Gender: {len(gender)} potential he/she confusion points")
         parts.append(f"  Articles: adequacy={subscore_article:.2f}")
         if word_order:
-            parts.append(f"  Word order: {len(word_order)} potential SOV-transfer clauses")
+            parts.append(
+                f"  Word order: {len(word_order)} potential SOV-transfer clauses"
+            )
         report.summary = "\n".join(parts)
 
         return report
@@ -198,25 +201,58 @@ class L1TransferAnalyzer:
             words = sent.split()
             if len(words) < 3:
                 continue
+            if sent.rstrip().endswith("?"):
+                # questions legitimately start with an auxiliary/verb
+                continue
             first_word = words[0].lower().rstrip(".,!?;:\"'")
-            if first_word in {"is", "are", "was", "were", "has", "have", "had",
-                             "will", "would", "can", "could", "should", "must",
-                             "seems", "feels", "looks", "becomes", "gets"}:
-                issues.append({
-                    "index": i,
-                    "sentence": sent[:80],
-                    "type": "pro-drop",
-                    "description": "Sentence starts with verb — possible missing subject (Turkish pro-drop transfer)",
-                })
-            if i > 0 and len(words) > 2 and words[0].lower() == "and":
-                second = words[1].lower().rstrip(".,!?;:\"'") if len(words) > 1 else ""
-                if second in {"then", "also", "so", "therefore", "is", "are", "was", "were"}:
-                    issues.append({
+            if first_word in {
+                "is",
+                "are",
+                "was",
+                "were",
+                "has",
+                "have",
+                "had",
+                "will",
+                "would",
+                "can",
+                "could",
+                "should",
+                "must",
+                "seems",
+                "feels",
+                "looks",
+                "becomes",
+                "gets",
+            }:
+                issues.append(
+                    {
                         "index": i,
                         "sentence": sent[:80],
-                        "type": "pro-drop-conjunction",
-                        "description": "And-clause without explicit subject — possible pro-drop transfer",
-                    })
+                        "type": "pro-drop",
+                        "description": "Sentence starts with verb — possible missing subject (Turkish pro-drop transfer)",
+                    }
+                )
+            if i > 0 and len(words) > 2 and words[0].lower() == "and":
+                second = words[1].lower().rstrip(".,!?;:\"'") if len(words) > 1 else ""
+                if second in {
+                    "then",
+                    "also",
+                    "so",
+                    "therefore",
+                    "is",
+                    "are",
+                    "was",
+                    "were",
+                }:
+                    issues.append(
+                        {
+                            "index": i,
+                            "sentence": sent[:80],
+                            "type": "pro-drop-conjunction",
+                            "description": "And-clause without explicit subject — possible pro-drop transfer",
+                        }
+                    )
         return issues
 
     def _detect_gender_confusion(self, sentences: List[str]) -> List[Dict[str, Any]]:
@@ -232,26 +268,35 @@ class L1TransferAnalyzer:
                     female_count += count
 
         if male_count > 0 and female_count == 0:
-            issues.append({
-                "index": 0,
-                "type": "gender-asymmetry",
-                "description": f"Only male pronouns used ({male_count} instances) — check for generic 'he' Turkish transfer (Turkish 'o' = he/she/it)",
-            })
+            issues.append(
+                {
+                    "index": 0,
+                    "type": "gender-asymmetry",
+                    "description": f"Only male pronouns used ({male_count} instances) — check for generic 'he' Turkish transfer (Turkish 'o' = he/she/it)",
+                }
+            )
         if female_count > 0 and male_count == 0:
-            issues.append({
-                "index": 0,
-                "type": "gender-asymmetry",
-                "description": f"Only female pronouns used ({female_count} instances) — check for generic 'she' usage pattern",
-            })
+            issues.append(
+                {
+                    "index": 0,
+                    "type": "gender-asymmetry",
+                    "description": f"Only female pronouns used ({female_count} instances) — check for generic 'she' usage pattern",
+                }
+            )
 
+        # count actual he<->she switches in pronoun sequence; a run of the
+        # same pronoun (he...he...he) is NOT alternation
         text_lower = " ".join(sentences).lower()
-        alternating = re.findall(r"\b(he|she)\b.*?\b(she|he)\b", text_lower)
-        if len(alternating) > 3:
-            issues.append({
-                "index": 0,
-                "type": "gender-alternation",
-                "description": f"Frequent he/she alternation ({len(alternating)} patterns) — possible gender confusion (Turkish 'o' has no gender)",
-            })
+        gendered = re.findall(r"\b(he|she)\b", text_lower)
+        switches = sum(1 for a, b in zip(gendered, gendered[1:]) if a != b)
+        if switches > 3:
+            issues.append(
+                {
+                    "index": 0,
+                    "type": "gender-alternation",
+                    "description": f"Frequent he/she alternation ({switches} switches) — possible gender confusion (Turkish 'o' has no gender)",
+                }
+            )
 
         return issues
 
@@ -301,18 +346,41 @@ class L1TransferAnalyzer:
             if len(words) < 8:
                 continue
             last = words[-1].lower().rstrip(".,!?;:\"'")
-            if last in {"is", "are", "was", "were", "has", "have", "had",
-                         "will", "would", "can", "could", "should", "must",
-                         "went", "came", "gave", "took", "made", "did", "got",
-                         "sees", "says", "goes", "comes"}:
-                issues.append({
-                    "index": i,
-                    "sentence": sent[:80],
-                    "type": "sov-transfer",
-                    "description": "Verb-final pattern — possible Turkish SOV transfer",
-                })
+            if last in {
+                "is",
+                "are",
+                "was",
+                "were",
+                "has",
+                "have",
+                "had",
+                "will",
+                "would",
+                "can",
+                "could",
+                "should",
+                "must",
+                "went",
+                "came",
+                "gave",
+                "took",
+                "made",
+                "did",
+                "got",
+                "sees",
+                "says",
+                "goes",
+                "comes",
+            }:
+                issues.append(
+                    {
+                        "index": i,
+                        "sentence": sent[:80],
+                        "type": "sov-transfer",
+                        "description": "Verb-final pattern — possible Turkish SOV transfer",
+                    }
+                )
         return issues
-
 
 
 def get_cefr_profile(level: str) -> Dict[str, Any]:
@@ -325,31 +393,76 @@ def get_cefr_profile(level: str) -> Dict[str, Any]:
     return CEFR_PROFILES[level_upper]
 
 
+# discourse markers typical of B2+ writing (subordination / contrast / logic)
+_COMPLEX_MARKERS = frozenset(
+    {
+        "although",
+        "though",
+        "whereas",
+        "unless",
+        "despite",
+        "nevertheless",
+        "nonetheless",
+        "furthermore",
+        "moreover",
+        "consequently",
+        "therefore",
+        "however",
+        "whom",
+        "whose",
+        "whereby",
+        "albeit",
+        "notwithstanding",
+    }
+)
+
+
 def estimate_cefr_level(text: str) -> Tuple[str, float]:
     """
     Estimate CEFR level from text features.
 
-    Heuristic (not definitive — for initial placement only):
-      - Word count → rough proficiency proxy
-      - Sentence complexity → avg length
+    Heuristic (not definitive — for initial placement only). Combines:
+      - Lexical diversity (Guiraud index — length-corrected type/token)
+      - Complex discourse marker rate (subordination, contrast, logic)
+      - Average sentence length
+    Word count acts as an evidence gate: short texts cannot reliably
+    demonstrate higher-level proficiency, so they cap the estimate and
+    lower the confidence.
 
     Returns: (level_label, confidence)
     """
-    words = text.split()
+    raw_words = text.split()
+    words = [w.strip(".,!?;:\"'()[]").lower() for w in raw_words]
+    words = [w for w in words if w]
     sentences = split_sentences(text)
     word_count = len(words)
-    sent_count = len(sentences)
-    avg_sent_len = word_count / max(sent_count, 1)
+    avg_sent_len = word_count / max(len(sentences), 1)
 
+    guiraud = len(set(words)) / math.sqrt(word_count) if word_count else 0.0
+    marker_rate = sum(1 for w in words if w in _COMPLEX_MARKERS) / max(word_count, 1)
+
+    complexity = 0
+    if avg_sent_len > 15:
+        complexity += 1
+    if avg_sent_len > 18:
+        complexity += 1
+    if guiraud > 7.0:
+        complexity += 1
+    if marker_rate > 0.012:
+        complexity += 1
+    if marker_rate > 0.025:
+        complexity += 1
+
+    # evidence gate: level ceiling depends on how much text there is
     if word_count < 100:
-        return ("B1", 0.6)
+        return ("B1", 0.5)
     elif word_count < 250:
-        return ("B1", 0.7)
+        return ("B2", 0.6) if complexity >= 3 else ("B1", 0.6)
     elif word_count < 400:
-        if avg_sent_len > 15:
-            return ("B2", 0.6)
-        return ("B2", 0.5)
+        if complexity >= 4:
+            return ("C1", 0.55)
+        return ("B2", 0.6) if complexity >= 2 else ("B1", 0.55)
     else:
-        if avg_sent_len > 18:
+        if complexity >= 3:
             return ("C1", 0.6)
-        return ("B2", 0.7)
+        return ("B2", 0.65)

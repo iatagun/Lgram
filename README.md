@@ -25,9 +25,9 @@ Discourse cohesion analysis based on **Centering Theory** (Grosz, Joshi, and Wei
 ---
 
 [![PyPI](https://img.shields.io/badge/pypi-centering--lgram-blue)](https://pypi.org/project/centering-lgram/)
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-167%20passed-green)]()
+[![Tests](https://github.com/iatagun/Lgram/actions/workflows/test.yml/badge.svg)](https://github.com/iatagun/Lgram/actions/workflows/test.yml)
 
 ---
 
@@ -43,7 +43,7 @@ from lgram import TextAnalyzer
 
 ta = TextAnalyzer()
 r = ta.analyze("AI helps doctors. It speeds up diagnosis. These tools save lives.")
-print(r.overall_cohesion)  # 0.87
+print(r.overall_cohesion)  # 0.0-1.0 (exact value depends on the spaCy model)
 print(r.quality)           # "high"
 ```
 

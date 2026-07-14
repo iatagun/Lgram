@@ -14,7 +14,7 @@ Uses a pluggable ContentAnalyzer interface. Includes:
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from .models import ContentAnalyzer, Essay, LayerResult, RubricCriterion
 from .utils import split_sentences as _get_sentences
@@ -36,11 +36,30 @@ class MockContentAnalyzer(ContentAnalyzer):
 
     def __init__(self):
         self._transition_phrases = {
-            "however", "therefore", "moreover", "furthermore", "consequently",
-            "thus", "nevertheless", "nonetheless", "accordingly", "hence",
-            "in contrast", "on the other hand", "in addition", "for example",
-            "for instance", "in conclusion", "to summarize", "as a result",
-            "because", "although", "while", "whereas", "unless", "since",
+            "however",
+            "therefore",
+            "moreover",
+            "furthermore",
+            "consequently",
+            "thus",
+            "nevertheless",
+            "nonetheless",
+            "accordingly",
+            "hence",
+            "in contrast",
+            "on the other hand",
+            "in addition",
+            "for example",
+            "for instance",
+            "in conclusion",
+            "to summarize",
+            "as a result",
+            "because",
+            "although",
+            "while",
+            "whereas",
+            "unless",
+            "since",
         }
 
     def analyze(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
@@ -72,7 +91,9 @@ class MockContentAnalyzer(ContentAnalyzer):
         if not evidence:
             evidence.append("Content and argument structure adequate")
 
-        sem = _standard_error([thesis_score, evidence_score, structure_score, development_score])
+        sem = _standard_error(
+            [thesis_score, evidence_score, structure_score, development_score]
+        )
         ci = (max(0, score - sem * 2 * 100), min(100, score + sem * 2 * 100))
 
         result = LayerResult(
@@ -104,20 +125,49 @@ class MockContentAnalyzer(ContentAnalyzer):
         all_text = " ".join(sentences).lower()
 
         thesis_signals = {
-            "argue that", "this essay", "in this paper", "the main",
-            "will discuss", "will examine", "will explore", "will analyze",
-            "the purpose", "the goal", "i believe", "i argue", "i think",
-            "my position", "the issue", "the problem", "the question",
-            "important because", "significant because",
-            "has changed", "have changed", "is a big problem", "is an issue",
-            "has transformed", "have transformed", "plays a", "is one of",
+            "argue that",
+            "this essay",
+            "in this paper",
+            "the main",
+            "will discuss",
+            "will examine",
+            "will explore",
+            "will analyze",
+            "the purpose",
+            "the goal",
+            "i believe",
+            "i argue",
+            "i think",
+            "my position",
+            "the issue",
+            "the problem",
+            "the question",
+            "important because",
+            "significant because",
+            "has changed",
+            "have changed",
+            "is a big problem",
+            "is an issue",
+            "has transformed",
+            "have transformed",
+            "plays a",
+            "is one of",
         }
 
         structure_signals = {
-            "first", "second", "third", "finally",
-            "in conclusion", "to conclude", "in summary",
-            "however", "therefore", "moreover", "furthermore",
-            "on the other hand", "consequently",
+            "first",
+            "second",
+            "third",
+            "finally",
+            "in conclusion",
+            "to conclude",
+            "in summary",
+            "however",
+            "therefore",
+            "moreover",
+            "furthermore",
+            "on the other hand",
+            "consequently",
         }
 
         thesis_hits = sum(1 for s in thesis_signals if s in first_three)
@@ -138,12 +188,36 @@ class MockContentAnalyzer(ContentAnalyzer):
 
     def _assess_evidence(self, words: List[str], sentences: List[str]) -> float:
         evidence_signals = {
-            "for example", "for instance", "study", "research", "data",
-            "evidence", "according to", "report", "survey", "statistic",
-            "percent", "figure", "finding", "result", "experiment",
-            "demonstrate", "show that", "indicate", "suggest that",
-            "prove", "confirm", "support", "cited", "reference",
-            "such as", "like", "these", "this", "because", "since",
+            "for example",
+            "for instance",
+            "study",
+            "research",
+            "data",
+            "evidence",
+            "according to",
+            "report",
+            "survey",
+            "statistic",
+            "percent",
+            "figure",
+            "finding",
+            "result",
+            "experiment",
+            "demonstrate",
+            "show that",
+            "indicate",
+            "suggest that",
+            "prove",
+            "confirm",
+            "support",
+            "cited",
+            "reference",
+            "such as",
+            "like",
+            "these",
+            "this",
+            "because",
+            "since",
         }
         text_lower = " ".join(sentences).lower()
         hits = sum(1 for s in evidence_signals if s in text_lower)
@@ -166,22 +240,44 @@ class MockContentAnalyzer(ContentAnalyzer):
             length_bonus = 0.15
         elif avg_words > 30:
             length_bonus = 0.10
-        return min(1.0, transition_score * 0.65 + 0.35 * min(1.0, (avg_words / 25)) + length_bonus)
+        return min(
+            1.0,
+            transition_score * 0.65 + 0.35 * min(1.0, (avg_words / 25)) + length_bonus,
+        )
 
     def _assess_development(self, sentences: List[str]) -> float:
         if len(sentences) < 3:
             return 0.3
         text_lower = " ".join(sentences).lower()
         conclusion_signals = {
-            "in conclusion", "to conclude", "in summary", "to summarize",
-            "overall", "ultimately", "in the end", "finally", "therefore",
-            "thus", "as a result", "consequently",
+            "in conclusion",
+            "to conclude",
+            "in summary",
+            "to summarize",
+            "overall",
+            "ultimately",
+            "in the end",
+            "finally",
+            "therefore",
+            "thus",
+            "as a result",
+            "consequently",
         }
         last_two = " ".join(sentences[-2:]).lower()
         has_conclusion = any(s in last_two for s in conclusion_signals)
         middle_development = len(sentences) > 4
-        deep_signals = {"because", "since", "as a result", "this means", "this implies",
-                        "the reason", "caused by", "due to", "leads to", "resulting in"}
+        deep_signals = {
+            "because",
+            "since",
+            "as a result",
+            "this means",
+            "this implies",
+            "the reason",
+            "caused by",
+            "due to",
+            "leads to",
+            "resulting in",
+        }
         depth_hits = sum(1 for s in deep_signals if s in text_lower)
         depth_score = min(1.0, depth_hits * 0.12)
         score = 0.3
@@ -189,7 +285,9 @@ class MockContentAnalyzer(ContentAnalyzer):
             score += 0.30
         if middle_development:
             score += 0.25
-        if "first" in text_lower and ("second" in text_lower or "however" in text_lower):
+        if "first" in text_lower and (
+            "second" in text_lower or "however" in text_lower
+        ):
             score += 0.15
         score += depth_score * 0.20
         return min(1.0, score)

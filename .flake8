@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 88
+select = E,F,W
+# black-compatible: E203/W503/E501 conflict with black's formatting;
+# E226/E231 fire inside f-string expressions on Python 3.12+ tokenization;
+# E704 conflicts with black's one-line protocol stubs
+extend-ignore = E203, W503, E501, E226, E231, E704
+exclude = .git, __pycache__, build, dist, .eggs, *.egg-info, .mypy_cache

@@ -14,10 +14,8 @@ Connectives are organized by PDTB relation type:
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
-
 
 _CONNECTIVE_MAP: Dict[str, str] = {
     "but": "COMPARISON",
@@ -105,6 +103,7 @@ class DiscourseAnalyzer:
     def _ensure_nlp(self):
         if self._nlp is None:
             import spacy
+
             self._nlp = spacy.load("en_core_web_sm")
 
     def extract_relations(self, text: str) -> List[DiscourseRelation]:
@@ -118,7 +117,6 @@ class DiscourseAnalyzer:
             return relations
 
         for i, sent in enumerate(sents):
-            sent_start = sent.start
             for token in sent:
                 token_lower = token.text.lower()
                 if token_lower in _CONNECTIVE_MAP:
@@ -127,27 +125,40 @@ class DiscourseAnalyzer:
                     target = i
                     if token.dep_ in ("cc", "mark"):
                         target = i
-                    relations.append(DiscourseRelation(
-                        connective=token_lower,
-                        relation_type=rel_type,
-                        source_sentence=source,
-                        target_sentence=target,
-                    ))
+                    relations.append(
+                        DiscourseRelation(
+                            connective=token_lower,
+                            relation_type=rel_type,
+                            source_sentence=source,
+                            target_sentence=target,
+                        )
+                    )
 
         import re
+
         for i in range(len(sents)):
             text_lower = sents[i].text.lower()
-            for phrase in ("as a result", "for this reason", "in addition",
-                          "for example", "for instance", "in particular",
-                          "in fact", "in contrast", "on the other hand"):
+            for phrase in (
+                "as a result",
+                "for this reason",
+                "in addition",
+                "for example",
+                "for instance",
+                "in particular",
+                "in fact",
+                "in contrast",
+                "on the other hand",
+            ):
                 if re.search(rf"\b{re.escape(phrase)}\b", text_lower):
                     rel_type = _CONNECTIVE_MAP.get(phrase, "EXPANSION")
-                    relations.append(DiscourseRelation(
-                        connective=phrase,
-                        relation_type=rel_type,
-                        source_sentence=i,
-                        target_sentence=i,
-                    ))
+                    relations.append(
+                        DiscourseRelation(
+                            connective=phrase,
+                            relation_type=rel_type,
+                            source_sentence=i,
+                            target_sentence=i,
+                        )
+                    )
 
         return relations
 
@@ -179,7 +190,9 @@ class DiscourseAnalyzer:
             if max_pct > 0.7:
                 distribution_penalty = (max_pct - 0.7) * 0.3
 
-        cohesion_score = round(min(relation_score + variety_bonus - distribution_penalty, 1.0), 4)
+        cohesion_score = round(
+            min(relation_score + variety_bonus - distribution_penalty, 1.0), 4
+        )
 
         return DiscourseReport(
             sentence_count=len(sents),
@@ -192,7 +205,9 @@ class DiscourseAnalyzer:
         )
 
     def compare_discourse(
-        self, text_a: str, text_b: str,
+        self,
+        text_a: str,
+        text_b: str,
     ) -> Dict[str, Any]:
         """Compare discourse structure of two texts."""
         r1 = self.analyze(text_a)

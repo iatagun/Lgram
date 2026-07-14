@@ -8,17 +8,37 @@ import re
 import urllib.request
 
 TOPICS = [
-    "Artificial_intelligence", "Climate_change", "Electric_vehicle",
-    "Social_media", "Quantum_computing", "Renewable_energy",
-    "CRISPR_gene_editing", "Blockchain", "Remote_work",
-    "Mental_health", "Bitcoin", "Mars_2020",
-    "mRNA_vaccine", "SpaceX", "Cybersecurity",
-    "Gig_economy", "Urban_planning", "Data_privacy",
-    "Renewable_energy", "Artificial_intelligence_in_healthcare",
-    "Streaming_media", "Supply_chain", "Internet_of_things",
-    "3D_printing", "Virtual_reality", "Genetic_testing",
-    "Online_education", "Smart_city", "Drone_delivery",
-    "Plant-based_meat", "Carbon_capture",
+    "Artificial_intelligence",
+    "Climate_change",
+    "Electric_vehicle",
+    "Social_media",
+    "Quantum_computing",
+    "Renewable_energy",
+    "CRISPR_gene_editing",
+    "Blockchain",
+    "Remote_work",
+    "Mental_health",
+    "Bitcoin",
+    "Mars_2020",
+    "mRNA_vaccine",
+    "SpaceX",
+    "Cybersecurity",
+    "Gig_economy",
+    "Urban_planning",
+    "Data_privacy",
+    "Renewable_energy",
+    "Artificial_intelligence_in_healthcare",
+    "Streaming_media",
+    "Supply_chain",
+    "Internet_of_things",
+    "3D_printing",
+    "Virtual_reality",
+    "Genetic_testing",
+    "Online_education",
+    "Smart_city",
+    "Drone_delivery",
+    "Plant-based_meat",
+    "Carbon_capture",
 ]
 
 HEADERS = {"User-Agent": "centering-lgram/2.2.0 (research calibration)"}
@@ -42,11 +62,16 @@ def fetch_wikipedia_corpus(max_articles: int = 30) -> list[str]:
                 text = page.get("extract", "")
                 # clean references
                 text = re.sub(r"\[[^\]]*\]", "", text)
-                text = re.sub(r"\([^)]*\b(?:pronounced|known as|also called|Latin|French|German|Italian|Spanish|lit\.|abbreviation for|short for|formerly|born|died|fl\.)\s[^)]*\)", "", text, flags=re.IGNORECASE)
+                text = re.sub(
+                    r"\([^)]*\b(?:pronounced|known as|also called|Latin|French|German|Italian|Spanish|lit\.|abbreviation for|short for|formerly|born|died|fl\.)\s[^)]*\)",
+                    "",
+                    text,
+                    flags=re.IGNORECASE,
+                )
                 text = re.sub(r"\s+", " ", text).strip()
                 if len(text.split()) >= 50:
                     texts.append(text)
-        except Exception as e:
+        except Exception:
             continue
     return texts
 

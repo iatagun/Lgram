@@ -13,9 +13,12 @@ caused by Turkish L1 transfer.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from .models import CAEASReport
 
 
 class ErrorCategory(Enum):
@@ -155,9 +158,7 @@ class ErrorTypology:
                 lv = inst.get("cefr", "unknown")
                 level_dist[lv] = level_dist.get(lv, 0) + 1
 
-            l1_count = sum(
-                1 for inst in instances if inst.get("l1_transfer", False)
-            )
+            l1_count = sum(1 for inst in instances if inst.get("l1_transfer", False))
             l1_corr = l1_count / max(freq, 1)
 
             examples = [
@@ -166,20 +167,21 @@ class ErrorTypology:
                 if inst.get("evidence")
             ]
 
-            entries.append(TypologyEntry(
-                category=cat,
-                frequency=freq,
-                severity=round(min(1.0, freq / max(self._essay_count, 1)), 3),
-                cefr_levels=level_dist,
-                l1_correlation=round(l1_corr, 3),
-                examples=examples,
-                teacher_guidance=self.GUIDANCE.get(cat, ""),
-            ))
+            entries.append(
+                TypologyEntry(
+                    category=cat,
+                    frequency=freq,
+                    severity=round(min(1.0, freq / max(self._essay_count, 1)), 3),
+                    cefr_levels=level_dist,
+                    l1_correlation=round(l1_corr, 3),
+                    examples=examples,
+                    teacher_guidance=self.GUIDANCE.get(cat, ""),
+                )
+            )
 
         entries.sort(key=lambda e: e.frequency, reverse=True)
         l1_total = sum(
-            e.frequency for e in entries
-            if e.category in self.L1_SENSITIVE_CATEGORIES
+            e.frequency for e in entries if e.category in self.L1_SENSITIVE_CATEGORIES
         )
         l1_ratio = l1_total / max(total_errors, 1)
 
@@ -212,60 +214,72 @@ class ErrorTypology:
         for seg in segments:
             rough = seg.get("rough_shift_ratio", 0)
             if rough > 0.2:
-                self._errors[ErrorCategory.MISSING_TRANSITION].append({
-                    "cefr": cefr_level,
-                    "evidence": f"Segment {seg.get('index', 0)} rough_shift={rough:.2f}",
-                    "l1_transfer": False,
-                    "weight": int(rough * 10),
-                })
+                self._errors[ErrorCategory.MISSING_TRANSITION].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": f"Segment {seg.get('index', 0)} rough_shift={rough:.2f}",
+                        "l1_transfer": False,
+                        "weight": int(rough * 10),
+                    }
+                )
 
             if seg.get("cohesion", 0) < 0.55:
-                self._errors[ErrorCategory.ABRUPT_TOPIC_SHIFT].append({
-                    "cefr": cefr_level,
-                    "evidence": f"Segment {seg.get('index', 0)} cohesion={seg.get('cohesion', 0):.2f}",
-                    "l1_transfer": False,
-                    "weight": 1,
-                })
+                self._errors[ErrorCategory.ABRUPT_TOPIC_SHIFT].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": f"Segment {seg.get('index', 0)} cohesion={seg.get('cohesion', 0):.2f}",
+                        "l1_transfer": False,
+                        "weight": 1,
+                    }
+                )
 
             if seg.get("continue_ratio", 0) > 0.5:
-                self._errors[ErrorCategory.OVERUSE_REPETITION].append({
-                    "cefr": cefr_level,
-                    "evidence": f"Segment {seg.get('index', 0)} high continue ratio",
-                    "l1_transfer": True,
-                    "weight": 1,
-                })
+                self._errors[ErrorCategory.OVERUSE_REPETITION].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": f"Segment {seg.get('index', 0)} high continue ratio",
+                        "l1_transfer": True,
+                        "weight": 1,
+                    }
+                )
 
     def _categorize_content(self, lr: Any, cefr_level: str) -> None:
         evidence = getattr(lr, "evidence", [])
         for e in evidence:
             text = e.lower()
             if "pronoun" in text or "gender" in text:
-                self._errors[ErrorCategory.PRONOUN_REFERENCE].append({
-                    "cefr": cefr_level,
-                    "evidence": e,
-                    "l1_transfer": True,
-                })
+                self._errors[ErrorCategory.PRONOUN_REFERENCE].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": e,
+                        "l1_transfer": True,
+                    }
+                )
 
-    def _categorize_triggers(
-        self, triggers: List[str], cefr_level: str
-    ) -> None:
+    def _categorize_triggers(self, triggers: List[str], cefr_level: str) -> None:
         for t in triggers:
             t_lower = t.lower()
             if "gap" in t_lower:
-                self._errors[ErrorCategory.ABRUPT_TOPIC_SHIFT].append({
-                    "cefr": cefr_level,
-                    "evidence": t,
-                    "l1_transfer": False,
-                })
+                self._errors[ErrorCategory.ABRUPT_TOPIC_SHIFT].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": t,
+                        "l1_transfer": False,
+                    }
+                )
             elif "cohesion" in t_lower and "low" in t_lower:
-                self._errors[ErrorCategory.MISSING_TRANSITION].append({
-                    "cefr": cefr_level,
-                    "evidence": t,
-                    "l1_transfer": False,
-                })
+                self._errors[ErrorCategory.MISSING_TRANSITION].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": t,
+                        "l1_transfer": False,
+                    }
+                )
             elif "l1" in t_lower or "transfer" in t_lower:
-                self._errors[ErrorCategory.SUBJECT_DROP].append({
-                    "cefr": cefr_level,
-                    "evidence": t,
-                    "l1_transfer": True,
-                })
+                self._errors[ErrorCategory.SUBJECT_DROP].append(
+                    {
+                        "cefr": cefr_level,
+                        "evidence": t,
+                        "l1_transfer": True,
+                    }
+                )

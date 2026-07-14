@@ -58,9 +58,7 @@ class DataExporter:
         for essay, report in zip(essays, reports):
             cefr = report.cefr_level or "unknown"
 
-            bundle.cefr_distribution[cefr] = (
-                bundle.cefr_distribution.get(cefr, 0) + 1
-            )
+            bundle.cefr_distribution[cefr] = bundle.cefr_distribution.get(cefr, 0) + 1
 
             record = {
                 "title": essay.title,
@@ -78,7 +76,8 @@ class DataExporter:
                         "indicator": lr.score,
                         "confidence": (
                             list(lr.confidence_interval)
-                            if lr.confidence_interval else None
+                            if lr.confidence_interval
+                            else None
                         ),
                         "evidence_count": len(lr.evidence),
                     }
@@ -100,20 +99,20 @@ class DataExporter:
     def to_json_string(self, bundle: ExportBundle) -> str:
         return json.dumps(bundle.__dict__, indent=2, ensure_ascii=False, default=str)
 
-    def to_csv_typology(
-        self, bundle: ExportBundle, filepath: str
-    ) -> None:
+    def to_csv_typology(self, bundle: ExportBundle, filepath: str) -> None:
         rows = [["cefr", "score", "ci_low", "ci_high", "borderline", "triggers"]]
         for r in bundle.reports:
             ci = r.get("confidence_interval", [0, 0])
-            rows.append([
-                r.get("estimated_cefr", ""),
-                r.get("overall_cohesion_indicator", 0),
-                ci[0] if len(ci) > 0 else 0,
-                ci[1] if len(ci) > 1 else 0,
-                r.get("borderline", False),
-                r.get("trigger_count", 0),
-            ])
+            rows.append(
+                [
+                    r.get("estimated_cefr", ""),
+                    r.get("overall_cohesion_indicator", 0),
+                    ci[0] if len(ci) > 0 else 0,
+                    ci[1] if len(ci) > 1 else 0,
+                    r.get("borderline", False),
+                    r.get("trigger_count", 0),
+                ]
+            )
 
         with open(filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
@@ -121,6 +120,7 @@ class DataExporter:
 
     def anonymize(self, bundle: ExportBundle) -> ExportBundle:
         import copy
+
         anon = copy.deepcopy(bundle)
         for r in anon.reports:
             r.pop("title", None)
@@ -132,12 +132,8 @@ class DataExporter:
         bundle_a: ExportBundle,
         bundle_b: ExportBundle,
     ) -> Dict[str, Any]:
-        scores_a = [
-            r["overall_cohesion_indicator"] for r in bundle_a.reports
-        ]
-        scores_b = [
-            r["overall_cohesion_indicator"] for r in bundle_b.reports
-        ]
+        scores_a = [r["overall_cohesion_indicator"] for r in bundle_a.reports]
+        scores_b = [r["overall_cohesion_indicator"] for r in bundle_b.reports]
         return {
             "institution_a": {
                 "count": len(scores_a),

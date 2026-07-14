@@ -87,7 +87,9 @@ def get_model(
                 return get_model(c, use_sentence_transformers)
             except OSError:
                 continue
-        raise OSError("No spaCy model found. Install: python -m spacy download en_core_web_sm")
+        raise OSError(
+            "No spaCy model found. Install: python -m spacy download en_core_web_sm"
+        )
 
     elif spec in _MODEL_SPECS:
         info = _MODEL_SPECS[spec]
@@ -103,6 +105,7 @@ def get_model(
     if use_sentence_transformers:
         try:
             from sentence_transformers import SentenceTransformer
+
             st_model = SentenceTransformer(_ST_MODEL_SPEC["name"])
             similarity_threshold = _ST_MODEL_SPEC["similarity_threshold"]
         except ImportError:

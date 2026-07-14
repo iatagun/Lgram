@@ -86,17 +86,19 @@ class TestCEFREstimation(unittest.TestCase):
         self.assertEqual(level, "B1")
 
     def test_longer_text_is_b2(self):
-        text = " ".join([
-            "The impact of social media on modern society is profound and multifaceted.",
-            "Research demonstrates that platforms like Instagram and TikTok reshape how",
-            "young people form identities and maintain relationships. Furthermore, these",
-            "technologies introduce unprecedented challenges regarding privacy, mental",
-            "health, and attention spans. Consequently, educators and policymakers must",
-            "develop comprehensive strategies to address these emerging concerns.",
-            "Studies have shown that excessive social media use correlates with anxiety.",
-            "However, the same platforms also provide valuable social support networks.",
-            "The key lies in balanced usage and digital literacy education.",
-        ])
+        text = " ".join(
+            [
+                "The impact of social media on modern society is profound and multifaceted.",
+                "Research demonstrates that platforms like Instagram and TikTok reshape how",
+                "young people form identities and maintain relationships. Furthermore, these",
+                "technologies introduce unprecedented challenges regarding privacy, mental",
+                "health, and attention spans. Consequently, educators and policymakers must",
+                "develop comprehensive strategies to address these emerging concerns.",
+                "Studies have shown that excessive social media use correlates with anxiety.",
+                "However, the same platforms also provide valuable social support networks.",
+                "The key lies in balanced usage and digital literacy education.",
+            ]
+        )
         level, conf = estimate_cefr_level(text)
         self.assertIn(level, ["B1", "B2"])
 
@@ -135,6 +137,26 @@ class TestL1TransferAnalyzer(unittest.TestCase):
         )
         report = self.analyzer.analyze(text)
         self.assertGreater(len(report.gender_pronoun_issues), 0)
+
+    def test_same_pronoun_run_is_not_alternation(self):
+        # regression: he...he...he used to be counted as he/she alternation
+        text = (
+            "The teacher entered the classroom. He put his books on the desk. "
+            "He then started the lesson. He asked many questions. He was strict. "
+            "He gave homework. He left early."
+        )
+        report = self.analyzer.analyze(text)
+        types = [i.get("type") for i in report.gender_pronoun_issues]
+        self.assertNotIn("gender-alternation", types)
+
+    def test_questions_not_flagged_as_pro_drop(self):
+        text = (
+            "Is this the right way to learn English? "
+            "Are students happy with their progress? "
+            "Should we change the curriculum completely?"
+        )
+        report = self.analyzer.analyze(text)
+        self.assertEqual(len(report.pro_drop_issues), 0)
 
     def test_article_estimate(self):
         text = (
@@ -219,6 +241,7 @@ class TestEFLGrader(unittest.TestCase):
 
     def test_set_rubric(self):
         from lgram.essay.models import RubricCriterion
+
         custom = [RubricCriterion(name="Custom", weight=1.0, description="")]
         self.grader.set_rubric(custom)
         self.assertEqual(len(self.grader.rubric), 1)
@@ -228,6 +251,54 @@ class TestEFLGrader(unittest.TestCase):
         essay = Essay(title="T", text="Hello world.")
         report = self.grader.grade(essay)
         self.assertIsNotNone(report)
+
+    def test_llm_c2_estimate_clamps_to_c1(self):
+        # regression: an LLM cefr_estimate of "C2" used to crash analyze()
+        # because CEFR_PROFILES only covers B1-C1
+        from lgram.essay.models import LayerResult
+
+        class FakeContent:
+            def analyze(self, essay, rubric):
+                return LayerResult(
+                    layer_name="Content (fake)",
+                    score=85.0,
+                    normalized_score=0.85,
+                    raw_details={"cefr_estimate": "C2"},
+                    evidence=["fake"],
+                    confidence_interval=(80.0, 90.0),
+                )
+
+        self.grader.set_content_analyzer(FakeContent())
+        essay = Essay(
+            title="T",
+            text=(
+                "The essay discusses climate change. It affects everyone. "
+                "Scientists study the problem carefully. They publish reports."
+            ),
+        )
+        report = self.grader.analyze(essay)
+        self.assertEqual(report.cefr_level, "C1")
+
+    def test_custom_rubric_order_weights_by_name(self):
+        # regression: weights used to be zipped positionally with the fixed
+        # layer order, so a reordered rubric silently mis-weighted layers
+        from lgram.essay.models import RubricCriterion
+
+        reordered = [
+            RubricCriterion(name="Mechanics", weight=0.10, description=""),
+            RubricCriterion(name="Organization", weight=0.30, description=""),
+            RubricCriterion(name="Grammar", weight=0.20, description=""),
+            RubricCriterion(name="Style & Expression", weight=0.15, description=""),
+            RubricCriterion(name="Content", weight=0.25, description=""),
+        ]
+        self.grader.set_rubric(reordered)
+        weights = self.grader._layer_weights()
+        # layer order: grammar, content, cohesion, surface, mechanics
+        self.assertAlmostEqual(weights[0], 0.20)
+        self.assertAlmostEqual(weights[1], 0.25)
+        self.assertAlmostEqual(weights[2], 0.30)
+        self.assertAlmostEqual(weights[3], 0.15)
+        self.assertAlmostEqual(weights[4], 0.10)
 
 
 if __name__ == "__main__":

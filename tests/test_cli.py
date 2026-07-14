@@ -32,40 +32,63 @@ class TestCLI(unittest.TestCase):
                 pass
 
     def test_score_text(self):
-        with patch("sys.argv", [
-            "cli", "score", "-t",
-            "John went to the store. He bought milk. John paid. He left.",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "cli",
+                "score",
+                "-t",
+                "John went to the store. He bought milk. John paid. He left.",
+            ],
+        ):
             result = main()
             self.assertEqual(result, 0)
 
     def test_analyze_text(self):
-        with patch("sys.argv", [
-            "cli", "analyze", "-t",
-            "John went to the store. He bought milk. John paid. He left.",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "cli",
+                "analyze",
+                "-t",
+                "John went to the store. He bought milk. John paid. He left.",
+            ],
+        ):
             result = main()
             self.assertEqual(result, 0)
 
     def test_clauses_text(self):
-        with patch("sys.argv", [
-            "cli", "clauses", "-t",
-            "John went to the store because he needed milk, but the store was closed.",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "cli",
+                "clauses",
+                "-t",
+                "John went to the store because he needed milk, but the store was closed.",
+            ],
+        ):
             result = main()
             self.assertEqual(result, 0)
 
     def test_full_text(self):
-        with patch("sys.argv", [
-            "cli", "full", "-t",
-            "John went to the store. He bought milk because he was hungry.",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "cli",
+                "full",
+                "-t",
+                "John went to the store. He bought milk because he was hungry.",
+            ],
+        ):
             result = main()
             self.assertEqual(result, 0)
 
     def test_score_from_file(self):
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".txt", delete=False, encoding="utf-8",
+            mode="w",
+            suffix=".txt",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             f.write("John went. He bought milk. John paid. He left.")
             tmp = f.name
@@ -92,17 +115,29 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(result, 1)
 
     def test_score_verbose(self):
-        with patch("sys.argv", [
-            "cli", "analyze", "-v", "-t",
-            "John went to the store. He bought milk.",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "cli",
+                "analyze",
+                "-v",
+                "-t",
+                "John went to the store. He bought milk.",
+            ],
+        ):
             result = main()
             self.assertEqual(result, 0)
 
     def test_clauses_simple_sentence(self):
-        with patch("sys.argv", [
-            "cli", "clauses", "-t", "John walked home.",
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "cli",
+                "clauses",
+                "-t",
+                "John walked home.",
+            ],
+        ):
             result = main()
             self.assertEqual(result, 0)
 

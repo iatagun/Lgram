@@ -19,6 +19,18 @@ import spacy
 
 from .models.centering_theory import EnhancedCenteringTheory, TransitionType
 
+# spaCy models are expensive to load and safe to share for sequential
+# analysis; cache them per process so repeated TextAnalyzer construction
+# (batch jobs, test suites) doesn't reload from disk every time
+_MODEL_CACHE: Dict[str, spacy.language.Language] = {}
+
+
+def _load_spacy_model(model: str) -> spacy.language.Language:
+    if model not in _MODEL_CACHE:
+        _MODEL_CACHE[model] = spacy.load(model)
+    return _MODEL_CACHE[model]
+
+
 # cohesion quality thresholds
 QUALITY_HIGH = 0.80
 QUALITY_MEDIUM = 0.55
@@ -92,15 +104,16 @@ class TextAnalyzer:
         history_limit: int = 20,
         use_sentence_transformers: bool = False,
     ):
-        self.nlp = spacy.load(model)
+        self.nlp = _load_spacy_model(model)
         self.model_name = model
         self._runtime_warnings: List[str] = []
         self._st_model = None
         if use_sentence_transformers:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._st_model = SentenceTransformer("all-MiniLM-L6-v2")
-            except ImportError as e:
+            except ImportError:
                 msg = (
                     "sentence-transformers requested but not installed; "
                     "falling back to spaCy/lexical similarity."
@@ -143,16 +156,18 @@ class TextAnalyzer:
     def _make_ct(self) -> EnhancedCenteringTheory:
         kwargs = dict(self._ct_kwargs)
         if self._st_model:
+
             def _sim(a: str, b: str) -> float:
                 try:
                     emb = self._st_model.encode([a, b])
                     a_vec, b_vec = emb[0], emb[1]
-                    dot = float(sum(x*y for x, y in zip(a_vec, b_vec)))
-                    na = math.sqrt(sum(x*x for x in a_vec))
-                    nb = math.sqrt(sum(x*x for x in b_vec))
+                    dot = float(sum(x * y for x, y in zip(a_vec, b_vec)))
+                    na = math.sqrt(sum(x * x for x in a_vec))
+                    nb = math.sqrt(sum(x * x for x in b_vec))
                     return dot / (na * nb) if na and nb else 0.0
                 except Exception:
                     return 0.0
+
             kwargs["custom_similarity"] = _sim
         return EnhancedCenteringTheory(self.nlp, **kwargs)
 
@@ -162,9 +177,13 @@ class TextAnalyzer:
             try:
                 emb = self._st_model.encode([text_a, text_b])
                 a, b = emb[0], emb[1]
-                return float(sum(x*y for x, y in zip(a, b)) / (
-                    math.sqrt(sum(x*x for x in a)) * math.sqrt(sum(x*x for x in b))
-                ))
+                return float(
+                    sum(x * y for x, y in zip(a, b))
+                    / (
+                        math.sqrt(sum(x * x for x in a))
+                        * math.sqrt(sum(x * x for x in b))
+                    )
+                )
             except Exception as e:
                 warnings.warn(
                     f"sentence-transformer similarity failed; using fallback similarity: {e}",
@@ -246,7 +265,10 @@ class TextAnalyzer:
                 paragraphs=[],
                 segments=[0] if all_sentences_flat else [],
                 quality="insufficient_data",
-                metadata={"model": self.model_name, "warning": "Need at least 2 sentences"},
+                metadata={
+                    "model": self.model_name,
+                    "warning": "Need at least 2 sentences",
+                },
                 warnings=self._runtime_notes(),
             )
 
@@ -274,8 +296,13 @@ class TextAnalyzer:
                     backward_center=state.backward_center,
                     forward_centers=state.forward_centers,
                     entities={
-                        k: {"text": v.text, "pos": v.pos, "dep": v.dep,
-                            "is_person": v.is_person, "gender": v.gender}
+                        k: {
+                            "text": v.text,
+                            "pos": v.pos,
+                            "dep": v.dep,
+                            "is_person": v.is_person,
+                            "gender": v.gender,
+                        }
                         for k, v in state._entity_map.items()
                     },
                 )
@@ -285,38 +312,52 @@ class TextAnalyzer:
                 if include_clauses:
                     clauses = ct.extract_clauses(sent_text)
                     if len(clauses) >= 2:
-                        clause_analyses.append({
-                            "sentence": sent_text,
-                            "clauses": clauses,
-                            "analysis": ct.analyze_intra_sentential(sent_text),
-                        })
+                        clause_analyses.append(
+                            {
+                                "sentence": sent_text,
+                                "clauses": clauses,
+                                "analysis": ct.analyze_intra_sentential(sent_text),
+                            }
+                        )
 
             para_total = sum(para_transitions.values()) or 1
             para_score = round(
-                sum(para_transitions.get(t, 0) * ct._transition_weights.get(t, 0.5)
-                    for t in TransitionType) / para_total, 4
+                sum(
+                    para_transitions.get(t, 0) * ct._transition_weights.get(t, 0.5)
+                    for t in TransitionType
+                )
+                / para_total,
+                4,
             )
-            para_dist = {t.value: para_transitions.get(t, 0) / para_total
-                        for t in TransitionType}
+            para_dist = {
+                t.value: para_transitions.get(t, 0) / para_total for t in TransitionType
+            }
 
             boundaries = ct.detect_boundaries([s.text for s in sent_analyses])
 
-            paragraph_results.append(ParagraphAnalysis(
-                index=p_idx,
-                sentences=sent_analyses,
-                cohesion_score=para_score,
-                transition_distribution=para_dist,
-                segment_count=len(boundaries),
-                clause_analyses=clause_analyses,
-            ))
+            paragraph_results.append(
+                ParagraphAnalysis(
+                    index=p_idx,
+                    sentences=sent_analyses,
+                    cohesion_score=para_score,
+                    transition_distribution=para_dist,
+                    segment_count=len(boundaries),
+                    clause_analyses=clause_analyses,
+                )
+            )
 
         all_trans_total = sum(all_transitions.values()) or 1
         overall_score = round(
-            sum(all_transitions.get(t, 0) * ct._transition_weights.get(t, 0.5)
-                for t in TransitionType) / all_trans_total, 4
+            sum(
+                all_transitions.get(t, 0) * ct._transition_weights.get(t, 0.5)
+                for t in TransitionType
+            )
+            / all_trans_total,
+            4,
         )
-        overall_dist = {t.value: all_transitions.get(t, 0) / all_trans_total
-                       for t in TransitionType}
+        overall_dist = {
+            t.value: all_transitions.get(t, 0) / all_trans_total for t in TransitionType
+        }
 
         all_texts = [s.text for s in all_sentences]
         all_boundaries = ct.detect_boundaries(all_texts)
@@ -338,7 +379,10 @@ class TextAnalyzer:
             paragraphs=paragraph_results,
             segments=all_boundaries,
             quality=quality,
-            metadata={"model": self.model_name, "similarity_mode": self._similarity_mode},
+            metadata={
+                "model": self.model_name,
+                "similarity_mode": self._similarity_mode,
+            },
             warnings=self._runtime_notes(),
         )
 
@@ -356,13 +400,15 @@ class TextAnalyzer:
         rankings = []
         for i, r in enumerate(reports):
             label = labels[i] if labels and i < len(labels) else f"text_{i+1}"
-            rankings.append({
-                "label": label,
-                "cohesion": r.overall_cohesion,
-                "quality": r.quality,
-                "sentences": r.sentence_count,
-                "segments": len(r.segments),
-            })
+            rankings.append(
+                {
+                    "label": label,
+                    "cohesion": r.overall_cohesion,
+                    "quality": r.quality,
+                    "sentences": r.sentence_count,
+                    "segments": len(r.segments),
+                }
+            )
 
         rankings.sort(key=lambda x: x["cohesion"], reverse=True)
 
@@ -380,7 +426,9 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def analyze_llm(
-        self, response: str, prompt: Optional[str] = None,
+        self,
+        response: str,
+        prompt: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Analyze LLM-generated text cohesion. Optionally compare with prompt."""
         ct = self._make_ct()
@@ -444,8 +492,10 @@ class TextAnalyzer:
             for sent in combined:
                 ct3.update_discourse(sent)
             for i in range(len(prompt_sents), len(combined)):
-                if (ct3.discourse_history[i].transition == TransitionType.ROUGH_SHIFT
-                        and ct3.discourse_history[i].backward_center is None):
+                if (
+                    ct3.discourse_history[i].transition == TransitionType.ROUGH_SHIFT
+                    and ct3.discourse_history[i].backward_center is None
+                ):
                     result["cross_boundary_penalty"] += 1
 
         return result
@@ -479,7 +529,9 @@ class TextAnalyzer:
             for token in sent_span:
                 if token.pos_ not in ("NOUN", "PROPN", "PRON"):
                     continue
-                key = token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
+                key = (
+                    token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
+                )
                 if not key or key in seen:
                     continue
                 seen.add(key)
@@ -550,9 +602,7 @@ class TextAnalyzer:
                 if role != "-"
             }
             curr_entities = {
-                entity_list[col]
-                for col, role in enumerate(matrix[row])
-                if role != "-"
+                entity_list[col] for col, role in enumerate(matrix[row]) if role != "-"
             }
             if not prev_entities and not curr_entities:
                 continue
@@ -606,10 +656,12 @@ class TextAnalyzer:
         recurring_entities = sum(1 for count in entity_presence.values() if count >= 2)
         recurrence_ratio = recurring_entities / max(n_entities, 1)
         adjacent_overlap = adjacent_overlap_sum / max(adjacent_pairs, 1)
-        adjacent_sentence_similarity = (
-            adjacent_sentence_similarity / max(adjacent_pairs, 1)
+        adjacent_sentence_similarity = adjacent_sentence_similarity / max(
+            adjacent_pairs, 1
         )
-        pairwise_similarity = pairwise_similarity_sum / max(pairwise_similarity_pairs, 1)
+        pairwise_similarity = pairwise_similarity_sum / max(
+            pairwise_similarity_pairs, 1
+        )
         pronoun_support_ratio = supported_pronoun_sentences / max(pronoun_sentences, 1)
         _ = base_transition, adjacent_overlap
         score = (
@@ -634,7 +686,10 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def texttile_segments(
-        self, text: str, k: int = 10, cutoff: float = 0.2,
+        self,
+        text: str,
+        k: int = 10,
+        cutoff: float = 0.2,
     ) -> List[int]:
         """
         TextTiling segmentation — returns sentence indices of boundaries.
@@ -655,11 +710,13 @@ class TextAnalyzer:
 
         sentence_tokens: List[List[str]] = []
         for sent in sents:
-            sentence_tokens.append([
-                token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
-                for token in sent
-                if token.is_alpha and not token.is_stop
-            ])
+            sentence_tokens.append(
+                [
+                    token.lemma_.lower().strip() if token.lemma_ else token.text.lower()
+                    for token in sent
+                    if token.is_alpha and not token.is_stop
+                ]
+            )
 
         sims: List[float] = []
         for boundary in range(len(sents) - 1):
@@ -693,7 +750,9 @@ class TextAnalyzer:
 
         for i in range(1, len(smoothed) - 1):
             left_peak = max(smoothed[:i]) if i > 0 else smoothed[i]
-            right_peak = max(smoothed[i + 1:]) if i < len(smoothed) - 1 else smoothed[i]
+            right_peak = (
+                max(smoothed[i + 1 :]) if i < len(smoothed) - 1 else smoothed[i]
+            )
             depth = (left_peak - smoothed[i]) + (right_peak - smoothed[i])
             local_floor = min(left_peak, right_peak)
             if depth >= cutoff and smoothed[i] <= local_floor:
@@ -752,8 +811,11 @@ class TextAnalyzer:
 
         if n < 2:
             return CohesionGraph(
-                adjacency=[[1.0]], density=1.0, avg_similarity=1.0,
-                communities=[[0]], central_sentences=[0],
+                adjacency=[[1.0]],
+                density=1.0,
+                avg_similarity=1.0,
+                communities=[[0]],
+                central_sentences=[0],
             )
 
         ct = self._make_ct()
@@ -777,12 +839,12 @@ class TextAnalyzer:
                 adj[j][i] = weight
 
         # density
-        edge_count = sum(1 for i in range(n) for j in range(i+1, n) if adj[i][j] > 0)
+        edge_count = sum(1 for i in range(n) for j in range(i + 1, n) if adj[i][j] > 0)
         max_edges = n * (n - 1) / 2
         density = round(edge_count / max(max_edges, 1), 4)
 
         # avg similarity
-        similarities = [adj[i][j] for i in range(n) for j in range(i+1, n)]
+        similarities = [adj[i][j] for i in range(n) for j in range(i + 1, n)]
         avg_sim = round(sum(similarities) / max(len(similarities), 1), 4)
 
         # simple community detection (threshold-based connected components)
@@ -805,13 +867,21 @@ class TextAnalyzer:
             communities.append(sorted(comp))
 
         # centrality: degree
-        degrees = [sum(1 for j in range(n) if j != i and adj[i][j] > GRAPH_EDGE_THRESHOLD) for i in range(n)]
+        degrees = [
+            sum(1 for j in range(n) if j != i and adj[i][j] > GRAPH_EDGE_THRESHOLD)
+            for i in range(n)
+        ]
         max_deg = max(degrees) if degrees else 0
-        central = [i for i, d in enumerate(degrees) if d == max_deg] if max_deg > 0 else [0]
+        central = (
+            [i for i, d in enumerate(degrees) if d == max_deg] if max_deg > 0 else [0]
+        )
 
         return CohesionGraph(
-            adjacency=adj, density=density, avg_similarity=avg_sim,
-            communities=communities, central_sentences=central,
+            adjacency=adj,
+            density=density,
+            avg_similarity=avg_sim,
+            communities=communities,
+            central_sentences=central,
         )
 
     # ------------------------------------------------------------------
@@ -828,8 +898,11 @@ class TextAnalyzer:
         # extract nouns per sentence (use doc directly, no re-parse)
         sent_nouns: List[List[str]] = []
         for sent in sents:
-            nouns = [t.text.lower() for t in sent
-                    if t.pos_ in ("NOUN", "PROPN") and not t.is_stop]
+            nouns = [
+                t.text.lower()
+                for t in sent
+                if t.pos_ in ("NOUN", "PROPN") and not t.is_stop
+            ]
             sent_nouns.append(nouns)
 
         chain_lengths: List[int] = []
@@ -858,7 +931,9 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def cohesion_trend(
-        self, text: str, window: int = 3,
+        self,
+        text: str,
+        window: int = 3,
     ) -> Dict[str, Any]:
         """Track cohesion across text using sliding window."""
         doc = self.nlp(text)
@@ -871,7 +946,7 @@ class TextAnalyzer:
         ct = self._make_ct()
         scores: List[float] = []
         for i in range(n - window + 1):
-            chunk = sents[i:i + window]
+            chunk = sents[i : i + window]
             ct.discourse_history = []
             for sent in chunk:
                 ct.update_discourse(sent)
@@ -915,7 +990,9 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def cohesion_heatmap(
-        self, text: str, ascii_render: bool = True,
+        self,
+        text: str,
+        ascii_render: bool = True,
     ) -> Dict[str, Any]:
         """NxN sentence similarity matrix. Weak pairs flagged."""
         doc = self.nlp(text)
@@ -937,11 +1014,13 @@ class TextAnalyzer:
         weak_pairs = []
         for i in range(n - 1):
             if matrix[i][i + 1] < HEATMAP_WEAK:
-                weak_pairs.append({
-                    "sentence_a": i,
-                    "sentence_b": i + 1,
-                    "similarity": matrix[i][i + 1],
-                })
+                weak_pairs.append(
+                    {
+                        "sentence_a": i,
+                        "sentence_b": i + 1,
+                        "similarity": matrix[i][i + 1],
+                    }
+                )
 
         ascii_out = ""
         if ascii_render:
@@ -968,8 +1047,9 @@ class TextAnalyzer:
     def readability_score(self, text: str) -> Dict[str, float]:
         """Flesch Reading Ease + basic text statistics (pure Python)."""
         words = text.split()
-        sentences = [s for s in text.replace("!", ".").replace("?", ".").split(".")
-                     if s.strip()]
+        sentences = [
+            s for s in text.replace("!", ".").replace("?", ".").split(".") if s.strip()
+        ]
         n_words = len(words) or 1
         n_sents = len(sentences) or 1
 
@@ -1032,31 +1112,37 @@ class TextAnalyzer:
             if t.value == "Rough-Shift":
                 rough_count += 1
                 if state.backward_center is None:
-                    suggestions.append({
-                        "index": i,
-                        "issue": "no_backward_center",
-                        "severity": "high",
-                    "suggestion": (
-                        "No link to previous topic. Add a pronoun, repeat a key word, "
-                        "or use a transition phrase (however, therefore, in addition)."
-                    ),
-                    })
+                    suggestions.append(
+                        {
+                            "index": i,
+                            "issue": "no_backward_center",
+                            "severity": "high",
+                            "suggestion": (
+                                "No link to previous topic. Add a pronoun, repeat a key word, "
+                                "or use a transition phrase (however, therefore, in addition)."
+                            ),
+                        }
+                    )
                 else:
-                    suggestions.append({
-                        "index": i,
-                        "issue": "rough_shift",
-                        "severity": "medium",
-                        "suggestion": "Topic shift detected. Consider adding a transition phrase.",
-                    })
+                    suggestions.append(
+                        {
+                            "index": i,
+                            "issue": "rough_shift",
+                            "severity": "medium",
+                            "suggestion": "Topic shift detected. Consider adding a transition phrase.",
+                        }
+                    )
 
         # consecutive rough shifts warning
         if rough_count >= 3:
-            suggestions.append({
-                "index": -1,
-                "issue": "consecutive_rough_shifts",
-                "severity": "high",
-                "suggestion": f"{rough_count} consecutive topic shifts. This section may need restructuring.",
-            })
+            suggestions.append(
+                {
+                    "index": -1,
+                    "issue": "consecutive_rough_shifts",
+                    "severity": "high",
+                    "suggestion": f"{rough_count} consecutive topic shifts. This section may need restructuring.",
+                }
+            )
 
         return suggestions
 
@@ -1079,7 +1165,9 @@ class TextAnalyzer:
     # ------------------------------------------------------------------
 
     def diff_cohesion(
-        self, original: str, revised: str,
+        self,
+        original: str,
+        revised: str,
     ) -> Dict[str, Any]:
         """Compare cohesion of two text versions."""
         r1 = self.analyze(original)
@@ -1092,11 +1180,13 @@ class TextAnalyzer:
 
         continue_delta = round(
             _count(r2.transition_distribution, "Continue")
-            - _count(r1.transition_distribution, "Continue"), 3
+            - _count(r1.transition_distribution, "Continue"),
+            3,
         )
         rough_delta = round(
             _count(r2.transition_distribution, "Rough-Shift")
-            - _count(r1.transition_distribution, "Rough-Shift"), 3
+            - _count(r1.transition_distribution, "Rough-Shift"),
+            3,
         )
 
         if delta > DIFF_DELTA_THRESHOLD:
@@ -1166,13 +1256,13 @@ class TextAnalyzer:
     def to_summary(self, report: TextReport) -> str:
         """Generate human-readable summary string."""
         lines = [
-            f"Text Analysis Report",
+            "Text Analysis Report",
             f"{'='*50}",
             f"Sentences: {report.sentence_count}  |  Paragraphs: {report.paragraph_count}",
             f"Words: {report.word_count}  |  Cohesion: {report.overall_cohesion:.3f}  [{report.quality}]",
             f"Segments: {len(report.segments)}",
-            f"",
-            f"Transitions:",
+            "",
+            "Transitions:",
         ]
         for t, pct in report.transition_distribution.items():
             bar = "#" * int(pct * 30)
@@ -1197,8 +1287,10 @@ class TextAnalyzer:
             end_char = start_char + len(raw.strip())
             search_start = end_char
             para_sents = [
-                s.text.strip() for s in all_sents
-                if s.start_char >= start_char and s.end_char <= end_char
+                s.text.strip()
+                for s in all_sents
+                if s.start_char >= start_char
+                and s.end_char <= end_char
                 and s.text.strip()
             ]
             if para_sents:

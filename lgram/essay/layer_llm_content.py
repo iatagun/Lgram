@@ -57,18 +57,35 @@ _CONTENT_SCHEMA = {
                 "topic_relevance": {"type": "number", "minimum": 0, "maximum": 1},
                 "strengths": {"type": "array", "items": {"type": "string"}},
                 "weaknesses": {"type": "array", "items": {"type": "string"}},
-                "cefr_estimate": {"type": "string", "enum": ["A1", "A2", "B1", "B2", "C1", "C2"]},
+                "cefr_estimate": {
+                    "type": "string",
+                    "enum": ["A1", "A2", "B1", "B2", "C1", "C2"],
+                },
             },
-            "required": ["overall_score", "thesis_clarity", "argument_development",
-                        "evidence_quality", "topic_relevance", "strengths", "weaknesses",
-                        "cefr_estimate"],
+            "required": [
+                "overall_score",
+                "thesis_clarity",
+                "argument_development",
+                "evidence_quality",
+                "topic_relevance",
+                "strengths",
+                "weaknesses",
+                "cefr_estimate",
+            ],
             "additionalProperties": False,
-        }
-    }
+        },
+    },
 }
 
 _CACHE: Dict[str, LayerResult] = {}
 _CACHE_MAX_SIZE = 128
+
+
+def _cache_put(key: str, result: LayerResult) -> None:
+    _CACHE[key] = result
+    if len(_CACHE) > _CACHE_MAX_SIZE:
+        _CACHE.pop(next(iter(_CACHE)))
+
 
 _LOCAL_ENDPOINTS = [
     ("http://localhost:1234/v1", "lm-studio", "auto"),
@@ -121,6 +138,7 @@ class LLMContentAnalyzer:
         for url, key, model in _LOCAL_ENDPOINTS:
             try:
                 import urllib.request
+
                 req = urllib.request.Request(f"{url}/models", method="GET")
                 urllib.request.urlopen(req, timeout=2)
                 source = "lm-studio" if "1234" in url else "ollama"
@@ -137,7 +155,10 @@ class LLMContentAnalyzer:
             return False
         try:
             from openai import OpenAI
-            self._client = OpenAI(api_key=self._api_key, base_url=self._base_url, timeout=60)
+
+            self._client = OpenAI(
+                api_key=self._api_key, base_url=self._base_url, timeout=60
+            )
             models = self._client.models.list()
             if models.data:
                 self._model = models.data[0].id
@@ -161,9 +182,7 @@ class LLMContentAnalyzer:
     def source(self) -> str:
         return self._source
 
-    def analyze(
-        self, essay: Essay, rubric: List[RubricCriterion]
-    ) -> LayerResult:
+    def analyze(self, essay: Essay, rubric: List[RubricCriterion]) -> LayerResult:
         cache_key = self._cache_key(essay.text, rubric)
         cached = _CACHE.get(cache_key)
         if cached is not None:
@@ -171,10 +190,11 @@ class LLMContentAnalyzer:
 
         if not self.available:
             from .layer1_content import MockContentAnalyzer
+
             fallback = MockContentAnalyzer()
             result = fallback.analyze(essay, rubric)
             result.layer_name = "Content (heuristic — no local LLM found)"
-            _CACHE[cache_key] = result
+            _cache_put(cache_key, result)
             return result
 
         criteria_text = self._compact_rubric(rubric)
@@ -189,7 +209,10 @@ class LLMContentAnalyzer:
             response = self._client.chat.completions.create(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": "You are an EFL essay evaluator. Be fair and constructive."},
+                    {
+                        "role": "system",
+                        "content": "You are an EFL essay evaluator. Be fair and constructive.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 response_format=_CONTENT_SCHEMA,
@@ -214,10 +237,11 @@ class LLMContentAnalyzer:
             score = float(data.get("overall_score", 0))
             if score == 0:
                 from .layer1_content import MockContentAnalyzer
+
                 fallback = MockContentAnalyzer()
                 result = fallback.analyze(essay, rubric)
-                result.layer_name = f"Content (LLM parse failed, heuristic fallback)"
-                _CACHE[cache_key] = result
+                result.layer_name = "Content (LLM parse failed, heuristic fallback)"
+                _cache_put(cache_key, result)
                 return result
 
             score = max(0.0, min(100.0, score))
@@ -240,8 +264,12 @@ class LLMContentAnalyzer:
                 normalized_score=normalized,
                 raw_details={
                     "thesis_clarity": round(float(data.get("thesis_clarity", 0)), 3),
-                    "argument_development": round(float(data.get("argument_development", 0)), 3),
-                    "evidence_quality": round(float(data.get("evidence_quality", 0)), 3),
+                    "argument_development": round(
+                        float(data.get("argument_development", 0)), 3
+                    ),
+                    "evidence_quality": round(
+                        float(data.get("evidence_quality", 0)), 3
+                    ),
                     "topic_relevance": round(float(data.get("topic_relevance", 0)), 3),
                     "cefr_estimate": cefr,
                     "model": self._model,
@@ -250,25 +278,27 @@ class LLMContentAnalyzer:
                 evidence=evidence,
                 confidence_interval=(round(ci[0], 1), round(ci[1], 1)),
             )
-            _CACHE[cache_key] = result
+            _cache_put(cache_key, result)
             return result
 
         except Exception as e:
             from .layer1_content import MockContentAnalyzer
+
             fallback = MockContentAnalyzer()
             result = fallback.analyze(essay, rubric)
             result.layer_name = f"Content (LLM error: {str(e)[:40]})"
-            _CACHE[cache_key] = result
+            _cache_put(cache_key, result)
             return result
 
     @staticmethod
     def _cache_key(text: str, rubric: List[RubricCriterion]) -> str:
         norm_text = " ".join(text.split())
         rubric_bits = "|".join(
-            f"{c.name}:{c.weight:.3f}:{c.description[:120]}"
-            for c in rubric
+            f"{c.name}:{c.weight:.3f}:{c.description[:120]}" for c in rubric
         )
-        digest = hashlib.sha256(f"{norm_text}\n{rubric_bits}".encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(
+            f"{norm_text}\n{rubric_bits}".encode("utf-8")
+        ).hexdigest()
         return digest
 
     @staticmethod
@@ -282,7 +312,9 @@ class LLMContentAnalyzer:
         return "\n".join(lines)
 
     @staticmethod
-    def _select_focus_text(text: str, max_sentences: int = 6, max_chars: int = 1800) -> str:
+    def _select_focus_text(
+        text: str, max_sentences: int = 6, max_chars: int = 1800
+    ) -> str:
         text = " ".join(text.split())
         if len(text) <= max_chars:
             return text
@@ -295,7 +327,7 @@ class LLMContentAnalyzer:
         head = sentences[:2]
         tail = sentences[-2:]
         middle_start = max(2, (len(sentences) // 2) - 1)
-        middle = sentences[middle_start:middle_start + 2]
+        middle = sentences[middle_start : middle_start + 2]
 
         selected: List[str] = []
         for sent in head + tail + middle:
@@ -335,7 +367,7 @@ class LLMContentAnalyzer:
         end = content.rfind("}")
         if start >= 0 and end > start:
             try:
-                return json.loads(content[start:end + 1])
+                return json.loads(content[start : end + 1])
             except json.JSONDecodeError:
                 pass
         return {}

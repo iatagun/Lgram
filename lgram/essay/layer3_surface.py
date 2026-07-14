@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
@@ -49,6 +49,7 @@ class SurfaceLayer:
     def _analyzer(self):
         if self._ta is None:
             from lgram import TextAnalyzer
+
             self._ta = TextAnalyzer(self._model, similarity_threshold=0.35)
         return self._ta
 
@@ -80,13 +81,17 @@ class SurfaceLayer:
 
         evidence: List[str] = []
         if readability < 0.4:
-            evidence.append(f"Low readability (Flesch: {self._flesch_raw(text, sentences, words):.0f})")
+            evidence.append(
+                f"Low readability (Flesch: {self._flesch_raw(text, sentences, words):.0f})"
+            )
         if sent_variety < 0.4:
             evidence.append("Low sentence length variety — monotonous rhythm")
         if vocabulary < 0.4:
             evidence.append("Limited vocabulary range (low type-token ratio)")
         if grammar < 0.3:
-            evidence.append("Very short or fragmented sentences — possible grammatical issues")
+            evidence.append(
+                "Very short or fragmented sentences — possible grammatical issues"
+            )
         if not evidence:
             evidence.append("Surface quality adequate")
 
@@ -99,7 +104,9 @@ class SurfaceLayer:
             normalized_score=normalized,
             raw_details={
                 "readability": {
-                    "flesch_reading_ease": round(self._flesch_raw(text, sentences, words), 1),
+                    "flesch_reading_ease": round(
+                        self._flesch_raw(text, sentences, words), 1
+                    ),
                     "normalized": round(readability, 3),
                 },
                 "sentence_variety": {
@@ -110,7 +117,9 @@ class SurfaceLayer:
                 "vocabulary": {
                     "word_count": word_count,
                     "unique_words": len(set(w.lower() for w in words)),
-                    "ttr": round(len(set(w.lower() for w in words)) / max(word_count, 1), 3),
+                    "ttr": round(
+                        len(set(w.lower() for w in words)) / max(word_count, 1), 3
+                    ),
                     "hapax_ratio": round(self._hapax_ratio(words), 3),
                     "normalized": round(vocabulary, 3),
                 },
@@ -140,7 +149,9 @@ class SurfaceLayer:
         sent_cnt = len(sentences)
         if word_cnt == 0 or sent_cnt == 0:
             return 50.0
-        return 206.835 - 1.015 * (word_cnt / sent_cnt) - 84.6 * (syllable_count / word_cnt)
+        return (
+            206.835 - 1.015 * (word_cnt / sent_cnt) - 84.6 * (syllable_count / word_cnt)
+        )
 
     def _sentence_variety(self, sentences: List[str], words: List[str]) -> float:
         if len(sentences) < 3:
@@ -149,7 +160,7 @@ class SurfaceLayer:
         mean_len = sum(lengths) / len(lengths)
         if mean_len == 0 or len(lengths) < 2:
             return 0.4
-        variance = sum((l - mean_len) ** 2 for l in lengths) / (len(lengths) - 1)
+        variance = sum((n - mean_len) ** 2 for n in lengths) / (len(lengths) - 1)
         std = math.sqrt(variance)
         cv = std / mean_len
         if cv < 0.2:
@@ -166,7 +177,7 @@ class SurfaceLayer:
         if len(lengths) < 2:
             return 0.0
         mean = sum(lengths) / len(lengths)
-        return math.sqrt(sum((l - mean) ** 2 for l in lengths) / (len(lengths) - 1))
+        return math.sqrt(sum((n - mean) ** 2 for n in lengths) / (len(lengths) - 1))
 
     def _vocabulary_richness(self, words: List[str]) -> float:
         if len(words) < 20:
@@ -177,7 +188,7 @@ class SurfaceLayer:
         types = len(set(lower))
         ttr = types / max(len(lower), 1)
         hapax = self._hapax_ratio(lower)
-        score = (ttr * 0.6 + hapax * 0.4)
+        score = ttr * 0.6 + hapax * 0.4
         if ttr < 0.4:
             score *= 0.7
         elif ttr > 0.75:
