@@ -25,7 +25,7 @@ Discourse cohesion analysis based on **Centering Theory** (Grosz, Joshi, and Wei
 ---
 
 [![PyPI](https://img.shields.io/badge/pypi-centering--lgram-blue)](https://pypi.org/project/centering-lgram/)
-[![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Tests](https://github.com/iatagun/Lgram/actions/workflows/test.yml/badge.svg)](https://github.com/iatagun/Lgram/actions/workflows/test.yml)
 
