@@ -25,9 +25,23 @@ from .models.centering_theory import EnhancedCenteringTheory, TransitionType
 _MODEL_CACHE: Dict[str, spacy.language.Language] = {}
 
 
+_FALLBACK_MODEL = "en_core_web_sm"
+
+
 def _load_spacy_model(model: str) -> spacy.language.Language:
     if model not in _MODEL_CACHE:
-        _MODEL_CACHE[model] = spacy.load(model)
+        try:
+            _MODEL_CACHE[model] = spacy.load(model)
+        except OSError:
+            if model == _FALLBACK_MODEL:
+                raise
+            warnings.warn(
+                f"spaCy model '{model}' is not installed; falling back to "
+                f"'{_FALLBACK_MODEL}' (lexical similarity only). For better "
+                f"results: python -m spacy download {model}",
+                RuntimeWarning,
+            )
+            _MODEL_CACHE[model] = _load_spacy_model(_FALLBACK_MODEL)
     return _MODEL_CACHE[model]
 
 
