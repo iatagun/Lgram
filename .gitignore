@@ -9,3 +9,4 @@ build/
 *.egg
 .mypy_cache/
 docs/_build/
+benchmark_data/
