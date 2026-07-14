@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.3.1 (2026-07-14)
+
+### Fixed
+- **Fresh installs were broken:** typer >= 0.22 no longer depends on `click`, but
+  spaCy 3.8's CLI imports it directly — so `import spacy` (and therefore
+  `import lgram`) failed with `ModuleNotFoundError: No module named 'click'` in any
+  clean environment. Added an explicit `click>=8.0` dependency. This was also why
+  every CI run since 2026-07-02 failed at the "Install dependencies" step.
+
 ## v2.3.0 (2026-07-14)
 
 ### Fixed

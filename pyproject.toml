@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "centering-lgram"
-version = "2.3.0"
+version = "2.3.1"
 authors = [
     {name = "Ilker Atagun", email = "ilker.atagun@gmail.com"},
 ]
@@ -37,6 +37,9 @@ keywords = [
 ]
 dependencies = [
     "spacy>=3.4.0",
+    # spaCy 3.8's CLI imports click directly, but typer >= 0.22 no longer
+    # depends on it — without this pin a fresh install can't even import spacy
+    "click>=8.0",
 ]
 
 [project.optional-dependencies]
