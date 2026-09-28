@@ -2,6 +2,15 @@
 
 **EFL essay feedback for teachers. Not a grading system.**
 
+> ⚠️ **Status: experimental, not validated for scoring.** On the ELLIPSE corpus (human-rated
+> L2 essays), the Centering-based `cohesion_score` did **not** track human cohesion ratings
+> (r = +0.09, n=200; a word-count baseline scores +0.31), and Centering features added
+> ≈ +0.001 r over surface + connective features in a supervised ablation (n=1000).
+> The institutional pilot is on hold. Use the evidence output (where transitions break,
+> which errors were found) as *descriptive* input for a teacher — do **not** treat
+> `cohesion_score` or `composite_indicator` as a measure of essay quality.
+> Details: [Development Plan](../../docs/CAEAS_DEVELOPMENT_PLAN.md), GATE 1.
+
 ## What It Does
 
 Analyzes student essays and tells the teacher what to look at:
@@ -37,8 +46,8 @@ grader = CAEASGrader()
 essay = Essay(title="My Essay", text="Social media has changed...")
 report = grader.analyze(essay)
 
-print(report.cohesion_score)       # 0-100 pure cohesion
-print(report.composite_indicator)  # all 5 layers combined
+print(report.cohesion_score)       # 0-100 Centering statistic — NOT validated vs. human ratings
+print(report.composite_indicator)  # all 5 layers combined — NOT validated
 print(report.suggestion)           # teacher-facing recommendation
 ```
 
@@ -55,7 +64,7 @@ grader = CAEASGrader(use_llm=True)
 ## Test Status
 
 ```
-167 tests passing (99 core + 42 CAEAS + 26 EFL)
+~180 tests passing across the repo (unit/behavior tests — they do not validate score accuracy)
 ```
 
 ## Scope
@@ -67,7 +76,10 @@ grader = CAEASGrader(use_llm=True)
 
 ## Current Phase
 
-Prototype functional. Seeking pilot institution for real-world calibration with teacher-scored essays.
+Prototype functional, **validation failed at GATE 1** (see status above). No pilot until the
+measurement core is repositioned or replaced. Open directions: narrow claims to descriptive
+diagnostics, publish the negative result, and rebuild scoring on the features that carried
+signal in the ablation (connective variety, lexical diversity, entity grid, paragraph structure).
 
 ## Documentation
 

@@ -14,6 +14,24 @@ Discourse cohesion analysis based on **Centering Theory** (Grosz, Joshi, and Wei
 
 **Correct positioning:** Use centering-lgram as a **complementary** evaluator alongside faithfulness/accuracy checkers. It measures **"how smoothly does this read?"**, not **"is this correct?"**.
 
+## ⚠️ Validation Status — Read Before Using Scores
+
+Centering transitions are computed faithfully to the theory, but **the scalar cohesion score has failed external validation on learner essays**:
+
+| Test (ELLIPSE corpus, human cohesion ratings) | Result |
+|---|---|
+| `overall_cohesion` vs. human cohesion (n=200) | r = +0.09 (word-count baseline: +0.31) |
+| Ridge regression, surface features only (n=1000, 5-fold CV) | r = 0.40 |
+| … + discourse connectives | r = 0.47 |
+| … + Centering features | r = 0.49 — **incremental gain from transitions ≈ +0.001** |
+
+**What this means:**
+
+- Do **not** use `overall_cohesion` as a proxy for essay quality or for grading. Centering transitions did not predict human cohesion judgments of L2 essays; the signal that exists lives in connective variety, lexical diversity, entity-grid persistence and paragraph structure.
+- The transition breakdown (Continue / Retain / Shift), entity grid, and weak-point detection remain useful as **descriptive discourse-analysis tools** — they show *where* entities flow or break, not *how good* the text is.
+- Not yet validated: LLM-output evaluation, Turkish text, other genres. Treat any score there as unvalidated.
+- Reproduce: `python -m lgram.ellipse_benchmark`, `python -m lgram.ellipse_features --sample 1000`, `python -m lgram.ellipse_supervised`. Plan and gates: [docs/CAEAS_DEVELOPMENT_PLAN.md](docs/CAEAS_DEVELOPMENT_PLAN.md).
+
 | What we measure | What we DON'T measure |
 |---|---|
 | Entity flow across sentences | Factual correctness |
@@ -233,21 +251,16 @@ Dependency parse: main, conj, advcl, ccomp, acl, relcl. Separator tokens (commas
 
 ```
 lgram/
-  __init__.py              # Package exports
-  analyzer.py        924   # TextAnalyzer (17 methods)
-  benchmark.py       290   # CohesionBenchmark (4 tests)
-  cli.py             238   # 6 CLI commands
-  core.py              7   # Re-export hub
-  utils.py            20   # Logging
-  models/
-    __init__.py         7   # Sub-package exports
-    centering_theory.py 1122 # Core engine
-tests/
-  test_lgram.py       209   # 15 core tests
-  test_edges.py       312   # 34 edge case tests
-docs/
-  RESEARCH.md                # Literature survey
-  IMPLEMENTATION_PLAN.md     # Implementation plan
+  analyzer.py              # TextAnalyzer (high-level API)
+  models/centering_theory.py  # Core Centering engine
+  discourse.py, genre_calibrator.py, brown_calibration.py  # Genre calibration
+  benchmark.py, gcdc_benchmark.py  # Synthetic / GCDC-sample benchmarks
+  ellipse_benchmark.py, ellipse_features.py, ellipse_supervised.py
+                           # ELLIPSE external validation (see Validation Status)
+  essay/                   # CAEAS — experimental essay feedback (see essay/README.md)
+  cli.py                   # CLI
+tests/                     # ~180 tests (run in CI on Python 3.10–3.13)
+docs/                      # Research notes, CAEAS plan and validation log
 ```
 
 **Dependencies:** `spacy>=3.4.0` only. Optional: `sentence-transformers` for MiniLM.
@@ -258,8 +271,8 @@ docs/
 
 | Domain | Application |
 |---|---|
-| **LLM Evaluation** | Cohesion scoring for GPT/Claude/Llama output |
-| **Education** | Essay scoring, writing assistant feedback — **[CAEAS](lgram/essay/README.md)** EFL essay feedback tool |
+| **LLM Evaluation** | Descriptive cohesion diagnostics for LLM output (score not externally validated) |
+| **Education** | Descriptive discourse feedback for teachers — experimental, **not validated for scoring** ([CAEAS](lgram/essay/README.md)) |
 | **Linguistics** | Discourse analysis research |
 | **Content Quality** | Blog/news fluency audits |
 | **Translation** | Cross-language cohesion comparison |
