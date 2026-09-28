@@ -174,8 +174,8 @@ def report(results: List[AblationResult], target: str = "Cohesion") -> str:
     for r in results:
         lines.append(
             f"  {r.group:24s} r = {r.cv_pearson_mean:+.3f} "
-            f"(±{r.cv_pearson_std:.3f})  QWK = {r.cv_qwk_mean:+.3f}  "
-            f"λ={r.best_lambda}"
+            f"(sd {r.cv_pearson_std:.3f})  QWK = {r.cv_qwk_mean:+.3f}  "
+            f"lambda={r.best_lambda}"
         )
 
     a = by_group.get("A_surface")
