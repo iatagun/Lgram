@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import unittest
 
+from lgram.essay.layer_grammar import GrammarLayer
 from lgram.essay import (
     CAEASGrader,
     CohesionLayer,
@@ -145,6 +146,30 @@ class TestCohesionLayer(unittest.TestCase):
         essay = Essay(text=text, title="Multi")
         result = self.layer.evaluate(essay)
         self.assertGreaterEqual(result.raw_details["segment_count"], 3)
+
+    def test_analysis_failure_propagates(self):
+        # A broken measurement must not be scored as a made-up 0.5.
+        class Boom:
+            def analyze(self, _):
+                raise RuntimeError("boom")
+
+        self.layer._segment_analyzer._ta = Boom()
+        with self.assertRaises(RuntimeError):
+            self.layer.evaluate(Essay(text="Alice left. She smiled."))
+
+
+class TestGrammarLayerFailure(unittest.TestCase):
+
+    def test_crashed_checker_is_neutral_not_perfect(self):
+        class Boom:
+            def check(self, _):
+                raise RuntimeError("java died")
+
+        layer = GrammarLayer()
+        layer._lt = Boom()
+        result = layer.evaluate(Essay(text="She go to school every days. " * 4))
+        self.assertTrue(result.raw_details["check_failed"])
+        self.assertEqual(result.score, 50.0)
 
 
 class TestSurfaceLayer(unittest.TestCase):

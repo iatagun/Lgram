@@ -12,12 +12,15 @@ All metrics are pure Python + spaCy — no external grammar checker needed.
 
 from __future__ import annotations
 
+import logging
 import math
 import re
 from typing import Dict, List
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
+
+logger = logging.getLogger(__name__)
 
 
 class SurfaceLayer:
@@ -141,7 +144,9 @@ class SurfaceLayer:
         try:
             return self._analyzer.readability_score(text).flesch_score
         except Exception:
-            pass
+            logger.warning(
+                "Analyzer readability failed; using local Flesch", exc_info=True
+            )
         if not sentences or not words:
             return 50.0
         syllable_count = sum(_count_syllables(w) for w in words)

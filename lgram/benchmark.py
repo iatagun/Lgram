@@ -168,10 +168,7 @@ class CohesionBenchmark:
         method_scores: Dict[str, List[float]] = {m: [] for m in methods}
         for text in all_texts:
             for m_name, m_fn in methods.items():
-                try:
-                    method_scores[m_name].append(m_fn(text))
-                except Exception:
-                    method_scores[m_name].append(0.5)
+                method_scores[m_name].append(m_fn(text))
 
         # check pairwise correlation direction
         agreements = []

@@ -25,12 +25,15 @@ Architecture:
 
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -142,8 +145,13 @@ class GrammarLayer:
             "issues": [],
         }
 
+        check_failed = False
         if self.available and word_count >= 5:
-            issues = self._check(text=essay.text, word_count=word_count)
+            checked = self._check(text=essay.text, word_count=word_count)
+            if checked is None:
+                check_failed = True
+            else:
+                issues = checked
 
         deep_errors: List[Dict[str, Any]] = []
         if (
@@ -157,7 +165,7 @@ class GrammarLayer:
                 deep = DeepGrammarCheck(self._llm_base_url, self._llm_model)
                 deep_errors = deep.check(essay.text)
             except Exception:
-                pass
+                logger.warning("Deep grammar check failed", exc_info=True)
 
         lt_total = issues.get("total_errors", 0)
         deep_total = len(deep_errors)
@@ -173,7 +181,8 @@ class GrammarLayer:
         else:
             score = lt_score
 
-        if combined_total == 0 and not self.available:
+        # No usable checker output: neutral score, not "zero errors = 100".
+        if combined_total == 0 and (not self.available or check_failed):
             score = 50.0
 
         normalized = round(score / 100.0, 3)
@@ -210,6 +219,7 @@ class GrammarLayer:
                 "pronoun_errors": issues.get("pronoun_errors", 0),
                 "word_count": word_count,
                 "sentence_count": sent_count,
+                "check_failed": check_failed,
             },
             evidence=evidence[:4],
             confidence_interval=(round(ci[0], 1), round(ci[1], 1)),
@@ -231,7 +241,8 @@ class GrammarLayer:
 
         return grammar_errors > 0 or pronoun_errors > 0
 
-    def _check(self, text: str, word_count: int) -> Dict[str, Any]:
+    def _check(self, text: str, word_count: int) -> Optional[Dict[str, Any]]:
+        """LanguageTool issues, or None if the checker itself crashed."""
         if self._lt is None or word_count < 5:
             return {
                 "total_errors": 0,
@@ -245,14 +256,8 @@ class GrammarLayer:
         try:
             matches = self._lt.check(text)
         except Exception:
-            return {
-                "total_errors": 0,
-                "grammar_errors": 0,
-                "spelling_errors": 0,
-                "style_issues": 0,
-                "pronoun_errors": 0,
-                "issues": [],
-            }
+            logger.warning("LanguageTool check failed", exc_info=True)
+            return None
 
         grammar_count = 0
         spelling_count = 0

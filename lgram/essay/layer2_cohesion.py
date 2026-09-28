@@ -15,12 +15,15 @@ Architecture:
 
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -87,13 +90,10 @@ class SegmentAnalyzer:
             sents = split_sentences(seg_text)
             sent_count = len(sents)
 
-            try:
-                r = self._analyzer.analyze(seg_text)
-                cohesion = r.overall_cohesion
-                dist = r.transition_distribution
-            except Exception:
-                cohesion = 0.5
-                dist = {}
+            # Core measurement: let failures propagate rather than invent a score.
+            r = self._analyzer.analyze(seg_text)
+            cohesion = r.overall_cohesion
+            dist = r.transition_distribution
 
             weak = []
             if cohesion < 0.5:
@@ -108,7 +108,9 @@ class SegmentAnalyzer:
                         for s in suggestions[:3]
                     ]
                 except Exception:
-                    pass
+                    logger.warning(
+                        "suggest_improvements failed for segment %d", i, exc_info=True
+                    )
 
             results.append(
                 SegmentAnalysis(

@@ -246,11 +246,8 @@ class EllipseFeatureExtractor:
 
     def extract_one(self, text: str) -> Dict[str, float]:
         report = self._analyzer().analyze(text, include_clauses=False)
-        try:
-            grid = self._analyzer().entity_grid_score(text)
-            grid_score = float(grid.score)
-        except Exception:
-            grid_score = 0.0
+        # No fallback: a silent 0.0 would poison the ablation's feature matrix.
+        grid_score = float(self._analyzer().entity_grid_score(text).score)
 
         feats: Dict[str, float] = {}
         feats.update(surface_features(text, report))

@@ -6,10 +6,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import urllib.request
 from typing import List, Dict, Any
 
 from .utils import split_sentences
+
+logger = logging.getLogger(__name__)
 
 _GRAMMAR_SCHEMA = {
     "type": "json_schema",
@@ -90,6 +93,7 @@ class DeepGrammarCheck:
             with urllib.request.urlopen(req, timeout=60) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
         except Exception:
+            logger.warning("Deep grammar LLM request failed", exc_info=True)
             return []
 
         try:
@@ -126,6 +130,7 @@ class DeepGrammarCheck:
                 _CACHE.pop(next(iter(_CACHE)))
             return result
         except Exception:
+            logger.warning("Deep grammar LLM response unparseable", exc_info=True)
             return []
 
     @staticmethod

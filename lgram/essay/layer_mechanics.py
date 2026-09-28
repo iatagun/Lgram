@@ -14,11 +14,14 @@ Requires: pip install pyspellchecker
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import List, Optional
 
 from .models import Essay, LayerResult
 from .utils import split_sentences
+
+logger = logging.getLogger(__name__)
 
 
 class MechanicsLayer:
@@ -123,7 +126,9 @@ class MechanicsLayer:
             error_rate = len(unknown) / max(len(unique_words), 1)
             return max(0.0, 1.0 - error_rate * 3)
         except Exception:
-            return 0.8
+            # Same neutral value as "spellchecker unavailable" — no invented penalty.
+            logger.warning("Spell check failed; spelling not scored", exc_info=True)
+            return 1.0
 
     def _get_misspellings(self, words: List[str]) -> List[str]:
         if not self.available:
@@ -133,6 +138,7 @@ class MechanicsLayer:
             unknown = self._spell.unknown(unique)
             return sorted(unknown)[:8]
         except Exception:
+            logger.warning("Misspelling lookup failed", exc_info=True)
             return []
 
     @staticmethod
