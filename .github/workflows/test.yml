@@ -23,7 +23,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e . pytest
+          # snowballstemmer only: runs the lgram.tr logic tests without torch
+          pip install -e . pytest snowballstemmer
           python -m spacy download en_core_web_sm
           python -m spacy download en_core_web_md
 

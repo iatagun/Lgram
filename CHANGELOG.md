@@ -1,5 +1,36 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **`lgram.tr` (experimental, `pip install centering-lgram[tr]`):** Turkish Centering on
+  UD parses from DizgeBERT-Joint — zero-pronoun recovery from verb agreement, possessive
+  suffixes as possessors, genderless 3rd-person anaphora. Diagnostic only (transitions,
+  rough-shift ratio), no quality score. **Not validated:** on 159 Turkish Wikipedia
+  paragraphs the rough-shift ratio prefers the original sentence order only 51–52% of
+  the time (chance = 50%, p ≥ 0.10), below a plain adjacent-sentence lexical-overlap
+  baseline (58.5%, p = 0.04). Benchmark: `python -m lgram.tr.benchmark corpus.txt`.
+  On 222 eight-sentence windows of Turkish folk tales the order test is also weak
+  (0.535, p = 0.34; overlap baseline 0.707) and gets *better* with zero-pronoun
+  resolution ablated (0.572, p = 0.02). Provisional single-annotator audit (n = 99):
+  zero-subject detection F1 0.82, but antecedent resolution only 10/25 correct
+  (ceiling of the link-to-previous-Cf design: 19/25) and 7/7 false links when the
+  antecedent is absent.
+
+### Changed
+- **Docs:** READMEs now state the ELLIPSE validation result (GATE 1 failed) and narrow
+  the scalar cohesion score to a descriptive, unvalidated statistic.
+
+### Fixed
+- **Silent fabricated scores:** failures no longer turn into plausible-looking numbers.
+  - Cohesion layer: an analysis error in a segment now propagates instead of scoring 0.5.
+  - Grammar layer: a crashed LanguageTool check now yields the neutral 50 with
+    `raw_details["check_failed"]=True`, instead of "zero errors" → 100.
+  - Mechanics layer: a crashed spell check no longer invents a 0.8 spelling score.
+  - `ellipse_features` / `benchmark`: removed `0.0` / `0.5` fallbacks that would have
+    silently corrupted feature matrices and method-agreement stats.
+  - Swallowed exceptions in the essay layers and deep-grammar client are now logged.
+
 ## v2.3.1 (2026-07-14)
 
 ### Fixed
