@@ -190,6 +190,49 @@ class TestResolution(unittest.TestCase):
         )
         self.assertEqual(report.utterances[1].cb, stem("Ayşe"))
 
+    def test_overt_genitive_labelled_nmod_blocks_implicit_possessor(self):
+        # regression: the KeNet scheme labels the possessor plain `nmod`, not
+        # `nmod:poss`; "Kahvenin numarası" was given a dropped possessor that then
+        # linked to the previous sentence (27% of possessor slots were spurious).
+        report = run(
+            AYSE_GITTI,
+            [
+                tok(1, "Kahvenin", "NOUN", 2, "nmod", Case="Gen"),
+                tok(2, "numarası", "NOUN", 3, "nsubj", **{"Person[psor]": "3"}),
+                verb(3, "değişti"),
+            ],
+        )
+        u2 = report.utterances[1]
+        self.assertFalse(any(m.kind == "possessor" for m in u2.cf))
+        self.assertIsNone(u2.cb)  # no link to Ayşe
+
+    def test_genitive_nmod_possessor_is_a_mention(self):
+        # regression: under KeNet the genitive possessor is `nmod`, which is not a
+        # ranked role, so "Ali'nin" never entered the Cf.
+        report = run(
+            [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "geldi")],
+            [
+                tok(1, "Ali'nin", "PROPN", 2, "nmod", Case="Gen"),
+                tok(2, "annesi", "NOUN", 3, "nsubj", **{"Person[psor]": "3"}),
+                verb(3, "güldü"),
+            ],
+        )
+        u2 = report.utterances[1]
+        self.assertEqual(u2.cb, "ali")
+        self.assertEqual(u2.transition, TT.RETAIN)  # Cp is the mother
+
+    def test_bare_compound_is_not_an_implicit_possessor(self):
+        # "okul müdürü": the -(s)I is a compound marker, not a dropped possessor
+        report = run(
+            AYSE_GITTI,
+            [
+                tok(1, "okul", "NOUN", 2, "nmod", Case="Nom"),
+                tok(2, "müdürü", "NOUN", 3, "nsubj", **{"Person[psor]": "3"}),
+                verb(3, "geldi"),
+            ],
+        )
+        self.assertIsNone(report.utterances[1].cb)
+
     def test_zero_prefers_previous_cb_over_previous_cp(self):
         # "Ali geldi. Ayşe Ali'yi gördü. Gülümsedi."  Cb of U2 is Ali, Cp is Ayşe;
         # the zero subject of U3 follows the Cb.

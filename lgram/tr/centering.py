@@ -156,6 +156,22 @@ def _role(tok: Token, by_id: Dict[int, Token]) -> Tuple[str, float]:
     return tok.deprel, penalty
 
 
+def _is_possessor(dep: Token) -> bool:
+    """`dep` is an overt possessor / compound modifier of its head noun.
+
+    The label alone is not enough: the IMST scheme marks these `nmod:poss`, but
+    DizgeBERT's default KeNet scheme uses plain `nmod` ("Kahvenin numarası") or
+    `compound` ("okul müdürü"), so genitive case and nominal modifiers count too.
+    """
+    return (
+        dep.deprel == "nmod:poss"
+        or dep.feats.get("Case") == "Gen"
+        or (
+            dep.deprel in ("nmod", "compound") and dep.upos in ("NOUN", "PROPN", "PRON")
+        )
+    )
+
+
 def _finite_carrier(root: Token, children: Dict[int, List[Token]]) -> Optional[Token]:
     """The token carrying tense/person agreement: the root, or its copula/aux."""
     for cand in [root] + [
@@ -195,6 +211,8 @@ def extract_mentions(
 
     for t in tokens:
         rel, penalty = _role(t, by_id)
+        if rel == "nmod" and t.feats.get("Case") == "Gen":
+            rel = "nmod:poss"  # KeNet labels genitive possessors plain nmod
         rank = ROLE_RANK.get(rel, 0.0) - penalty
         plural = t.feats.get("Number") == "Plur"
 
@@ -211,7 +229,7 @@ def extract_mentions(
 
         # possessive suffix without an explicit genitive NP -> implicit possessor
         psor = t.feats.get("Person[psor]")
-        has_genitive = any(c.deprel == "nmod:poss" for c in children.get(t.id, []))
+        has_genitive = any(_is_possessor(c) for c in children.get(t.id, []))
         if t.upos in ("NOUN", "PROPN") and psor and not has_genitive:
             pl = t.feats.get("Number[psor]") == "Plur"
             form = _PSOR_FORM.get((psor, pl), "onun")
