@@ -33,7 +33,9 @@ from .ellipse_benchmark import DEFAULT_CSV, EllipseBenchmark
 
 DEFAULT_FEATURES_CACHE = Path("benchmark_data/ellipse_features_cache.json")
 
-FEATURES_VERSION = "1.0"
+# 1.1: the NOCB split moves a few Continue/Retain cases; pct_rough_shift still
+# counts Rough-Shift + NOCB
+FEATURES_VERSION = "1.1"
 
 # common English discourse connectives (explicit cohesive devices)
 CONNECTIVES = frozenset(

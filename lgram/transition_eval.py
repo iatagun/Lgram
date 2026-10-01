@@ -1,12 +1,16 @@
 """
-Transition accuracy against hand-annotated Cp/Cb (benchmark_data/en_transitions_gold.csv).
+Transition accuracy against hand-annotated Cp/Cb.
+
+The default sheet is benchmark_data/en_transitions_claude.csv: a single-annotator
+(Claude) annotation, good for regression checks, not a validated gold standard.
+en_transitions_gold.csv is the same sheet left blank for an independent annotator.
 
 The annotator marks Cp and Cb per utterance; the gold transition is derived from those
 with the same BFP rules the system uses (Cb undefined -> NOCB; Cb(Ui-1) undefined ->
 treated as equal). The system is run live on the gold sentences, paragraph by paragraph.
 
 Usage:
-    python -m lgram.transition_eval [benchmark_data/en_transitions_gold.csv]
+    python -m lgram.transition_eval [SHEET.csv]
     python -m lgram.transition_eval --agree a.csv b.csv   # inter-annotator kappa
 """
 
@@ -84,7 +88,7 @@ def main(argv: List[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     if argv[:1] == ["--agree"]:
         return agree(Path(argv[1]), Path(argv[2]))
-    path = Path(argv[0] if argv else "benchmark_data/en_transitions_gold.csv")
+    path = Path(argv[0] if argv else "benchmark_data/en_transitions_claude.csv")
     rows = list(csv.DictReader(path.open(encoding="utf-8-sig")))
     todo = [r for r in rows if r["idx"] != "0" and not r["gold_cb"].strip()]
     if todo:

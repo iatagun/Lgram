@@ -18,6 +18,7 @@ README's Validation Status) and this module has not earned one yet.
 
 from __future__ import annotations
 
+import warnings
 from collections import Counter
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
@@ -347,6 +348,18 @@ def _transition(
     )
 
 
+def _marks_finiteness(parses: Sequence[Sequence[Token]]) -> bool:
+    """False when verbs agree in person but none is marked VerbForm=Fin: the sign
+    of a parser scheme (IMST, BOUN) under which zero subjects silently vanish."""
+    verbs = [
+        t
+        for toks in parses
+        for t in toks
+        if t.upos in ("VERB", "AUX") and "Person" in t.feats
+    ]
+    return not verbs or any(t.feats.get("VerbForm") == "Fin" for t in verbs)
+
+
 def analyze_parsed(
     sentences: Sequence[str],
     parses: Sequence[Sequence[Token]],
@@ -358,6 +371,14 @@ def analyze_parsed(
     `resolve_zero=False` ablates zero-pronoun recovery (for benchmarks).
     `identity(sentence_index, mention)` overrides entity identity (coref model).
     """
+    if resolve_zero and not _marks_finiteness(parses):
+        warnings.warn(
+            "These parses carry person agreement but no VerbForm=Fin, so no dropped "
+            "subject can be detected. lgram.tr needs DizgeBERT's 'kenet' scheme "
+            "(the 'imst' and 'boun' schemes do not mark finite verbs).",
+            RuntimeWarning,
+            stacklevel=2,
+        )
     states: List[UtteranceState] = []
     for i, (text, tokens) in enumerate(zip(sentences, parses)):
         if not tokens:

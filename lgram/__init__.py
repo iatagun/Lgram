@@ -7,7 +7,8 @@ and Weinstein for analyzing entity tracking and discourse cohesion.
 Centering Theory models surface-level discourse cohesion through:
 - Forward center (Cf) computation with grammatical salience weighting
 - Backward center (Cb) inference with pronoun resolution
-- Transition classification: Establish, Continue, Retain, Smooth-Shift, Rough-Shift
+- Transition classification: Establish, Continue, Retain, Smooth-Shift, Rough-Shift,
+  NOCB (no backward center)
 - Cohesion scoring based on transition distributions
 
 Note: In linguistics, cohesion (bagdasiklik) concerns surface grammatical/lexical
@@ -51,7 +52,7 @@ def show_info():
     print(
         f"LGRAM v{__version__} [{status}]\n"
         f"Centering Theory (Grosz, Joshi, Weinstein)\n"
-        f"Transition classification: Continue, Retain, Smooth-Shift, Rough-Shift\n"
+        f"Transition classification: Continue, Retain, Smooth-Shift, Rough-Shift, NOCB\n"
         f"\nQuick Start:\n"
         f"    import spacy\n"
         f"    from lgram import EnhancedCenteringTheory\n"

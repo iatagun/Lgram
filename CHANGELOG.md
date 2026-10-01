@@ -17,11 +17,45 @@
   (ceiling of the link-to-previous-Cf design: 19/25) and 7/7 false links when the
   antecedent is absent.
 
+- **`lgram.tr` measured against gold coreference.** Centering derived from Turkish-ITCC
+  (CorefUD 1.3; dropped subjects and possessors annotated) is now the yardstick
+  (`experiments/itcc_centering.py`, `experiments/tr_baseline_itcc.py`). Rule-based
+  transition accuracy (5-fold over ITCC): 0.52 by label, **0.46 strict** (label right *and* the Cb is the
+  right entity) — still experimental. What the measurements changed: a dropped subject
+  is posited on every finite clause, not only the root; an implicit possessor binds to
+  its own clause's subject; anaphors try the previous Cb first; proper names are not
+  stemmed. Without dropped subjects 65% of ITCC transitions have no Cb (34% with them).
+- **Coreference hook for `lgram.tr`:** `analyze_parsed(..., identity=fn)` lets an external
+  coreference model decide which entity each mention is. A BERTurk model in the
+  fastcoref architecture, trained on ITCC (`experiments/tr_coref_*.py`), reaches strict
+  accuracy 0.50 vs 0.46 for the rules in 5-fold cross-validation (better in 18 of 21
+  documents). The model is not shipped: ITCC is CC BY-NC-SA.
+- **`python -m lgram.transition_eval`:** transition accuracy against a hand-annotated
+  Cp/Cb sheet, plus inter-annotator kappa (`--agree`). The bundled English sheet is a
+  single-annotator annotation. `experiments/coref_centering.py` shows the built-in
+  English engine at 0.32 on it and a fastcoref-based prototype at 0.82–0.84.
+
 ### Changed
+- **NOCB is a transition of its own.** An utterance that shares no entity with the
+  previous one has no Cb; it used to be labelled Rough-Shift (about half of all
+  "Rough-Shifts" on English Wikipedia and Grimm) and is now `TransitionType.NOCB`.
+  `transition_distribution` gains a `"NOCB"` key and its `"Rough-Shift"` share drops
+  accordingly — **add the two if you compare against earlier numbers.** The cohesion
+  score is unchanged (NOCB keeps the Rough-Shift weight), and the essay layers, genre
+  calibration and `diff_cohesion` still report the sum. ELLIPSE feature cache → v1.1.
+- **`lgram.tr.rough_shift_ratio`** counts Rough-Shift + NOCB, as before the split.
 - **Docs:** READMEs now state the ELLIPSE validation result (GATE 1 failed) and narrow
   the scalar cohesion score to a descriptive, unvalidated statistic.
 
 ### Fixed
+- **`lgram.tr` overt possessors under the KeNet scheme:** the possessor relation is
+  `nmod`/`compound` there, not `nmod:poss`, so "Kahvenin numarası" got a dropped
+  possessor (27% of possessor slots were spurious) and genitive possessors never
+  entered the Cf.
+- **`lgram.tr` imperatives** had no subject at all; a 2nd-person imperative now
+  realizes the addressee, a 3rd-person one takes an antecedent.
+- **`lgram.tr` warns** when the parses carry no `VerbForm=Fin` (IMST/BOUN schemes),
+  instead of silently finding no dropped subjects.
 - **Silent fabricated scores:** failures no longer turn into plausible-looking numbers.
   - Cohesion layer: an analysis error in a segment now propagates instead of scoring 0.5.
   - Grammar layer: a crashed LanguageTool check now yields the neutral 50 with

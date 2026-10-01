@@ -129,7 +129,7 @@ Centering Theory tracks three discourse centers per utterance:
 | **Backward Center** | Cb | Entity linking to previous utterance |
 | **Preferred Center** | Cp | Highest-ranked Cf |
 
-Five transition types between utterances:
+Six transition types between utterances:
 
 | Transition | Rule | Quality |
 |------------|------|---------|
@@ -138,6 +138,13 @@ Five transition types between utterances:
 | **Retain** | Cb(Ui) = Cb(Ui-1) ≠ Cp(Ui) | Good |
 | **Smooth-Shift** | Cb(Ui) ≠ Cb(Ui-1) = Cp(Ui) | OK |
 | **Rough-Shift** | Cb(Ui) ≠ Cb(Ui-1) ≠ Cp(Ui) | Poor |
+| **NOCB** | Cb(Ui) undefined: no entity shared with Ui-1 | Poor |
+
+The four-way table (Brennan, Friedman & Pollard 1987) needs a Cb. An utterance that
+shares no entity with the previous one has none, so it is reported as **NOCB**
+(Poesio et al. 2004) rather than as a Rough-Shift. NOCB is scored like a Rough-Shift,
+and the genre calibration and essay thresholds on this page still count the two
+together (as "Rough") — they were calibrated before the split.
 
 ---
 

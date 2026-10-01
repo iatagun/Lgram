@@ -261,6 +261,22 @@ class TestResolution(unittest.TestCase):
         self.assertEqual(report.utterances[2].cb, "ali")
 
 
+class TestSchemeGuard(unittest.TestCase):
+    def test_parses_without_finiteness_warn(self):
+        # regression: under the IMST scheme no verb is VerbForm=Fin, and every zero
+        # subject silently disappeared
+        imst_like = [tok(1, "geldi", "VERB", 0, "root", Person="3", Number="Sing")]
+        with self.assertWarns(RuntimeWarning):
+            analyze_parsed(["s0"], [imst_like])
+
+    def test_kenet_parses_do_not_warn(self):
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            run(AYSE_GITTI)
+
+
 class TestIdentityHook(unittest.TestCase):
     def test_external_identity_overrides_rule_resolution(self):
         # a coref model says the zero subject of U2 is entity "E1", like Ayşe
