@@ -20,10 +20,16 @@ from __future__ import annotations
 
 import warnings
 from collections import Counter
+from functools import lru_cache
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
-import snowballstemmer
+try:
+    import snowballstemmer
+except ImportError as e:  # pragma: no cover
+    raise ImportError(
+        "Turkish support needs the optional stack: pip install centering-lgram[tr]"
+    ) from e
 
 from ..models.centering_theory import TransitionType
 from .parser import JointParser, Token, split_sentences
@@ -137,7 +143,13 @@ def entity_key(tok: Token) -> str:
     """Lexical identity of a noun mention. Proper names are not stemmed: the
     Turkish snowball stemmer mangles them ("Çadır" -> "ça")."""
     base = _base(tok.form)
-    return base if tok.upos == "PROPN" else _STEM.stemWord(base)
+    return base if tok.upos == "PROPN" else _stem(base)
+
+
+@lru_cache(maxsize=100_000)
+def _stem(base: str) -> str:
+    # the pure-Python snowball stemmer was 80% of analyze_parsed's runtime
+    return _STEM.stemWord(base)
 
 
 def _speech_key(base: str) -> Optional[str]:
@@ -307,6 +319,13 @@ def extract_mentions(
                     a.key = subj.key
                     mentions.append(a)
                     continue
+            # Only a possessed *subject* ("Annesi geldi") looks back for its
+            # possessor. Linking every other implicit possessor to the previous
+            # sentence cost 2 points of strict accuracy on Turkish-ITCC: more
+            # spurious Cbs than recovered ones.
+            if by_id[a.pos].deprel not in _SUBJECTS:
+                unresolved.append(a.kind)
+                continue
         for cand in prev_cf:
             if (
                 cand.plural == a.plural
@@ -359,7 +378,9 @@ def _marks_finiteness(parses: Sequence[Sequence[Token]]) -> bool:
         for t in toks
         if t.upos in ("VERB", "AUX") and "Person" in t.feats
     ]
-    return not verbs or any(t.feats.get("VerbForm") == "Fin" for t in verbs)
+    # under KeNet a short text can lack one too ("Memurlar ne kadar alacak?"),
+    # so only a run of unmarked verbs counts as evidence of the wrong scheme
+    return len(verbs) < 3 or any(t.feats.get("VerbForm") == "Fin" for t in verbs)
 
 
 def analyze_parsed(

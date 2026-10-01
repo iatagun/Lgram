@@ -21,7 +21,7 @@ from lgram.tr.centering import (  # noqa: E402
     analyze_parsed,
     entity_key,
 )
-from lgram.tr.parser import Token, parse_feats  # noqa: E402
+from lgram.tr.parser import Token, parse_feats, split_sentences  # noqa: E402
 
 FIN3 = {"VerbForm": "Fin", "Person": "3", "Number": "Sing"}
 
@@ -244,6 +244,21 @@ class TestResolution(unittest.TestCase):
         )
         self.assertIsNone(report.utterances[1].cb)
 
+    def test_possessed_object_does_not_look_back(self):
+        # "Ayşe pazara gitti. Kitabını buldum."  Measured on ITCC: linking a
+        # non-subject implicit possessor to the previous sentence is wrong more
+        # often than right, so it stays unresolved.
+        report = run(
+            AYSE_GITTI,
+            [
+                tok(1, "Kitabını", "NOUN", 2, "obj", **{"Person[psor]": "3"}),
+                verb(2, "buldum", Person="1"),
+            ],
+        )
+        u2 = report.utterances[1]
+        self.assertIsNone(u2.cb)
+        self.assertIn("possessor", u2.unresolved)
+
     def test_zero_prefers_previous_cb_over_previous_cp(self):
         # "Ali geldi. Ayşe Ali'yi gördü. Gülümsedi."  Cb of U2 is Ali, Cp is Ayşe;
         # the zero subject of U3 follows the Cb.
@@ -259,6 +274,33 @@ class TestResolution(unittest.TestCase):
         self.assertEqual(report.utterances[1].cb, "ali")
         self.assertEqual(report.utterances[1].cp, "ayşe")
         self.assertEqual(report.utterances[2].cb, "ali")
+
+
+class TestSentenceSplitter(unittest.TestCase):
+    def test_plain_sentences(self):
+        self.assertEqual(
+            split_sentences("Ali geldi. Ayşe gitti! Kim kaldı?"),
+            ["Ali geldi.", "Ayşe gitti!", "Kim kaldı?"],
+        )
+
+    def test_abbreviations_and_initials_do_not_split(self):
+        # regression: "Prof. Dr. Ahmet Bey geldi." used to be three sentences
+        self.assertEqual(
+            split_sentences("Prof. Dr. Ahmet Bey geldi. A. Kadir de oradaydı."),
+            ["Prof. Dr. Ahmet Bey geldi.", "A. Kadir de oradaydı."],
+        )
+
+    def test_lower_case_continuation_does_not_split(self):
+        self.assertEqual(
+            split_sentences("Bu 21. yüzyıl sorunu. Nerdeydin? dedi annesi."),
+            ["Bu 21. yüzyıl sorunu.", "Nerdeydin? dedi annesi."],
+        )
+
+    def test_closing_quote_stays_with_its_sentence(self):
+        self.assertEqual(
+            split_sentences("“Geliyorum.” Sonra sustu."),
+            ["“Geliyorum.”", "Sonra sustu."],
+        )
 
 
 class TestMalformedParses(unittest.TestCase):
@@ -293,7 +335,17 @@ class TestSchemeGuard(unittest.TestCase):
         # subject silently disappeared
         imst_like = [tok(1, "geldi", "VERB", 0, "root", Person="3", Number="Sing")]
         with self.assertWarns(RuntimeWarning):
-            analyze_parsed(["s0"], [imst_like])
+            analyze_parsed(["s0", "s1", "s2"], [imst_like] * 3)
+
+    def test_one_unmarked_verb_is_not_enough_to_warn(self):
+        # regression: "Memurlar ne kadar alacak?" comes back without VerbForm=Fin
+        # even under KeNet; a single such sentence must not raise the alarm
+        import warnings
+
+        unmarked = [tok(1, "alacak", "VERB", 0, "root", Person="3", Number="Sing")]
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            analyze_parsed(["s0"], [unmarked])
 
     def test_kenet_parses_do_not_warn(self):
         import warnings

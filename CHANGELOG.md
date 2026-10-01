@@ -20,16 +20,18 @@
 - **`lgram.tr` measured against gold coreference.** Centering derived from Turkish-ITCC
   (CorefUD 1.3; dropped subjects and possessors annotated) is now the yardstick
   (`experiments/itcc_centering.py`, `experiments/tr_baseline_itcc.py`). Rule-based
-  transition accuracy (5-fold over ITCC): 0.52 by label, **0.46 strict** (label right *and* the Cb is the
-  right entity) — still experimental. What the measurements changed: a dropped subject
+  transition accuracy over all 21 ITCC documents: 0.54 by label, **0.48 strict** (label
+  right *and* the Cb is the right entity) — still experimental. For scale: with no
+  anaphora resolution at all (repeated nouns and speaker/addressee only) strict accuracy
+  is 0.46, and with perfect entity identity on the same mention slots it is 0.74. What the measurements changed: a dropped subject
   is posited on every finite clause, not only the root; an implicit possessor binds to
   its own clause's subject; anaphors try the previous Cb first; proper names are not
   stemmed. Without dropped subjects 65% of ITCC transitions have no Cb (34% with them).
 - **Coreference hook for `lgram.tr`:** `analyze_parsed(..., identity=fn)` lets an external
   coreference model decide which entity each mention is. A BERTurk model in the
   fastcoref architecture, trained on ITCC (`experiments/tr_coref_*.py`), reaches strict
-  accuracy 0.50 vs 0.46 for the rules in 5-fold cross-validation (better in 18 of 21
-  documents). The model is not shipped: ITCC is CC BY-NC-SA.
+  accuracy 0.50 vs 0.48 for the rules in 5-fold cross-validation (McNemar p = 0.004,
+  better in 13 of 21 documents). The model is not shipped: ITCC is CC BY-NC-SA.
 - **`python -m lgram.transition_eval`:** transition accuracy against a hand-annotated
   Cp/Cb sheet, plus inter-annotator kappa (`--agree`). The bundled English sheet is a
   single-annotator annotation. `experiments/coref_centering.py` shows the built-in
@@ -56,6 +58,17 @@
   realizes the addressee, a 3rd-person one takes an antecedent.
 - **`lgram.tr` warns** when the parses carry no `VerbForm=Fin` (IMST/BOUN schemes),
   instead of silently finding no dropped subjects.
+- **`lgram.tr` hang on malformed parses:** DizgeBERT can emit a self-headed token or a
+  head cycle (0.4–1% of sentences); possessor binding then looped forever.
+- **`lgram.tr` implicit possessors** are linked to the previous sentence only when the
+  possessed noun is the subject ("Annesi geldi"). Linking every implicit possessor back
+  cancelled the whole gain of zero-subject and pronoun resolution (strict 0.46 → 0.48).
+- **`lgram.tr` sentence splitter** no longer splits after abbreviations and initials
+  ("Prof. Dr. Ahmet") or before a lower-case continuation ("21. yüzyıl", "Nerdeydin?
+  dedi"), and keeps a closing quote with its sentence. Boundary errors on ITCC raw
+  text: 436 → 319.
+- **`import lgram.tr` without the `[tr]` extra** now says how to install it. Stems are
+  cached (the stemmer was 80% of the runtime).
 - **Silent fabricated scores:** failures no longer turn into plausible-looking numbers.
   - Cohesion layer: an analysis error in a segment now propagates instead of scoring 0.5.
   - Grammar layer: a crashed LanguageTool check now yields the neutral 50 with
