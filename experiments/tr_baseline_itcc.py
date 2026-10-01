@@ -73,7 +73,9 @@ def anchor(node):
     return int(node.deps[0]["parent"].ord) if node.deps else None
 
 
-def evaluate(sents, parses):
+def evaluate(sents, parses, make_identity=None):
+    """`make_identity(para)` -> identity(i, mention) lets a coref model set entity
+    keys (see tr_coref_centering.py); None = lgram.tr's rule-based resolution."""
     paras, cur = [], []
     for s, p in zip(sents, parses):
         if s["newpar"] and cur:
@@ -90,7 +92,9 @@ def evaluate(sents, parses):
     miss = Counter()  # gold Cb not recovered, by how it is realized in U_i
     for para in paras:
         report = analyze_parsed(
-            [" ".join(s["forms"]) for s, _ in para], [p for _, p in para]
+            [" ".join(s["forms"]) for s, _ in para],
+            [p for _, p in para],
+            identity=make_identity(para) if make_identity else None,
         )
         if len(report.utterances) != len(para):  # empty parse dropped a sentence
             continue
