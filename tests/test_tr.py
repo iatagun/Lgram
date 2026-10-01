@@ -207,6 +207,23 @@ class TestResolution(unittest.TestCase):
         self.assertEqual(report.utterances[2].cb, "ali")
 
 
+class TestIdentityHook(unittest.TestCase):
+    def test_external_identity_overrides_rule_resolution(self):
+        # a coref model says the zero subject of U2 is entity "E1", like Ayşe
+        def identity(i, m):
+            return "E1" if m.kind == "zero" or m.key == "ayşe" else None
+
+        report = analyze_parsed(
+            ["s0", "s1"],
+            [AYSE_GITTI, [tok(1, "Elma", "NOUN", 2, "obj"), verb(2, "aldı")]],
+            identity=identity,
+        )
+        u2 = report.utterances[1]
+        self.assertEqual(u2.cb, "E1")
+        zero = next(m for m in u2.cf if m.kind == "zero")
+        self.assertEqual(zero.form, "o")  # placeholder handed to the model
+
+
 class TestEntityKey(unittest.TestCase):
     def test_proper_names_are_not_stemmed(self):
         # snowball turns "Çadır" into "ça"; names keep their base form

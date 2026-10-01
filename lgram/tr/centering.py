@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import snowballstemmer
 
@@ -42,6 +42,11 @@ ROLE_RANK = {
     "appos": 1.0,
 }
 _SUBJECTS = frozenset({"nsubj", "nsubj:outer", "csubj"})
+# pronoun a dropped subject / possessor stands for, by (person, plural)
+_ZERO_FORM = {("1", False): "ben", ("2", False): "sen", ("3", False): "o",
+              ("1", True): "biz", ("2", True): "siz", ("3", True): "onlar"}  # fmt: skip
+_PSOR_FORM = {("1", False): "benim", ("2", False): "senin", ("3", False): "onun",
+              ("1", True): "bizim", ("2", True): "sizin", ("3", True): "onların"}  # fmt: skip
 _THIRD = frozenset(
     "o onu ona onda ondan onun onunla onlar onları onlara onlarda onlardan "
     "onların onlarla".split()
@@ -63,6 +68,11 @@ class Mention:
     pos: int
     plural: bool = False
     kind: str = "noun"  # noun | pronoun | zero | possessor
+    form: str = ""  # pronoun a zero/possessor stands for ("o", "onun"): coref input
+
+
+# entity identity from outside (a coreference model): mention -> entity id or None
+Identity = Callable[[Mention], Optional[str]]
 
 
 @dataclass
@@ -161,7 +171,10 @@ def extract_mentions(
     prev_cf: Sequence[Mention],
     resolve_zero: bool = True,
     prev_cb: Optional[str] = None,
+    identity: Optional[Identity] = None,
 ) -> Tuple[List[Mention], List[str]]:
+    """Cf mentions of one utterance. With `identity`, entity keys come from it
+    (e.g. a coreference model) instead of the rule-based resolution below."""
     # anaphors look at the previous Cb first, then down the previous Cf
     # (+0.013 transition accuracy on Turkish-ITCC train, +0.006 dev)
     prev_cf = sorted(prev_cf, key=lambda m: m.key != prev_cb) if prev_cb else prev_cf
@@ -174,8 +187,8 @@ def extract_mentions(
     anaphors: List[Mention] = []  # key unresolved yet: kind + plural + rank set
     subject_of: Dict[int, Mention] = {}  # predicate token id -> its subject mention
 
-    def anaphor(kind: str, rank: float, pos: int, plural: bool) -> None:
-        anaphors.append(Mention("", rank, pos, plural, kind))
+    def anaphor(kind: str, rank: float, pos: int, plural: bool, form: str) -> None:
+        anaphors.append(Mention("", rank, pos, plural, kind, form))
 
     def speech(person: str, number: str) -> str:
         return f"@{person}{'pl' if number == 'Plur' else 'sg'}"
@@ -192,7 +205,7 @@ def extract_mentions(
         elif t.upos == "PRON" and rel in ROLE_RANK:
             base = _base(t.form)
             if base in _THIRD:
-                anaphor("pronoun", rank, t.id, base.startswith("onlar"))
+                anaphor("pronoun", rank, t.id, base.startswith("onlar"), "")
             elif (key := _speech_key(base)) is not None:
                 mentions.append(Mention(key, rank, t.id, key.endswith("pl"), "pronoun"))
 
@@ -200,18 +213,15 @@ def extract_mentions(
         psor = t.feats.get("Person[psor]")
         has_genitive = any(c.deprel == "nmod:poss" for c in children.get(t.id, []))
         if t.upos in ("NOUN", "PROPN") and psor and not has_genitive:
+            pl = t.feats.get("Number[psor]") == "Plur"
+            form = _PSOR_FORM.get((psor, pl), "onun")
             if psor in ("1", "2"):
                 key = speech(psor, t.feats.get("Number[psor]", ""))
                 mentions.append(
-                    Mention(key, ROLE_RANK["nmod:poss"], t.id, False, "possessor")
+                    Mention(key, ROLE_RANK["nmod:poss"], t.id, False, "possessor", form)
                 )
             else:
-                anaphor(
-                    "possessor",
-                    ROLE_RANK["nmod:poss"],
-                    t.id,
-                    t.feats.get("Number[psor]") == "Plur",
-                )
+                anaphor("possessor", ROLE_RANK["nmod:poss"], t.id, pl, form)
 
     # zero subject: every finite predicate (root, subordinate, parataxis...) with no
     # overt subject. The root's zero keeps pos 0 so it heads the Cf among subjects.
@@ -232,11 +242,22 @@ def extract_mentions(
         pos = 0 if pred.head == 0 else pred.id
         person = carrier.feats.get("Person", "3")
         number = carrier.feats.get("Number", "")
+        form = _ZERO_FORM.get((person, number == "Plur"), "o")
         if person in ("1", "2"):
-            mentions.append(Mention(speech(person, number), 4.0, pos, False, "zero"))
+            mentions.append(
+                Mention(speech(person, number), 4.0, pos, False, "zero", form)
+            )
         else:
-            anaphor("zero", 4.0, pos, number == "Plur")
+            anaphor("zero", 4.0, pos, number == "Plur", form)
             subject_of[pred.id] = anaphors[-1]
+
+    if identity is not None:
+        unresolved = []
+        for m in mentions + anaphors:
+            m.key = identity(m) or m.key
+            if not m.key:
+                unresolved.append(m.kind)
+        return [m for m in mentions + anaphors if m.key], unresolved
 
     def clause_subject(tok: Token) -> Optional[Mention]:
         """Subject of the clause `tok` sits in, unless `tok` is inside that subject."""
@@ -311,13 +332,15 @@ def analyze_parsed(
     sentences: Sequence[str],
     parses: Sequence[Sequence[Token]],
     resolve_zero: bool = True,
+    identity: Optional[Callable[[int, Mention], Optional[str]]] = None,
 ) -> TurkishReport:
     """Centering over already-parsed sentences (no model needed).
 
     `resolve_zero=False` ablates zero-pronoun recovery (for benchmarks).
+    `identity(sentence_index, mention)` overrides entity identity (coref model).
     """
     states: List[UtteranceState] = []
-    for text, tokens in zip(sentences, parses):
+    for i, (text, tokens) in enumerate(zip(sentences, parses)):
         if not tokens:
             continue
         prev = states[-1] if states else None
@@ -326,6 +349,7 @@ def analyze_parsed(
             prev.cf if prev else [],
             resolve_zero,
             prev.cb if prev else None,
+            (lambda m, i=i: identity(i, m)) if identity else None,
         )
         cf = _merge_cf(mentions)
         cb, cp, transition = _transition(prev, cf)
