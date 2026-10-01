@@ -1,0 +1,117 @@
+﻿id,para,idx,sentence,gold_cp,gold_cb,note
+1,wiki-01,0,"The Sun orbits the Galactic Center at a distance of 24,000 to 28,000 light-years.",-,-,
+2,wiki-01,1,Its mean distance from Earth is about 1.496×108 kilometres or about 8 light-minutes.,distance,sun,
+3,wiki-01,2,"The distance between the Sun and the Earth was used to define a unit of length called the astronomical unit , now defined to be 149.5978707×106 kilometres.",distance,distance,
+4,wiki-01,3,"It is the largest and most massive object in the Solar System; its diameter is about 1,391,400 km , around 109 times that of Earth.",sun,sun,
+5,wiki-01,4,"The Sun's mass is around 330,000 times that of Earth, making up about 99.86% of the total mass of the Solar System.",mass,sun,
+6,wiki-01,5,"The mass of the Sun's surface layer, its photosphere, consists mostly of hydrogen and helium , with much smaller quantities of heavier elements, including oxygen, carbon, neon, and iron.",mass,sun,different mass (surface layer)
+7,wiki-02,0,"As relations between Hungary and the Ottoman Empire deteriorated, Suleiman resumed his campaign in Central Europe, and on 29 August 1526 he defeated Louis II of Hungary at the Battle of Mohács.",-,-,
+8,wiki-02,1,"The Hungarian army, encouraged by the nobility to engage prematurely, launched a frontal assault that collapsed under coordinated Ottoman counterattacks.",army,-,hungarian army ~ hungary is bridging
+9,wiki-02,2,"King Louis and much of the Hungarian aristocracy were killed, resulting in the destruction of the royal army and the end of the Jagiellonian dynasty in Hungary and Bohemia.",louis,army,royal army = hungarian army
+10,wiki-02,3,"The aftermath saw the partition of Hungary between the Ottoman Empire, the Habsburg monarchy, and the Principality of Transylvania.",aftermath,hungary,
+11,wiki-02,4,The battle marked the beginning of sustained Ottoman–Habsburg wars and the decline of Hungary as an independent power.,battle,hungary,
+12,wiki-02,5,"Upon encountering the lifeless body of King Louis, Suleiman is said to have lamented: ""I came indeed in arms against him; but it was not my wish that he should be thus cut off before he scarcely tasted the sweets of life and royalty.""",suleiman,-,
+13,wiki-03,0,The Turkish word for Ottoman originally referred to the tribal followers of Osman in the 14th century.,-,-,
+14,wiki-03,1,The word subsequently came to be used to refer to the empire's military-administrative elite.,word,word,
+15,wiki-03,2,"In contrast, the term Turk was used to refer to the Anatolian peasant and tribal population and was seen as a disparaging term when applied to urban, educated individuals.",turk,-,
+16,wiki-03,3,"In the early modern period, an educated, urban-dwelling Turkish speaker who was not a member of the military-administrative class typically referred to himself neither as an Osmanlı nor as a Türk, but rather as a Rūmī , or ""Roman"", meaning an inhabitant of the territory of the former Byzantine Empire in the Balkans and Anatolia.",speaker,turk,Turk realized as 'Türk'
+17,wiki-03,4,The term Rūmī was also used to refer to Turkish speakers by the other Muslim peoples of the empire and beyond.,rumi,speaker,generic 'Turkish speakers' = same class
+18,wiki-04,0,"Long before any knowledge of electricity existed, people were aware of shocks from electric fish.",-,-,
+19,wiki-04,1,"Ancient Egyptian texts dating from 2750 BCE described them as the ""protectors"" of all other fish.",texts,fish,
+20,wiki-04,2,"Electric fish were again reported millennia later by ancient Greek, Roman and Arab naturalists and physicians.",fish,fish,
+21,wiki-04,3,"Several ancient writers, such as Pliny the Elder and Scribonius Largus, attested to the numbing effect of electric shocks delivered by electric catfish and electric rays, and knew that such shocks could travel along conducting objects.",writers,-,bridging: catfish/rays subset of fish
+22,wiki-04,4,Patients with ailments such as gout or headache were directed to touch electric fish in the hope that the powerful jolt might cure them.,patients,-,bridging: electric fish superset of catfish/rays
+23,wiki-05,0,"When Mehmed II was eleven years old, he was sent to Amasya with his two lalas to govern and thus gain experience, per the custom of Ottoman rulers before his time.",-,-,
+24,wiki-05,1,Sultan Murad II also sent a number of teachers for him to study under.,murad,mehmed,
+25,wiki-05,2,This Islamic education had a great impact in molding Mehmed's mindset and reinforcing his Muslim beliefs.,education,mehmed,
+26,wiki-05,3,"He was influenced in his practice of Islamic epistemology by practitioners of science, particularly by his mentor, Molla Gürâni, and he followed their approach.",mehmed,mehmed,
+27,wiki-05,4,"The influence of Akshamsaddin in Mehmed's life became predominant from a young age, especially in the imperative of fulfilling his Islamic duty to overthrow the Byzantine Empire by conquering Constantinople.",influence,mehmed,
+28,wiki-06,0,"Pamuk was born in Istanbul, in 1952, and grew up in a wealthy but declining upper-class family, an experience he describes in passing in his novels The Black Book and Cevdet Bey and His Sons, as well as more thoroughly in his personal memoir Istanbul: Memories and the City.",-,-,
+29,wiki-06,1,Pamuk's paternal grandmother was Circassian.,grandmother,pamuk,
+30,wiki-06,2,"He was educated at Robert College secondary school in Istanbul and studied architecture at the Istanbul Technical University, a subject related to his dream career, painting.",pamuk,pamuk,
+31,wiki-06,3,"He left architecture school after three years to become a full-time writer, and graduated from the Institute of Journalism at the University of Istanbul in 1976.",pamuk,pamuk,
+32,wiki-06,4,"From ages 22 to 30, Pamuk lived with his mother, writing his first novel and attempting to find a publisher.",pamuk,pamuk,
+33,wiki-06,5,He describes himself as a Cultural Muslim who identifies with Islam historically and culturally while not believing in a personal connection to God.,pamuk,pamuk,
+34,wiki-07,0,"In the Principia, Newton formulated the laws of motion and universal gravitation that formed the dominant scientific viewpoint for centuries until it was superseded by the theory of relativity.",-,-,
+35,wiki-07,1,"While this is the case, his laws still serve as sufficient approximations for all physical phenomena involving low speeds and weak gravitational fields.",laws,newton,
+36,wiki-07,2,"He used his mathematical description of gravity to derive Kepler's laws of planetary motion, account for tides, the trajectories of comets, the precession of the equinoxes and other phenomena, eradicating doubt about the Solar System's heliocentricity.",newton,newton,Kepler's laws != Newton's laws
+37,wiki-07,3,Newton solved the two-body problem and introduced the three-body problem.,newton,newton,
+38,wiki-07,4,He demonstrated that the motion of objects on Earth and celestial bodies could be accounted for by the same principles.,newton,newton,
+39,wiki-07,5,"Newton's inference that the Earth is an oblate spheroid was subsequently confirmed by the geodetic measurements of Pierre Louis Maupertuis, Alexis Clairaut, Charles Marie de La Condamine, and others, convincing most European scientists of the superiority of Newtonian mechanics over earlier systems.",inference,newton,
+40,wiki-08,0,The mountain was not called by the name Ararat until the Middle Ages; early Armenian historians considered the biblical Ararat to be in Corduene.,-,-,
+41,wiki-08,1,"It is known as Ararat in European languages, however, none of the native peoples have traditionally referred to it by that name.",mountain,mountain,
+42,wiki-08,2,"Ultimately, Ararat is the Biblical Hebrew name of the Iron Age kingdom of Urartu.",ararat,ararat,"the name Ararat, not the mountain"
+43,wiki-08,3,"Urartu, the Assyrian/Babylonian name of the kingdom, has been proposed by Archibald Sayce to mean ""highlands"".",urartu,urartu,kingdom = urartu
+44,wiki-08,4,"Ayrarat, the central province of ancient Armenia, is linked to the same name.",ayrarat,urartu,'the same name' = Urartu
+45,wiki-08,5,"Robert W. Thomson suggested that the mountain was called Ararat ""by confusion with Ayrarat, the name of the province.""",thomson,ayrarat,
+46,wiki-09,0,"Gökçen, due to the success in flight training, Ataturk himself said: ""You've made me very happy ...",-,-,
+47,wiki-09,1,Now I can explain what I have planned for you ...,ataturk,ataturk,
+48,wiki-09,2,Perhaps you'll be the first woman military pilot in the world ...,gokcen,gokcen,
+49,wiki-09,3,"For the world's first military woman pilot to be of Turkish descent would be a proud event, you can imagine, right?",gokcen,gokcen,subject is a clause; pilot/you = gokcen
+50,wiki-09,4,Now I will act immediately and send you to Tayyare School in Eskişehir.,ataturk,gokcen,
+51,wiki-09,5,"You will receive a special education there"".",gokcen,gokcen,
+52,wiki-10,0,"The Moon has been an important source of inspiration and knowledge in human history, having been crucial to cosmography, mythology, religion, art, time keeping, natural science and spaceflight.",-,-,
+53,wiki-10,1,"The first spaceflights to an extraterrestrial body were to the Moon, starting in 1959 with the flyby of Luna 1 , and the intentional impact of Luna 2, followed in 1966 by the first soft landing and orbital insertion .",spaceflights,moon,
+54,wiki-10,2,"Humans first arrived in orbit with Apollo 8 on December 24, 1968, and then on the surface with Apollo 11 on July 20, 1969, making the Moon the only celestial body beyond Earth that humans have visited.",humans,moon,
+55,wiki-10,3,"By 1972, six Apollo missions had landed twelve people on the Moon and stayed up to three days.",missions,moon,people != humans (generic)
+56,wiki-10,4,"Renewed robotic exploration of the Moon, in particular to confirm the presence of water on the Moon, has fueled plans to return humans to the Moon.",exploration,moon,
+57,wiki-10,5,"These plans include the Artemis program, which included the Artemis II crewed lunar flyby in 2026.",plans,plans,
+58,grimm-11,0,"The path led him into a wood, and there he saw two old ravens standing by their nest, and throwing out their young ones.",-,-,
+59,grimm-11,1,"‘Out with you, you idle, good-for-nothing creatures!’ cried they; ‘we cannot find food for you any longer; you are big enough, and can provide for yourselves.’",ravens,ravens,"ravens = old ravens, young = young ravens"
+60,grimm-11,2,"But the poor young ravens lay upon the ground, flapping their wings, and crying: ‘Oh, what helpless chicks we are!",young,young,
+61,grimm-11,3,"We must shift for ourselves, and yet we cannot fly!",young,young,
+62,grimm-11,4,"What can we do, but lie here and starve?’",young,young,
+63,grimm-11,5,"So the good young fellow alighted and killed his horse with his sword, and gave it to them for food.",fellow,young,
+64,grimm-12,0,"After he had travelled a little way, he spied a dog lying by the roadside and panting as if he were tired.",-,-,
+65,grimm-12,1,"‘What makes you pant so, my friend?’ said the ass.",ass,ass,
+66,grimm-12,2,"‘Alas!’ said the dog, ‘my master was going to knock me on the head, because I am old and weak, and can no longer make myself useful to him in hunting; so I ran away; but what can I do to earn my livelihood?’",dog,dog,
+67,grimm-12,3,"‘Hark ye!’ said the ass, ‘I am going to the great city to turn musician: suppose you go with me, and try what you can do in the same way?’",ass,dog,
+68,grimm-12,4,"The dog said he was willing, and they jogged on together.",dog,dog,'they' group does not realize ass
+69,grimm-13,0,"When evening came, and the dwarfs had gone home, they found Snowdrop lying on the ground: no breath came from her lips, and they were afraid that she was quite dead.",-,-,
+70,grimm-13,1,"They lifted her up, and combed her hair, and washed her face with wine and water; but all was in vain, for the little girl seemed quite dead.",dwarfs,dwarfs,
+71,grimm-13,2,"So they laid her down upon a bier, and all seven watched and bewailed her three whole days; and then they thought they would bury her: but her cheeks were still rosy; and her face looked just as it did while she was alive; so they said, ‘We will never bury her in the cold ground.’",dwarfs,dwarfs,
+72,grimm-13,3,"And they made a coffin of glass, so that they might still look at her, and wrote upon it in golden letters what her name was, and that she was a king’s daughter.",dwarfs,dwarfs,
+73,grimm-13,4,"And the coffin was set among the hills, and one of the dwarfs always sat by it and watched.",coffin,dwarfs,'one of the dwarfs'
+74,grimm-13,5,"And the birds of the air came too, and bemoaned Snowdrop; and first of all came an owl, and then a raven, and at last a dove, and sat by her side.",birds,-,
+75,grimm-14,0,"After a year or two, it came to pass that the king’s son rode through the forest and passed by the tower.",-,-,
+76,grimm-14,1,"Then he heard a song, which was so charming that he stood still and listened.",son,son,
+77,grimm-14,2,"This was Rapunzel, who in her solitude passed her time in letting her sweet voice resound.",rapunzel,-,bridging: song -> her voice
+78,grimm-14,3,"The king’s son wanted to climb up to her, and looked for the door of the tower, but none was to be found.",son,rapunzel,
+79,grimm-14,4,"He rode home, but the singing had so deeply touched his heart, that every day he went out into the forest and listened to it.",son,son,
+80,grimm-14,5,"Once when he was thus standing behind a tree, he saw that an enchantress came there, and he heard how she cried:",son,son,
+81,grimm-15,0,"Hans took out his pocket-handkerchief, put the piece of silver into it, threw it over his shoulder, and jogged off on his road homewards.",-,-,
+82,grimm-15,1,"As he went lazily on, dragging one foot after another, a man came in sight, trotting gaily along on a capital horse.",man,hans,
+83,grimm-15,2,"‘Ah!’ said Hans aloud, ‘what a fine thing it is to ride on horseback!",hans,hans,
+84,grimm-15,3,"There he sits as easy and happy as if he was at home, in the chair by his fireside; he trips against no stones, saves shoe-leather, and gets on he hardly knows how.’",man,-,he = the horseman
+85,grimm-15,4,"Hans did not speak so softly but the horseman heard it all, and said, ‘Well, friend, why do you go on foot then?’",hans,man,horseman = man
+86,grimm-15,5,"‘Ah!’ said he, ‘I have this load to carry: to be sure it is silver, but it is so heavy that I can’t hold up my head, and you must know it hurts my shoulder sadly.’",hans,hans,
+87,grimm-16,0,"The proposition pleased the two others, and they set out on their way together.",-,-,
+88,grimm-16,1,"Soon, however, they came to a little brook, and as there was no bridge or foot-plank, they did not know how they were to get over it.",travelers,travelers,they = the travellers of U0
+89,grimm-16,2,"The straw hit on a good idea, and said: ‘I will lay myself straight across, and then you can walk over on me as on a bridge.’",straw,-,straw is a member of the group
+90,grimm-16,3,"The straw therefore stretched itself from one bank to the other, and the coal, who was of an impetuous disposition, tripped quite boldly on to the newly-built bridge.",straw,straw,
+91,grimm-16,4,"But when she had reached the middle, and heard the water rushing beneath her, she was after all, afraid, and stood still, and ventured no farther.",coal,coal,
+92,grimm-16,5,"The straw, however, began to burn, broke in two pieces, and fell into the stream.",straw,-,stream vs water not coreferent
+93,grimm-17,0,"There was once a man called Frederick: he had a wife whose name was Catherine, and they had not long been married.",-,-,
+94,grimm-17,1,One day Frederick said.,frederick,frederick,
+95,grimm-17,2,"I am going to work in the fields; when I come back I shall be hungry so let me have something nice cooked, and a good draught of ale.’",frederick,frederick,
+96,grimm-17,3,"‘Very well,’ said she, ‘it shall all be ready.’",catherine,meal,it = the cooked meal and ale
+97,grimm-17,4,"When dinner-time drew nigh, Catherine took a nice steak, which was all the meat she had, and put it on the fire to fry.",catherine,catherine,steak is part of meal (bridging)
+98,grimm-17,5,"The steak soon began to look brown, and to crackle in the pan; and Catherine stood by with a fork and turned it: then she said to herself, ‘The steak is almost ready, I may as well go to the cellar for the ale.’",steak,catherine,
+99,grimm-18,0,"And now the little peasant and his wife had the cow for which they had so long wished, and they were heartily glad, but they had no food for it, and could give it nothing to eat, so it soon had to be killed.",-,-,
+100,grimm-18,1,"They salted the flesh, and the peasant went into the town and wanted to sell the skin there, so that he might buy a new calf with the proceeds.",couple,couple,
+101,grimm-18,2,"On the way he passed by a mill, and there sat a raven with broken wings, and out of pity he took him and wrapped him in the skin.",peasant,peasant,
+102,grimm-18,3,"But as the weather grew so bad and there was a storm of rain and wind, he could go no farther, and turned back to the mill and begged for shelter.",peasant,peasant,
+103,grimm-18,4,"The miller’s wife was alone in the house, and said to the peasant: ‘Lay yourself on the straw there,’ and gave him a slice of bread and cheese.",wife,peasant,miller's wife
+104,grimm-18,5,"The peasant ate it, and lay down with his skin beside him, and the woman thought: ‘He is tired and has gone to sleep.’",peasant,wife,the woman = miller's wife
+105,grimm-19,0,"They could not, however, reach the great city the first day; so when night came on, they went into a wood to sleep.",-,-,
+106,grimm-19,1,"The ass and the dog laid themselves down under a great tree, and the cat climbed up into the branches; while the cock, thinking that the higher he sat the safer he should be, flew up to the very top of the tree, and then, according to his custom, before he went to sleep, looked out on all sides of him to see that everything was well.",ass,-,group members + tree~wood: bridging
+107,grimm-19,2,"In doing this, he saw afar off something bright and shining and calling to his companions said, ‘There must be a house no great way off, for I see a light.’",cock,cock,companions = group
+108,grimm-19,3,"‘If that be the case,’ said the ass, ‘we had better change our quarters, for our lodging is not the best in the world!’",ass,-,'we' group; 'that' is propositional
+109,grimm-19,4,"‘Besides,’ added the dog, ‘I should not be the worse for a bone or two, or a bit of meat.’",dog,-,dog only inside 'we'
+110,grimm-19,5,"So they walked off together towards the spot where Chanticleer had seen the light, and as they drew near it became larger and brighter, till they at last came close to a house in which a gang of robbers lived.",animals,-,'they' group; dog not realized individually
+111,grimm-20,0,"The little tailor went onwards, always following his own pointed nose.",-,-,
+112,grimm-20,1,"After he had walked for a long time, he came to the courtyard of a royal palace, and as he felt weary, he lay down on the grass and fell asleep.",tailor,tailor,
+113,grimm-20,2,"Whilst he lay there, the people came and inspected him on all sides, and read on his girdle: ‘Seven at one stroke.’",people,tailor,
+114,grimm-20,3,"‘Ah!’ said they, ‘what does the great warrior want here in the midst of peace?",people,people,warrior = tailor
+115,grimm-20,4,He must be a mighty lord.’,tailor,tailor,
+116,grimm-20,5,"They went and announced him to the king, and gave it as their opinion that if war should break out, this would be a weighty and useful man who ought on no account to be allowed to depart.",people,tailor,
