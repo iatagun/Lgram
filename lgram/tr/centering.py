@@ -255,8 +255,9 @@ def extract_mentions(
         if pred.deprel == "conj" and pred.head in predicates:
             continue
         carrier = _finite_carrier(pred, children)
-        if carrier is None or carrier.feats.get("Mood") == "Imp":
+        if carrier is None:
             continue
+        # imperatives included: "Gir!" realizes the addressee, "Gelsin" a 3rd person
         pos = 0 if pred.head == 0 else pred.id
         person = carrier.feats.get("Person", "3")
         number = carrier.feats.get("Number", "")

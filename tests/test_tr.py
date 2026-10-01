@@ -84,9 +84,20 @@ class TestZeroPronoun(unittest.TestCase):
         report = run(AYSE_GITTI, [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "geldi")])
         self.assertFalse(report.utterances[1].zero_subject)
 
-    def test_imperative_is_not_a_zero_pronoun(self):
-        report = run(AYSE_GITTI, [verb(1, "Gel", Mood="Imp")])
-        self.assertFalse(report.utterances[1].zero_subject)
+    def test_second_person_imperative_realizes_the_addressee(self):
+        # regression: imperatives were skipped, so "Gel!" had no subject at all.
+        # Its subject is the addressee, never the previous sentence's entity.
+        report = run(AYSE_GITTI, [verb(1, "Gel", Mood="Imp", Person="2")])
+        u2 = report.utterances[1]
+        self.assertEqual(u2.cp, "@2sg")
+        self.assertIsNone(u2.cb)  # not linked to Ayşe
+
+    def test_third_person_imperative_takes_an_antecedent(self):
+        # "Ayşe pazara gitti. Gelsin."  (let her come: subject = Ayşe)
+        report = run(AYSE_GITTI, [verb(1, "Gelsin", Mood="Imp")])
+        u2 = report.utterances[1]
+        self.assertTrue(u2.zero_subject)
+        self.assertEqual(u2.cb, stem("Ayşe"))
 
     def test_first_person_zero_subject_is_speaker_not_previous_entity(self):
         first = [
