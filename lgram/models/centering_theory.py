@@ -32,6 +32,7 @@ class TransitionType(Enum):
     RETAIN = "Retain"  # Cb(Ui) = Cb(Ui-1) != Cp(Ui)
     SMOOTH_SHIFT = "Smooth-Shift"  # Cb(Ui) != Cb(Ui-1) = Cp(Ui)
     ROUGH_SHIFT = "Rough-Shift"  # Cb(Ui) != Cb(Ui-1) != Cp(Ui)
+    NOCB = "NOCB"  # Cb(Ui) undefined: no link to Ui-1 (Poesio et al. 2004)
 
 
 @dataclass
@@ -438,20 +439,9 @@ class EnhancedCenteringTheory:
         prev_cb = prev_state.backward_center
         cp = current_state.preferred_center
 
-        if cb is None and prev_cb is None:
-            if cp and prev_state.preferred_center:
-                if self._are_coreferent_cached(
-                    cp,
-                    prev_state.preferred_center,
-                    current_state._entity_map,
-                    prev_state._entity_map,
-                ):
-                    return TransitionType.CONTINUE
-                return TransitionType.ROUGH_SHIFT
-            return TransitionType.RETAIN
-
-        if cb is None and prev_cb is not None:
-            return TransitionType.ROUGH_SHIFT
+        # The BFP table needs a defined Cb(Ui); without one it is NOCB, not a shift.
+        if cb is None:
+            return TransitionType.NOCB
 
         if cb is not None and prev_cb is None:
             # First transition: previous Cb undefined.
@@ -650,6 +640,7 @@ class EnhancedCenteringTheory:
         TransitionType.RETAIN: 0.8,
         TransitionType.SMOOTH_SHIFT: 0.6,
         TransitionType.ROUGH_SHIFT: 0.3,
+        TransitionType.NOCB: 0.3,  # was scored as Rough-Shift before the split
         TransitionType.ESTABLISH: 1.0,
     }
 
@@ -797,7 +788,7 @@ class EnhancedCenteringTheory:
             for i, u in enumerate(utterance_sequence):
                 state = self.update_discourse(u)
                 t = state.transition
-                if t == TransitionType.ROUGH_SHIFT:
+                if t in (TransitionType.ROUGH_SHIFT, TransitionType.NOCB):
                     recent_rough += 1
                     if state.backward_center is None and recent_rough >= 2:
                         boundaries.append(i)
@@ -940,6 +931,7 @@ class EnhancedCenteringTheory:
         TransitionType.RETAIN: "~> ",
         TransitionType.SMOOTH_SHIFT: "~~>",
         TransitionType.ROUGH_SHIFT: "//>",
+        TransitionType.NOCB: "xx>",
     }
 
     def visualize(self, text: str) -> str:
@@ -967,7 +959,7 @@ class EnhancedCenteringTheory:
                     transition_counts[t] = transition_counts.get(t, 0) + 1
 
                 # boundary detection inline
-                if t == TransitionType.ROUGH_SHIFT:
+                if t in (TransitionType.ROUGH_SHIFT, TransitionType.NOCB):
                     rough_streak += 1
                     if state.backward_center is None and rough_streak >= 2:
                         boundary_count += 1

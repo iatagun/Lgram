@@ -193,7 +193,9 @@ class CohesionLayer:
         for s in segments:
             d = s.transition_distribution
             continues.append(d.get("Continue", 0))
-            roughs.append(d.get("Rough-Shift", 0))
+            roughs.append(
+                d.get("Rough-Shift", 0) + d.get("NOCB", 0)
+            )  # thresholds predate the NOCB split
 
         avg_continue = sum(continues) / max(len(continues), 1)
         avg_rough = sum(roughs) / max(len(roughs), 1)
@@ -222,7 +224,9 @@ class CohesionLayer:
                             s.transition_distribution.get("Continue", 0), 3
                         ),
                         "rough_shift_ratio": round(
-                            s.transition_distribution.get("Rough-Shift", 0), 3
+                            s.transition_distribution.get("Rough-Shift", 0)
+                            + s.transition_distribution.get("NOCB", 0),
+                            3,
                         ),
                         "weak_points": len(s.weak_points),
                     }

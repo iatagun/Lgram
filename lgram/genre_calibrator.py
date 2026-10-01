@@ -72,7 +72,9 @@ class GenreCalibrator:
                     continue
                 r = self.ta.analyze(text)
                 d = r.transition_distribution
-                roughs.append(d.get("Rough-Shift", 0))
+                roughs.append(
+                    d.get("Rough-Shift", 0) + d.get("NOCB", 0)
+                )  # pre-split definition
                 continues.append(d.get("Continue", 0))
                 retains.append(d.get("Retain", 0))
                 smooths.append(d.get("Smooth-Shift", 0))

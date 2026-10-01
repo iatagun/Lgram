@@ -187,7 +187,8 @@ def centering_features(report, grid_score: float) -> Dict[str, float]:
         "pct_continue": dist.get("Continue", 0.0),
         "pct_retain": dist.get("Retain", 0.0),
         "pct_smooth_shift": dist.get("Smooth-Shift", 0.0),
-        "pct_rough_shift": dist.get("Rough-Shift", 0.0),
+        "pct_rough_shift": dist.get("Rough-Shift", 0.0)
+        + dist.get("NOCB", 0.0),  # v1.0 cache semantics
         "pct_establish": dist.get("Establish", 0.0),
         "cohesion_score": report.overall_cohesion,
         "entity_grid": grid_score,

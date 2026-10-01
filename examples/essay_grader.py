@@ -59,7 +59,7 @@ def analyze(title, text, genre="essay"):
 
         cohesion = r.overall_cohesion
         dist = r.transition_distribution
-        rough_pct = dist.get("Rough-Shift", 0)
+        rough_pct = dist.get("Rough-Shift", 0) + dist.get("NOCB", 0)
         cont = dist.get("Continue", 0) * 100
         g = GENRE_THRESHOLDS.get(genre, GENRE_THRESHOLDS["essay"])
         rough_flagged = rough_pct > g["flag_above"]

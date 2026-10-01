@@ -467,7 +467,7 @@ class TextAnalyzer:
         _b = [0]
         rough = 0
         for _i, _s in enumerate(boundaries):
-            if _s.transition == TransitionType.ROUGH_SHIFT:
+            if _s.transition in (TransitionType.ROUGH_SHIFT, TransitionType.NOCB):
                 rough += 1
                 if _s.backward_center is None and rough >= 2:
                     _b.append(_i)
@@ -507,7 +507,7 @@ class TextAnalyzer:
                 ct3.update_discourse(sent)
             for i in range(len(prompt_sents), len(combined)):
                 if (
-                    ct3.discourse_history[i].transition == TransitionType.ROUGH_SHIFT
+                    ct3.discourse_history[i].transition == TransitionType.NOCB
                     and ct3.discourse_history[i].backward_center is None
                 ):
                     result["cross_boundary_penalty"] += 1
@@ -1123,7 +1123,7 @@ class TextAnalyzer:
             if t is None:
                 continue
 
-            if t.value == "Rough-Shift":
+            if t in (TransitionType.ROUGH_SHIFT, TransitionType.NOCB):
                 rough_count += 1
                 if state.backward_center is None:
                     suggestions.append(
@@ -1190,6 +1190,9 @@ class TextAnalyzer:
         delta = round(r2.overall_cohesion - r1.overall_cohesion, 4)
 
         def _count(t_dist, name):
+            # Rough-Shift keeps its pre-split meaning (Rough-Shift + NOCB)
+            if name == "Rough-Shift":
+                return t_dist.get(name, 0) + t_dist.get("NOCB", 0)
             return t_dist.get(name, 0)
 
         continue_delta = round(

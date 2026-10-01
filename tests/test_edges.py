@@ -101,11 +101,13 @@ class TestTransitionCorrectness(unittest.TestCase):
         # Mary was the prev Cp, becomes new Cb
         self.assertIn(state.transition.value, ("Smooth-Shift", "Continue", "Retain"))
 
-    def test_Rough_Shift_complete_change(self):
+    def test_complete_change_is_NOCB(self):
+        # no shared entity -> Cb undefined -> NOCB, not Rough-Shift
         ct = _make_ct()
         ct.update_discourse("The dog barked loudly.")
         state = ct.update_discourse("Stock markets fell sharply today.")
-        self.assertEqual(state.transition.value, "Rough-Shift")
+        self.assertEqual(state.transition.value, "NOCB")
+        self.assertIsNone(state.backward_center)
 
 
 # =============================================================================
