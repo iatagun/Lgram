@@ -287,7 +287,9 @@ def extract_mentions(
                 break
             in_subject = in_subject or cur.deprel in _SUBJECTS
             cur = by_id[cur.head]
-        while cur.id not in subject_of and cur.deprel == "conj" and cur.head in by_id:
+        for _ in range(20):  # bounded: neural parses can contain cycles / self-heads
+            if cur.id in subject_of or cur.deprel != "conj" or cur.head not in by_id:
+                break
             cur = by_id[cur.head]  # conjuncts share the subject
         return None if in_subject else subject_of.get(cur.id)
 

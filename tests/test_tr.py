@@ -261,6 +261,32 @@ class TestResolution(unittest.TestCase):
         self.assertEqual(report.utterances[2].cb, "ali")
 
 
+class TestMalformedParses(unittest.TestCase):
+    def test_self_headed_conjunct_does_not_hang(self):
+        # regression: DizgeBERT can emit a token that is its own head ("Avnî",
+        # head = itself, deprel conj); the conj walk in possessor binding looped
+        # forever on it.
+        report = run(
+            AYSE_GITTI,
+            [
+                tok(1, "mahlasıyla", "NOUN", 2, "obl", **{"Person[psor]": "3"}),
+                tok(2, "Avnî", "PROPN", 2, "conj"),
+                verb(3, "yazdı"),
+            ],
+        )
+        self.assertEqual(len(report.utterances), 2)
+
+    def test_two_token_head_cycle_does_not_hang(self):
+        report = run(
+            [
+                tok(1, "kitabı", "NOUN", 2, "conj", **{"Person[psor]": "3"}),
+                tok(2, "defteri", "NOUN", 1, "conj", **{"Person[psor]": "3"}),
+                verb(3, "kayboldu"),
+            ]
+        )
+        self.assertEqual(len(report.utterances), 1)
+
+
 class TestSchemeGuard(unittest.TestCase):
     def test_parses_without_finiteness_warn(self):
         # regression: under the IMST scheme no verb is VerbForm=Fin, and every zero
