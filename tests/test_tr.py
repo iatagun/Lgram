@@ -14,7 +14,13 @@ import pytest
 pytest.importorskip("snowballstemmer", reason="optional: pip install .[tr]")
 
 from lgram.models.centering_theory import TransitionType as TT  # noqa: E402
-from lgram.tr.centering import _STEM, _base, _lower, analyze_parsed  # noqa: E402
+from lgram.tr.centering import (  # noqa: E402
+    _STEM,
+    _base,
+    _lower,
+    analyze_parsed,
+    entity_key,
+)
 from lgram.tr.parser import Token, parse_feats  # noqa: E402
 
 FIN3 = {"VerbForm": "Fin", "Person": "3", "Number": "Sing"}
@@ -140,7 +146,7 @@ class TestAnaphora(unittest.TestCase):
                 verb(2, "güldü", Number="Plur"),
             ],
         )
-        self.assertEqual(report.utterances[1].transition, TT.ROUGH_SHIFT)
+        self.assertEqual(report.utterances[1].transition, TT.NOCB)
 
     def test_possessive_suffix_realises_possessor(self):
         # "Ayşe geldi. Annesi hastaydı."  (Annesi = Ayşe's mother)
@@ -158,13 +164,65 @@ class TestAnaphora(unittest.TestCase):
         self.assertEqual(u2.transition, TT.RETAIN)
 
 
+class TestResolution(unittest.TestCase):
+    def test_possessor_binds_to_its_clause_subject(self):
+        # "Ayşe pazara gitti. Ali annesini aradı."  (annesi = Ali's, not Ayşe's)
+        report = run(
+            AYSE_GITTI,
+            [
+                tok(1, "Ali", "PROPN", 3, "nsubj"),
+                tok(2, "annesini", "NOUN", 3, "obj", **{"Person[psor]": "3"}),
+                verb(3, "aradı"),
+            ],
+        )
+        u2 = report.utterances[1]
+        self.assertIsNone(u2.cb)  # no link to Ayşe
+        self.assertEqual(u2.transition, TT.NOCB)
+
+    def test_possessed_subject_takes_possessor_from_context(self):
+        # "Ayşe pazara gitti. Annesi kızdı."  (annesi = Ayşe's: it IS the subject)
+        report = run(
+            AYSE_GITTI,
+            [
+                tok(1, "Annesi", "NOUN", 2, "nsubj", **{"Person[psor]": "3"}),
+                verb(2, "kızdı"),
+            ],
+        )
+        self.assertEqual(report.utterances[1].cb, stem("Ayşe"))
+
+    def test_zero_prefers_previous_cb_over_previous_cp(self):
+        # "Ali geldi. Ayşe Ali'yi gördü. Gülümsedi."  Cb of U2 is Ali, Cp is Ayşe;
+        # the zero subject of U3 follows the Cb.
+        report = run(
+            [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "geldi")],
+            [
+                tok(1, "Ayşe", "PROPN", 3, "nsubj"),
+                tok(2, "Ali'yi", "PROPN", 3, "obj"),
+                verb(3, "gördü"),
+            ],
+            [verb(1, "gülümsedi")],
+        )
+        self.assertEqual(report.utterances[1].cb, "ali")
+        self.assertEqual(report.utterances[1].cp, "ayşe")
+        self.assertEqual(report.utterances[2].cb, "ali")
+
+
+class TestEntityKey(unittest.TestCase):
+    def test_proper_names_are_not_stemmed(self):
+        # snowball turns "Çadır" into "ça"; names keep their base form
+        self.assertEqual(entity_key(tok(1, "Çadır'ın", "PROPN", 0, "root")), "çadır")
+        noun = tok(1, "kapısı", "NOUN", 0, "root")
+        self.assertEqual(entity_key(noun), _STEM.stemWord("kapısı"))
+
+
 class TestTransitions(unittest.TestCase):
-    def test_no_shared_entity_is_rough_shift(self):
+    def test_no_shared_entity_is_nocb(self):
         report = run(
             [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "geldi")],
             [tok(1, "Ayşe", "PROPN", 2, "nsubj"), verb(2, "gitti")],
         )
-        self.assertEqual(report.utterances[1].transition, TT.ROUGH_SHIFT)
+        self.assertEqual(report.utterances[1].transition, TT.NOCB)
+        # rough_shift_ratio keeps counting NOCB, as before the split
         self.assertEqual(report.rough_shift_ratio, 1.0)
 
     def test_first_utterance_is_establish_and_not_counted(self):
