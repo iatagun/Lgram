@@ -206,6 +206,7 @@ def evaluate(sents, parses, make_identity=None):
         print(f"{a:14s} " + " ".join(f"{c[(a, b)]:8d}" for b in labels))
     print("gold dist:", Counter(gold_t))
     print("gold Cb missed/wrong, realized in U_i as:", dict(miss.most_common()))
+    return gold_t, sys_t
 
 
 def main(argv):
