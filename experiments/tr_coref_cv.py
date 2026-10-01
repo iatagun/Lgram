@@ -113,12 +113,12 @@ def main():
         datasets.disable_progress_bar()
         sents = list(B.sentences(str(fd / "test.conllu")))
         assert len(sents) == len(test_parses)
-        rule_gold, rule_sys = B.evaluate(sents, test_parses)
+        rule_gold, rule_sys = B.evaluate(sents, test_parses)[:2]
         model = FCoref(model_name_or_path=str(fd / "model" / "model"), nlp=None,
                        enable_progress_bar=False)  # fmt: skip
         model_gold, model_sys = B.evaluate(
             sents, test_parses, make_identity=C.make_identity_factory(model, "lexical")
-        )
+        )[:2]
         assert rule_gold == model_gold
         res = {
             "test_docs": test,

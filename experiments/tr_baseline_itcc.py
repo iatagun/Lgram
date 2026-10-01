@@ -86,6 +86,9 @@ def evaluate(sents, parses, make_identity=None):
         paras.append(cur)
 
     gold_t, sys_t = [], []
+    strict = (
+        []
+    )  # label right AND, when there is a gold Cb, the system's Cb is that entity
     cb_pres = cb_same = cb_both = 0
     zero = Counter()  # detection / resolution
     psor = Counter()
@@ -171,6 +174,10 @@ def evaluate(sents, parses, make_identity=None):
                 prev_gold_cb = g_cb
                 st = "NOCB" if u.cb is None else u.transition.value
                 sys_t.append(st)
+                strict.append(
+                    st == gold_t[-1]
+                    and (g_cb is None or prev_sys_map.get(u.cb) == g_cb)
+                )
                 cb_pres += (g_cb is None) == (u.cb is None)
                 if g_cb is not None and prev_sys_map.get(u.cb) != g_cb:
                     types = {mt for e, mt, _ in s["mentions"] if e == g_cb}
@@ -184,6 +191,8 @@ def evaluate(sents, parses, make_identity=None):
     n = len(gold_t)
     acc = sum(a == b for a, b in zip(gold_t, sys_t)) / n
     print(f"transitions n={n}  accuracy={acc:.3f}  kappa={kappa(gold_t, sys_t):.3f}")
+    # a label can match while the Cb is the wrong entity; strict rules that out
+    print(f"strict accuracy (label and Cb entity)={sum(strict) / n:.3f}")
     print(f"Cb present/absent agreement={cb_pres / n:.3f}")
     print(f"Cb is the right gold entity (both present)={cb_same}/{cb_both}"
           f" = {cb_same / max(cb_both, 1):.3f}")  # fmt: skip
@@ -206,7 +215,7 @@ def evaluate(sents, parses, make_identity=None):
         print(f"{a:14s} " + " ".join(f"{c[(a, b)]:8d}" for b in labels))
     print("gold dist:", Counter(gold_t))
     print("gold Cb missed/wrong, realized in U_i as:", dict(miss.most_common()))
-    return gold_t, sys_t
+    return gold_t, sys_t, strict
 
 
 def main(argv):
