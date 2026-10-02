@@ -32,6 +32,15 @@
   fastcoref architecture, trained on ITCC (`experiments/tr_coref_*.py`), reaches strict
   accuracy 0.50 vs 0.48 for the rules in 5-fold cross-validation (McNemar p = 0.004,
   better in 13 of 21 documents). The model is not shipped: ITCC is CC BY-NC-SA.
+- **Silver training data for the Turkish model (`experiments/tr_silver.py`).** Fetches
+  Turkish Wikipedia articles or a Wikisource category, parses them and writes CoNLL-U
+  with `lgram.tr`'s dropped subjects / possessors as empty nodes, for a teacher model
+  (CorPipe 25) to label. A BERTurk model trained only on that silver data — 450
+  Wikipedia articles plus 69 public-domain stories, no ITCC document — reaches strict
+  accuracy **0.55** over all 21 ITCC documents (rules 0.48). Genre mattered more than
+  volume: Wikipedia alone gave 0.48, the stories added the rest. Caveats: the teacher
+  was trained on ITCC and is CC BY-NC-SA, and the checkpoint was selected on an ITCC
+  slice. Not shipped.
 - **`python -m lgram.transition_eval`:** transition accuracy against a hand-annotated
   Cp/Cb sheet, plus inter-annotator kappa (`--agree`). The bundled English sheet is a
   single-annotator annotation. `experiments/coref_centering.py` shows the built-in
