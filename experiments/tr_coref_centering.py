@@ -25,56 +25,68 @@ import tr_baseline_itcc as B  # noqa: E402
 from lgram.tr.centering import analyze_parsed  # noqa: E402
 
 
+def build_stream(parses):
+    """Token stream the model reads, and where each mention slot sits in it.
+
+    lgram.tr finds the slots; dropped subjects / implicit possessors are inserted
+    as pronoun placeholders right after the token they hang on.
+    Returns (stream, where): where[(i, "tok", id)] / where[(i, kind, pos)] -> index.
+    """
+    slots = []  # (sentence i, kind, pos, form)
+
+    def record(i, m):
+        slots.append((i, m.kind, m.pos, m.form))
+        return None
+
+    analyze_parsed([str(i) for i in range(len(parses))], parses, identity=record)
+    stream, where = [], {}
+    for i, toks in enumerate(parses):
+        root = next((t.id for t in toks if t.head == 0), None)
+        after = {}
+        for j, kind, pos, form in slots:
+            if j == i and kind in ("zero", "possessor"):
+                anchor = root if pos == 0 else pos
+                after.setdefault(anchor, []).append((kind, pos, form))
+        for t in toks:
+            where[(i, "tok", t.id)] = len(stream)
+            stream.append(t.form)
+            for kind, pos, form in sorted(
+                after.get(t.id, []), key=lambda x: x[0] != "possessor"
+            ):
+                where[(i, kind, pos)] = len(stream)
+                stream.append(form)
+    return stream, where
+
+
+def cluster_words(model, stream):
+    """Stream index -> cluster id, for the last word of every clustered span."""
+    res = model.predict(texts=stream, is_split_into_words=True)
+    # for pretokenized input fastcoref returns word spans [start, end)
+    word_cluster = {}
+    for ci, cluster in enumerate(res.get_clusters(as_strings=False)):
+        for span in cluster:
+            if span is not None:  # None: mention on a special token
+                # Turkish NPs are head-final: the span's last word
+                word_cluster[span[1] - 1] = f"C{ci}"
+    return word_cluster
+
+
+def slot_index(where, i, m):
+    if m.kind in ("zero", "possessor"):
+        return where.get((i, m.kind, m.pos))
+    return where.get((i, "tok", m.pos))
+
+
 def make_identity_factory(model, fallback):
     def make_identity(para):
-        slots = []  # (sentence i, kind, pos, form)
-
-        def record(i, m):
-            slots.append((i, m.kind, m.pos, m.form))
-            return None
-
-        analyze_parsed(
-            [" ".join(s["forms"]) for s, _ in para],
-            [p for _, p in para],
-            identity=record,
-        )
-        # token stream with placeholders right after the token they hang on
-        stream, where = [], {}
-        for i, (s, toks) in enumerate(para):
-            root = next((t.id for t in toks if t.head == 0), None)
-            after = {}
-            for j, kind, pos, form in slots:
-                if j == i and kind in ("zero", "possessor"):
-                    anchor = root if pos == 0 else pos
-                    after.setdefault(anchor, []).append((kind, pos, form))
-            for t in toks:
-                where[(i, "tok", t.id)] = len(stream)
-                stream.append(t.form)
-                for kind, pos, form in sorted(
-                    after.get(t.id, []), key=lambda x: x[0] != "possessor"
-                ):
-                    where[(i, kind, pos)] = len(stream)
-                    stream.append(form)
-        res = model.predict(texts=stream, is_split_into_words=True)
-        # for pretokenized input fastcoref returns word spans [start, end)
-        word_cluster = {}
-        for ci, cluster in enumerate(res.get_clusters(as_strings=False)):
-            for span in cluster:
-                if span is not None:  # None: mention on a special token
-                    # Turkish NPs are head-final: the span's last word
-                    word_cluster[span[1] - 1] = f"C{ci}"
+        stream, where = build_stream([p for _, p in para])
+        word_cluster = cluster_words(model, stream)
 
         def identity(i, m):
-            idx = (
-                where.get((i, m.kind, m.pos))
-                if m.kind in ("zero", "possessor")
-                else where.get((i, "tok", m.pos))
-            )
-            cid = word_cluster.get(idx) if idx is not None else None
+            cid = word_cluster.get(slot_index(where, i, m))
             if cid or fallback == "lexical":
-                return (
-                    cid  # None keeps lgram.tr's own key (or leaves anaphor unresolved)
-                )
+                # None keeps lgram.tr's own key (or leaves an anaphor unresolved)
+                return cid
             return f"S{i}:{m.kind}:{m.pos}"  # model only: unclustered = singleton
 
         return identity
