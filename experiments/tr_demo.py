@@ -1,9 +1,10 @@
 """
 Throwaway local UI for the Turkish coreference model + centering.
 
-Shows, for a text you type: the sentences, the pronoun placeholders lgram.tr inserts
-for dropped subjects / implicit possessors, the model's coreference clusters (colours),
-and per sentence the Cf ranking, Cb, Cp and transition — model and rules side by side.
+Written for readers, not linguists: words that refer to the same person or thing share
+an underline colour, dropped subjects / possessors appear in parentheses, and a thread
+between consecutive sentences shows what ties them (or that the tie is cut). "Show
+details" adds the technical names (transition, Cb, Cp, Cf) and what the rules say.
 Hover a word for its DizgeBERT analysis.
 
 Usage:
@@ -24,8 +25,7 @@ from tr_coref_centering import build_stream, cluster_words, slot_index  # noqa: 
 from lgram.tr.centering import analyze_parsed  # noqa: E402
 from lgram.tr.parser import JointParser, split_sentences  # noqa: E402
 
-SPEAKERS = {"@1sg": "ben (konuşan)", "@2sg": "sen (dinleyen)",
-            "@1pl": "biz", "@2pl": "siz"}  # fmt: skip
+SPEAKERS = {"@1sg": "ben", "@2sg": "sen", "@1pl": "biz", "@2pl": "siz"}
 LOCK = threading.Lock()
 PARSER = MODEL = None
 
@@ -40,7 +40,7 @@ def analyze_sentences(sentences) -> dict:
     pairs = [(s, p) for s, p in pairs if p]
     sents, parses = [s for s, _ in pairs], [p for _, p in pairs]
     if not parses:
-        return {"sentences": [], "entities": {}}
+        return {"sentences": [], "entities": []}
     stream, where = build_stream(parses)
     clusters = cluster_words(MODEL, stream) if MODEL is not None else {}
 
@@ -48,41 +48,56 @@ def analyze_sentences(sentences) -> dict:
     items = [None] * len(stream)
     for (i, kind, pos), idx in where.items():
         item = {"i": i, "form": stream[idx], "kind": kind, "cluster": clusters.get(idx),
-                "noun": False}  # fmt: skip
+                "noun": False, "nom": False}  # fmt: skip
         if kind == "tok":
             t = parses[i][pos - 1]
             feats = " ".join(f"{k}={v}" for k, v in t.feats.items())
             item["info"] = f"{t.upos} · {t.deprel} → {t.head} · {feats}"
             item["noun"] = t.upos in ("NOUN", "PROPN")
+            item["nom"] = t.feats.get("Case") == "Nom"
         items[idx] = item
-    # a cluster is named after its first noun; a cluster of pronouns only after a
-    # placeholder's plain form ("ben", "o"), else after its first word
+    # a cluster is named after a noun in its plain form if there is one ("Ayşe", not
+    # "Ayşe'yi"), a cluster of pronouns only after a placeholder ("ben", "o")
     names = {}
     for ok in (
+        lambda it: it["noun"] and it["nom"],
         lambda it: it["noun"],
         lambda it: it["kind"] != "tok",
         lambda it: True,
     ):
         for it in items:
             if it["cluster"] and ok(it):
-                names.setdefault(it["cluster"], it["form"])
-
-    def label(key):
-        return SPEAKERS.get(key) or names.get(key) or key
+                plain = it["form"].replace("’", "'").split("'")[0]
+                names.setdefault(it["cluster"], plain)
+    order = list(dict.fromkeys(it["cluster"] for it in items if it["cluster"]))
 
     def report(rep):
-        return [
-            {
-                "transition": u.transition.value,
-                "cb": label(u.cb) if u.cb else None,
-                "cp": label(u.cp) if u.cp else None,
-                "cf": [
-                    {"key": m.key, "label": label(m.key), "kind": m.kind} for m in u.cf
-                ],
-                "unresolved": u.unresolved,
-            }
-            for u in rep.utterances
-        ]
+        out = []
+        for i, u in enumerate(rep.utterances):
+            # an entity shows under its cluster name; one the model did not cluster
+            # under the word as written (not lgram.tr's stem key: "annes", "telefo")
+            lab = {}
+            for m in u.cf:
+                word = (
+                    parses[i][m.pos - 1].form if m.kind == "noun" and m.pos else m.key
+                )
+                plain = word.replace("’", "'").split("'")[0]
+                lab[m.key] = SPEAKERS.get(m.key) or names.get(m.key) or plain
+            out.append(
+                {
+                    "transition": u.transition.value,
+                    "cb": lab.get(u.cb),
+                    "cp": lab.get(u.cp),
+                    "cb_key": u.cb,
+                    "cp_key": u.cp,
+                    "cf": [
+                        {"key": m.key, "label": lab[m.key], "kind": m.kind}
+                        for m in u.cf
+                    ],
+                    "unresolved": u.unresolved,
+                }
+            )
+        return out
 
     rules = report(analyze_parsed(sents, parses))
     if MODEL is None:
@@ -101,80 +116,144 @@ def analyze_sentences(sentences) -> dict:
              "model": model[i], "rules": rules[i]}
             for i, s in enumerate(sents)
         ],  # fmt: skip
-        "entities": names,
+        # in order of first appearance: the page gives each one a thread colour
+        "entities": [{"id": c, "name": names[c]} for c in order],
     }
 
 
 PAGE = r"""<!doctype html><html lang="tr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Türkçe merkezleme · model demosu</title>
+<title>Bu metin kimden bahsediyor?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f7f5;--card:#fff;--ink:#1c1c1a;--mute:#6b6b66;--line:#e3e3de;--acc:#3b5bdb;--L:86%;--S:70%}
-@media(prefers-color-scheme:dark){:root{--bg:#161615;--card:#1f1f1d;--ink:#ecece8;--mute:#9a9a93;--line:#33332f;--acc:#8fa5ff;--L:28%;--S:45%}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,sans-serif}
-main{max-width:1000px;margin:0 auto;padding:24px 16px 60px}
-h1{font-size:20px;margin:0 0 4px}p.sub{margin:0 0 16px;color:var(--mute);font-size:13px}
-textarea{width:100%;min-height:110px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;resize:vertical}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 22px}
-button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
-button.go{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}button:disabled{opacity:.55;cursor:wait}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
-.n{color:var(--mute);font-size:12px;font-weight:600;letter-spacing:.04em}
-.toks{margin:6px 0 12px;line-height:2.1}
-.t{padding:2px 5px;border-radius:5px;margin-right:2px;white-space:nowrap}
-.t.c{background:hsl(var(--h) var(--S) var(--L))}
-.t.ph{border:1px dashed var(--mute);color:var(--mute);font-style:italic;font-size:13px}
-.t.ph.c{color:var(--ink)}
-.sys{display:grid;grid-template-columns:90px 1fr;gap:4px 12px;font-size:13.5px;padding-top:8px;border-top:1px solid var(--line)}
-.sys+.sys{margin-top:8px}.who{color:var(--mute);font-weight:600}
-.b{display:inline-block;padding:1px 9px;border-radius:99px;font-weight:600;font-size:12.5px;color:#fff;background:#868e96}
-.b.Continue{background:#2f9e44}.b.Retain{background:#0c8599}.b.Smooth-Shift{background:#e67700}
-.b.Rough-Shift{background:#d9480f}.b.NOCB{background:#868e96}.b.Establish{background:#4263eb}
-.kv{color:var(--mute)}.kv b{color:var(--ink);font-weight:600}.cf span{margin-right:6px}
-.cf i{color:var(--mute);font-style:normal;font-size:11.5px}
-.diff{outline:2px solid #f08c00;outline-offset:2px}
-.legend{font-size:13px;color:var(--mute);margin:-8px 0 16px}.legend .t{margin-right:6px}
-.err{color:#e03131}
+:root{
+  --ground:#F2F4F3;--ink:#16202A;--soft:#5E6B75;--line:#D5DBDC;--field:#FFFFFF;
+  --e0:#2F4B9A;--e1:#B23A48;--e2:#B57A08;--e3:#1B8282;--e4:#647A22;--e5:#7B3F8C;--e6:#B5561F;--e7:#2E6B4F;
+  --ui:"Bricolage Grotesque",system-ui,"Segoe UI",sans-serif;--read:"Newsreader",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#12171A;--ink:#E9EDEE;--soft:#93A0A8;--line:#2B343A;--field:#1A2126;
+  --e0:#8FA6F2;--e1:#F08A95;--e2:#E8B24A;--e3:#5CCFCF;--e4:#B4CC6A;--e5:#D29AE3;--e6:#F0A070;--e7:#7FCFA6;
+}}
+*{box-sizing:border-box}
+html{background:var(--ground)}
+body{margin:0;color:var(--ink);font:400 16px/1.5 var(--ui)}
+main{max-width:44rem;margin:0 auto;padding:clamp(28px,7vw,72px) 20px 96px}
+h1{font:600 clamp(2rem,6vw,3.1rem)/1.04 var(--ui);letter-spacing:-.025em;margin:0 0 .55em;max-width:13ch}
+.lede{color:var(--soft);margin:0 0 1.6rem;max-width:34rem}
+textarea{display:block;width:100%;min-height:8.5rem;padding:16px 18px;border:1px solid var(--line);border-radius:4px;
+  background:var(--field);color:var(--ink);font:400 1.2rem/1.5 var(--read);resize:vertical}
+textarea:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--e0);outline-offset:3px}
+.actions{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 20px;margin:14px 0 0}
+#go{font:600 1rem var(--ui);padding:11px 20px;border:0;border-radius:4px;background:var(--ink);color:var(--ground);cursor:pointer}
+#go:disabled{opacity:.6;cursor:progress}
+.try{color:var(--soft);font-size:.92rem}
+.try button{font:inherit;color:var(--ink);background:none;border:0;padding:0;margin-left:10px;cursor:pointer;
+  text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px;text-decoration-thickness:2px}
+.try button:hover{text-decoration-color:var(--ink)}
+#status{margin:18px 0 0;color:var(--soft)}
+#status:empty{display:none}
+#status.bad{color:var(--e1)}
+#result[hidden]{display:none}
+.who{margin:40px 0 6px;font-size:.95rem;color:var(--soft)}
+.who span{margin-left:12px;white-space:nowrap}
+.key{margin:0 0 30px;font-size:.9rem;color:var(--soft);max-width:36rem}
+/* an entity: a thread stitched under the word */
+.e{text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:3px;text-underline-offset:5px;text-decoration-skip-ink:none}
+.who .e{color:var(--ink);font-family:var(--read);font-size:1.1rem}
+.g{color:var(--soft);font-style:italic}
+.g.e{text-decoration-style:dotted}
+/* the flow: sentences on a rail; the rail is the thread that ties them */
+.flow{list-style:none;margin:0;padding:0}
+.flow li{position:relative;padding-left:34px}
+.sent{font:400 1.32rem/1.55 var(--read);padding:2px 0}
+.sent::before{content:"";position:absolute;left:5px;top:.72em;width:11px;height:11px;border-radius:50%;background:var(--ink)}
+.sent i.up,.sent i.down,.link::before{content:"";position:absolute;left:9px;width:3px;background:var(--c,var(--line))}
+.sent i.up{top:0;height:.72em}
+.sent i.down{top:calc(.72em + 11px);bottom:0}
+.link{padding:9px 0 11px;font-size:.93rem;color:var(--soft)}
+.link::before{top:0;bottom:0}
+.link.cut::before,.sent i.cut{background:repeating-linear-gradient(to bottom,var(--line) 0 4px,transparent 4px 9px)}
+.link b{font-weight:600;color:var(--ink)}
+.link .e{color:var(--ink)}
+.more{display:none;margin-top:5px;font-size:.84rem;line-height:1.55}
+.more .differs{color:var(--e1)}
+body.detail .more{display:block}
+.toggle{display:flex;align-items:center;gap:9px;margin:34px 0 0;font-size:.92rem;color:var(--soft);cursor:pointer;width:fit-content}
+.toggle input{width:17px;height:17px;accent-color:var(--ink);margin:0}
+.fine{margin:14px 0 0;font-size:.84rem;color:var(--soft);max-width:36rem}
+@media (prefers-reduced-motion:no-preference){
+  .flow li{animation:rise .5s both;animation-delay:calc(var(--n)*70ms)}
+  .link::before{animation:draw .45s both;animation-delay:calc(var(--n)*70ms);transform-origin:top}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}}
+  @keyframes draw{from{transform:scaleY(0)}}
+}
 </style></head><body><main>
-<h1>Türkçe merkezleme · model demosu</h1>
-<p class="sub">Geçici, yerel arayüz. Renkli sözcükler modelin aynı varlık saydığı bahsetmeler.
-Kesik çerçeveli sözcükler metinde yok: kuralların eklediği düşürülmüş özne / iyelik yer tutucuları.
-Bir sözcüğün üzerine gelince DizgeBERT çözümlemesi görünür. Turuncu çerçeve: model ile kurallar farklı geçiş verdi.</p>
-<textarea id="tx">Yaşlı bir oduncu ormanın kenarında yaşarmış. Her sabah baltasını alıp ormana gidermiş. Bir gün ormanda küçük bir kuş bulmuş. Kuşun kanadı kırıkmış. Oduncu onu evine götürmüş. Karısı kuşu görünce çok sevinmiş.</textarea>
-<div class="row"><button class="go" id="go">Çözümle</button>
-<button data-ex="Ali dün Ayşe'yi aradı. Ona kitabını geri verecekti. Ama evde yoktu. Annesi telefonu açtı.">Örnek: Ali ve Ayşe</button>
-<button data-ex="Dün pazara gittim. Domates aldım. Çok pahalıydı. Satıcıya sordum. Bana indirim yapmadı.">Örnek: birinci kişi</button>
-<span id="st" class="kv"></span></div>
-<div id="legend" class="legend"></div><div id="out"></div>
+<h1>Bu metin kimden bahsediyor?</h1>
+<p class="lede">Birkaç cümle yaz. Her cümlenin bir öncekine kimin ya da neyin üzerinden bağlandığını, bağın nerede koptuğunu gösterelim.</p>
+<textarea id="tx" aria-label="Çözümlenecek metin" spellcheck="false">Ali dün Ayşe'yi aradı. Ona kitabını geri verecekti. Ama evde yoktu. Annesi telefonu açtı.</textarea>
+<div class="actions"><button id="go">Bağları göster</button>
+<span class="try">Örnek dene:
+<button data-ex="Ali dün Ayşe'yi aradı. Ona kitabını geri verecekti. Ama evde yoktu. Annesi telefonu açtı.">Ali ile Ayşe</button>
+<button data-ex="Dün pazara gittim. Domates aldım. Çok pahalıydı. Satıcıya sordum. Bana indirim yapmadı.">pazarda</button>
+<button data-ex="Yaşlı bir oduncu ormanın kenarında yaşarmış. Her sabah baltasını alıp ormana gidermiş. Bir gün ormanda küçük bir kuş bulmuş. Kuşun kanadı kırıkmış. Oduncu onu evine götürmüş. Karısı kuşu görünce çok sevinmiş.">oduncu masalı</button>
+</span></div>
+<p id="status" role="status"></p>
+<section id="result" hidden>
+<p class="who" id="who"></p>
+<p class="key">Altı aynı renkle çizili sözcükler aynı kişiyi ya da şeyi gösteriyor. Parantez içindekiler metinde yazmıyor: cümlenin söylenmeyen öznesi ya da sahibi. Cümleleri birleştiren ipin rengi, bağı kuranın rengi.</p>
+<ol class="flow" id="flow"></ol>
+<label class="toggle"><input type="checkbox" id="detail"> Ayrıntıları göster</label>
+<p class="fine">Deneme sürümü. Model bağları her zaman doğru kurmuyor; ayrıntılarda kural tabanlı yöntemin ne dediğini de görebilirsin.</p>
+</section>
 <script>
-const $=s=>document.querySelector(s), hue=c=>(parseInt(c.slice(1))*67+20)%360;
+const $=s=>document.querySelector(s);
 const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
-function sysRow(name,u){const d=el('div','sys');d.append(el('div','who',name));const r=el('div');
-  r.append(el('span','b '+u.transition,u.transition));
-  const kv=el('span','kv');kv.innerHTML='  Cb: <b></b>  ·  Cp: <b></b>';const b=kv.querySelectorAll('b');
-  b[0].textContent=u.cb||'—';b[1].textContent=u.cp||'—';r.append(kv);
-  const cf=el('div','cf kv');cf.append('Cf: ');
-  if(!u.cf.length)cf.append('—');
-  u.cf.forEach((m,i)=>{const s=el('span');const w=el('b',null,m.label);if(/^C\d+$/.test(m.key)){w.className='t c';w.style.setProperty('--h',hue(m.key))}
-    s.append(w);if(m.kind!=='noun')s.append(el('i',null,' '+({zero:'∅ özne',possessor:'∅ iyelik',pronoun:'zamir'}[m.kind]||m.kind)));
-    if(i<u.cf.length-1)s.append(' ›');cf.append(s)});
-  if(u.unresolved.length)cf.append(el('i',null,'  çözülemeyen: '+u.unresolved.join(', ')));
-  r.append(cf);d.append(r);return d}
-async function run(){const b=$('#go');b.disabled=true;$('#st').textContent='çözümleniyor…';$('#st').className='kv';
+const PLAIN={Continue:'Aynı konu sürüyor','Retain':'Konu aynı, odak kayıyor','Smooth-Shift':'Konu değişti','Rough-Shift':'Konu sertçe değişti',NOCB:'Bağ koptu'};
+const KIND={zero:'söylenmeyen özne',possessor:'söylenmeyen sahip',pronoun:'zamir'};
+let color=new Map();
+const paint=(node,key)=>{if(color.has(key)){node.classList.add('e');node.style.setProperty('--c','var(--e'+color.get(key)+')')}return node};
+function words(tokens){const p=el('span');let open=true;
+  tokens.forEach(t=>{const ghost=t.kind!=='tok',close=/^[.,!?;:…)\]’”]+$/.test(t.form);
+    if(!open&&!close)p.append(' ');
+    const w=el('span',ghost?'g':null,ghost?'('+t.form+')':t.form);if(t.cluster)paint(w,t.cluster);
+    w.title=ghost?'Metinde yazmıyor: '+KIND[t.kind]:t.info;p.append(w);open=/^[(\[‘“]+$/.test(t.form)});
+  return p}
+function tech(name,u,other){const d=el('div');
+  d.append(name+': '+u.transition+', bağ (Cb) '+(u.cb||'yok')+', odak (Cp) '+(u.cp||'yok')+'. Sıra (Cf): '+(u.cf.map(m=>m.label).join(', ')||'boş')+'.');
+  if(other&&other.transition!==u.transition)d.className='differs';return d}
+function render(d){color=new Map(d.entities.map((e,i)=>[e.id,i%8]));
+  const who=$('#who');who.textContent=d.entities.length?'Metindeki kişi ve şeyler:':'Model bu metinde tekrar eden bir kişi ya da şey bulamadı.';
+  d.entities.forEach(e=>who.append(paint(el('span',null,e.name),e.id)));
+  const flow=$('#flow');flow.textContent='';const S=d.sentences;
+  const tie=u=>!u||u.transition==='NOCB'?null:u.cb_key;
+  const thread=(node,u)=>{if(tie(u))node.style.setProperty('--c',color.has(u.cb_key)?'var(--e'+color.get(u.cb_key)+')':'var(--soft)');else node.classList.add('cut')};
+  S.forEach((s,i)=>{const u=s.model;
+    if(i){const li=el('li','link');li.style.setProperty('--n',i*2-1);thread(li,u);
+      li.append(el('b',null,PLAIN[u.transition]));
+      if(u.cb){li.append('. Bağ: ');li.append(paint(el('span',null,u.cb),u.cb_key));
+        if(u.cp&&u.cp_key!==u.cb_key){li.append(', odak: ');li.append(paint(el('span',null,u.cp),u.cp_key))}li.append('.')}
+      else li.append('. Önceki cümleyle ortak bir kişi ya da şey yok.');
+      const m=el('div','more');m.append(tech('Model',u,null));if(s.rules)m.append(tech('Kurallar',s.rules,u));li.append(m);flow.append(li)}
+    const li=el('li','sent');li.style.setProperty('--n',i*2);
+    if(i){const up=el('i','up');thread(up,u);li.append(up)}
+    if(i<S.length-1){const dn=el('i','down');thread(dn,S[i+1].model);li.append(dn)}
+    li.append(words(s.tokens));flow.append(li)});
+  $('#result').hidden=false}
+async function run(){const b=$('#go'),st=$('#status');b.disabled=true;b.textContent='Okuyor…';st.className='';st.textContent='';
   try{const r=await fetch('/analyze',{method:'POST',body:JSON.stringify({text:$('#tx').value})});
     const d=await r.json();if(d.error)throw new Error(d.error);
-    const out=$('#out');out.textContent='';const lg=$('#legend');lg.textContent='';
-    const ents=Object.entries(d.entities);if(ents.length){lg.append('Modelin bulduğu varlıklar: ');
-      ents.forEach(([c,n])=>{const t=el('span','t c',n);t.style.setProperty('--h',hue(c));lg.append(t)})}
-    d.sentences.forEach((s,i)=>{const c=el('div','card');if(s.model.transition!==s.rules.transition)c.classList.add('diff');
-      c.append(el('div','n','CÜMLE '+(i+1)));const tk=el('div','toks');
-      s.tokens.forEach(t=>{const e=el('span','t'+(t.kind!=='tok'?' ph':'')+(t.cluster?' c':''),(t.kind!=='tok'?'∅ ':'')+t.form);
-        if(t.cluster)e.style.setProperty('--h',hue(t.cluster));
-        e.title=t.kind==='tok'?t.info:(t.kind==='zero'?'düşürülmüş özne (kural ekledi)':'düşürülmüş iyelik (kural ekledi)');tk.append(e,' ')});
-      c.append(tk,sysRow('Model',s.model),sysRow('Kurallar',s.rules));out.append(c)});
-    $('#st').textContent=d.sentences.length+' cümle'}
-  catch(e){$('#st').textContent='Hata: '+e.message;$('#st').className='err'}b.disabled=false}
-$('#go').onclick=run;document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#tx').value=b.dataset.ex;run()});
+    if(!d.sentences.length){$('#result').hidden=true;st.textContent='Çözümlenecek bir cümle bulunamadı. Birkaç cümle yaz ya da bir örnek seç.'}
+    else{render(d);if(d.sentences.length<2)st.textContent='Bağ görmek için en az iki cümle gerekiyor.'}}
+  catch(e){$('#result').hidden=true;st.className='bad';st.textContent='Çözümleme yapılamadı: '+e.message+'. Sunucu hâlâ çalışıyor mu?'}
+  b.disabled=false;b.textContent='Bağları göster'}
+$('#go').onclick=run;
+document.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{$('#tx').value=b.dataset.ex;run()});
+const box=$('#detail');try{box.checked=localStorage.getItem('detail')==='1'}catch(e){}
+const sync=()=>{document.body.classList.toggle('detail',box.checked);try{localStorage.setItem('detail',box.checked?'1':'0')}catch(e){}};
+box.onchange=sync;sync();
+const q=new URLSearchParams(location.search);if(q.has('ayrinti')){box.checked=true;sync()}if(q.has('ornek'))run();
 </script></main></body></html>"""
 
 
