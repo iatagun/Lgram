@@ -31,13 +31,18 @@ PARSER = MODEL = None
 
 
 def analyze(text: str) -> dict:
-    pairs = [(s, PARSER.parse(s)) for s in split_sentences(text)]
+    return analyze_sentences(split_sentences(text))
+
+
+def analyze_sentences(sentences) -> dict:
+    """Rules and (when MODEL is loaded) model analysis of already split sentences."""
+    pairs = [(s, PARSER.parse(s)) for s in sentences]
     pairs = [(s, p) for s, p in pairs if p]
     sents, parses = [s for s, _ in pairs], [p for _, p in pairs]
     if not parses:
         return {"sentences": [], "entities": {}}
     stream, where = build_stream(parses)
-    clusters = cluster_words(MODEL, stream)
+    clusters = cluster_words(MODEL, stream) if MODEL is not None else {}
 
     # stream items, with the parse of real tokens for the tooltip
     items = [None] * len(stream)
@@ -80,11 +85,16 @@ def analyze(text: str) -> dict:
         ]
 
     rules = report(analyze_parsed(sents, parses))
-    model = report(
-        analyze_parsed(
-            sents, parses, identity=lambda i, m: clusters.get(slot_index(where, i, m))
+    if MODEL is None:
+        model = [None] * len(sents)
+    else:
+        model = report(
+            analyze_parsed(
+                sents,
+                parses,
+                identity=lambda i, m: clusters.get(slot_index(where, i, m)),
+            )
         )
-    )
     return {
         "sentences": [
             {"text": s, "tokens": [it for it in items if it["i"] == i],

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "anne-telefon",
+    "source": "kullanıcı, arayüzde buldu (2026-10-02)",
+    "annotator": "kullanıcı (3→4) + claude (1→3), kullanıcı onayladı 2026-10-02",
+    "note": "3. cümlenin düşürülmüş öznesi Ayşe (çıkarım: aranan kişi evde yok); 4. cümlede 'Annesi' Ayşe'nin annesi. Model iyeliği Ali'ye bağlıyor: zinciri düşürülmüş özne üzerinden taşıyamıyor. 3. cümlede 'Ayşe' açık yazılırsa doğru buluyor.",
+    "sentences": [
+      "Ali dün Ayşe'yi aradı.",
+      "Ona kitabını geri verecekti.",
+      "Ama evde yoktu.",
+      "Annesi telefonu açtı."
+    ],
+    "expect": [
+      {"cp": "ali", "cb": null},
+      {"cp": "ali", "cb": "ali"},
+      {"cp": "ayşe", "cb": "ayşe"},
+      {"cp": "anne", "cb": "ayşe"}
+    ]
+  },
+  {
+    "id": "pazar-domates",
+    "source": "arayüzdeki hazır örnek",
+    "annotator": "claude, kullanıcı onayladı 2026-10-02",
+    "note": "Düşürülmüş özne üç kez el değiştiriyor: ben → domates → ben → satıcı. 4. cümle 3. cümleyle varlık paylaşmıyor (NOCB).",
+    "sentences": [
+      "Dün pazara gittim.",
+      "Domates aldım.",
+      "Çok pahalıydı.",
+      "Satıcıya sordum.",
+      "Bana indirim yapmadı."
+    ],
+    "expect": [
+      {"cp": "ben", "cb": null},
+      {"cp": "ben", "cb": "ben"},
+      {"cp": "domates", "cb": "domates"},
+      {"cp": "ben", "cb": null},
+      {"cp": "satıcı", "cb": "ben"}
+    ]
+  }
+]
