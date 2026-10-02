@@ -41,6 +41,29 @@
   volume: Wikipedia alone gave 0.48, the stories added the rest. Caveats: the teacher
   was trained on ITCC and is CC BY-NC-SA, and the checkpoint was selected on an ITCC
   slice. Not shipped.
+- **More Cf candidates in `lgram.tr`.** With gold entity identity, 55% of the remaining
+  transition errors on ITCC came from the linking entity not being a candidate at all.
+  When a coreference model supplies identity, two more kinds are candidates: a noun
+  modifying a noun (plain `nmod`, ranked below possessors) and any pronoun in a ranked
+  role ("bu", "bunlar", "kendisi", "hepsi"), not only the "o" family. Strict accuracy
+  over all 21 ITCC documents: ceiling 0.72 -> 0.77, silver-trained model 0.55 -> 0.56
+  (McNemar p = 0.002). The rules keep their candidates: they cannot resolve "bu", and
+  noun modifiers matched by word alone tie unrelated sentences (Wikipedia order test
+  0.59 -> 0.54). Predicate nouns and compound parts were measured too and left out.
+- **Animate entities head the Cf in `lgram.tr`.** On ITCC gold mentions, how often the
+  top of the Cf list becomes the next sentence's Cb was 0.68 under every role-based
+  order; ranking people and animals first, then by role, gives 0.73 (better in 18 of
+  21 documents): an animate object outranks an inanimate subject. `lgram/tr/animacy.py`
+  holds the cues: about 200 common nouns, a short list of places, 1st/2nd person, and
+  proper names counted as people. Against hand labels on ITCC the noun list has
+  precision 0.97 / recall 0.73, names 0.75 / 0.98 (organisations pass as people).
+  **This changes the yardstick:** gold transitions are now derived with the same
+  animate-first order (`evaluate(..., animate=...)` in `tr_baseline_itcc.py`; the hand
+  labels are not in the repository), so earlier figures are not comparable. Strict
+  accuracy on the new yardstick, all 21 documents: ceiling 0.76, silver-trained model
+  0.55, rules 0.48 (role-only ranking would score 0.72 / 0.53 / 0.46; hand-labelled
+  animacy instead of the embedded list 0.78 / 0.56 / 0.49). Out of domain, the
+  Wikipedia sentence-order test moves from 0.59 to 0.60 (144 paragraphs, p = 0.0001).
 - **`python -m lgram.transition_eval`:** transition accuracy against a hand-annotated
   Cp/Cb sheet, plus inter-annotator kappa (`--agree`). The bundled English sheet is a
   single-annotator annotation. `experiments/coref_centering.py` shows the built-in

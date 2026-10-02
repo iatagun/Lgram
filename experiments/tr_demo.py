@@ -3,7 +3,8 @@ Throwaway local UI for the Turkish coreference model + centering.
 
 Written for readers, not linguists: words that refer to the same person or thing share
 an underline colour, dropped subjects / possessors appear in parentheses, and a thread
-between consecutive sentences shows what ties them (or that the tie is cut). "Show
+between consecutive sentences shows what ties them (or that the tie is cut). A dropped
+subject says who the model tied it to: "(o = Ali)". "Show
 details" adds the technical names (transition, Cb, Cp, Cf) and what the rules say.
 Hover a word for its DizgeBERT analysis.
 
@@ -164,6 +165,7 @@ textarea:focus-visible,button:focus-visible,input:focus-visible{outline:2px soli
 .who .e{color:var(--ink);font-family:var(--read);font-size:1.1rem}
 .g{color:var(--soft);font-style:italic}
 .g.e{text-decoration-style:dotted}
+.g b{font-style:normal;font-weight:500;color:var(--ink)}
 /* the flow: sentences on a rail; the rail is the thread that ties them */
 .flow{list-style:none;margin:0;padding:0}
 .flow li{position:relative;padding-left:34px}
@@ -202,7 +204,7 @@ body.detail .more{display:block}
 <p id="status" role="status"></p>
 <section id="result" hidden>
 <p class="who" id="who"></p>
-<p class="key">Altı aynı renkle çizili sözcükler aynı kişiyi ya da şeyi gösteriyor. Parantez içindekiler metinde yazmıyor: cümlenin söylenmeyen öznesi ya da sahibi. Cümleleri birleştiren ipin rengi, bağı kuranın rengi.</p>
+<p class="key">Altı aynı renkle çizili sözcükler aynı kişiyi ya da şeyi gösteriyor. Parantez içindekiler metinde yazmıyor: cümlenin söylenmeyen öznesi ya da sahibi; eşittirden sonra, modelin onu kime ya da neye bağladığı yazıyor. Cümleleri birleştiren ipin rengi, bağı kuranın rengi.</p>
 <ol class="flow" id="flow"></ol>
 <label class="toggle"><input type="checkbox" id="detail"> Ayrıntıları göster</label>
 <p class="fine">Deneme sürümü. Model bağları her zaman doğru kurmuyor; ayrıntılarda kural tabanlı yöntemin ne dediğini de görebilirsin.</p>
@@ -212,18 +214,22 @@ const $=s=>document.querySelector(s);
 const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
 const PLAIN={Continue:'Aynı konu sürüyor','Retain':'Konu aynı, odak kayıyor','Smooth-Shift':'Konu değişti','Rough-Shift':'Konu sertçe değişti',NOCB:'Bağ koptu'};
 const KIND={zero:'söylenmeyen özne',possessor:'söylenmeyen sahip',pronoun:'zamir'};
-let color=new Map();
+let color=new Map(),named=new Map();
 const paint=(node,key)=>{if(color.has(key)){node.classList.add('e');node.style.setProperty('--c','var(--e'+color.get(key)+')')}return node};
 function words(tokens){const p=el('span');let open=true;
   tokens.forEach(t=>{const ghost=t.kind!=='tok',close=/^[.,!?;:…)\]’”]+$/.test(t.form);
     if(!open&&!close)p.append(' ');
-    const w=el('span',ghost?'g':null,ghost?'('+t.form+')':t.form);if(t.cluster)paint(w,t.cluster);
-    w.title=ghost?'Metinde yazmıyor: '+KIND[t.kind]:t.info;p.append(w);open=/^[(\[‘“]+$/.test(t.form)});
+    // a dropped subject / owner names who the model tied it to: "(o = Ali)"
+    const ref=ghost&&named.get(t.cluster),tied=ref&&ref.toLowerCase()!==t.form.toLowerCase();
+    const w=el('span',ghost?'g':null,ghost?'('+t.form+(tied?' = ':')'):t.form);if(tied)w.append(el('b',null,ref),')');
+    if(t.cluster)paint(w,t.cluster);
+    w.title=ghost?'Metinde yazmıyor: '+KIND[t.kind]+(tied?'. Modele göre: '+ref:t.cluster?'':'. Model bunu kimseye bağlamadı'):t.info;
+    p.append(w);open=/^[(\[‘“]+$/.test(t.form)});
   return p}
 function tech(name,u,other){const d=el('div');
   d.append(name+': '+u.transition+', bağ (Cb) '+(u.cb||'yok')+', odak (Cp) '+(u.cp||'yok')+'. Sıra (Cf): '+(u.cf.map(m=>m.label).join(', ')||'boş')+'.');
   if(other&&other.transition!==u.transition)d.className='differs';return d}
-function render(d){color=new Map(d.entities.map((e,i)=>[e.id,i%8]));
+function render(d){color=new Map(d.entities.map((e,i)=>[e.id,i%8]));named=new Map(d.entities.map(e=>[e.id,e.name]));
   const who=$('#who');who.textContent=d.entities.length?'Metindeki kişi ve şeyler:':'Model bu metinde tekrar eden bir kişi ya da şey bulamadı.';
   d.entities.forEach(e=>who.append(paint(el('span',null,e.name),e.id)));
   const flow=$('#flow');flow.textContent='';const S=d.sentences;

@@ -32,9 +32,11 @@ except ImportError as e:  # pragma: no cover
     ) from e
 
 from ..models.centering_theory import TransitionType
+from .animacy import HUMAN_PRONOUNS, PLACES, is_animate_noun
 from .parser import JointParser, Token, split_sentences
 
 _STEM = snowballstemmer.stemmer("turkish")
+_PLACES = frozenset(PLACES)
 
 # Cf ranking by grammatical role. ponytail: Turkish word order is free, so role
 # alone is a rough salience proxy; upgrade to information-structure ranking
@@ -47,6 +49,12 @@ ROLE_RANK = {
     "obl": 2.0,
     "nmod:poss": 1.0,
     "appos": 1.0,
+    # A noun modifying a noun ("Naci Beyin yanına", "insan zihnine") still carries
+    # the link to the next sentence: on Turkish-ITCC the linking entity sat in an
+    # unranked nmod more often than anywhere else (ceiling 0.72 -> 0.75 strict).
+    # Used only when a coreference model decides identity: matched by word alone
+    # these modifiers tie unrelated sentences (Wikipedia order test 0.59 -> 0.54).
+    "nmod": 0.5,
 }
 _SUBJECTS = frozenset({"nsubj", "nsubj:outer", "csubj"})
 # pronoun a dropped subject / possessor stands for, by (person, plural)
@@ -76,6 +84,7 @@ class Mention:
     plural: bool = False
     kind: str = "noun"  # noun | pronoun | zero | possessor
     form: str = ""  # pronoun a zero/possessor stands for ("o", "onun"): coref input
+    animate: bool = False  # a person or an animal: ranked before the inanimate
 
 
 # entity identity from outside (a coreference model): mention -> entity id or None
@@ -152,6 +161,14 @@ def _stem(base: str) -> str:
     return _STEM.stemWord(base)
 
 
+def _animate_noun(tok: Token) -> bool:
+    """A noun for a person or an animal (lgram.tr.animacy: a short list, not a lexicon)."""
+    base = _base(tok.form)
+    if tok.upos == "PROPN":  # names are people unless a known place or an acronym
+        return base not in _PLACES and not (len(tok.form) > 1 and tok.form.isupper())
+    return is_animate_noun(base)
+
+
 def _speech_key(base: str) -> Optional[str]:
     for prefix, key in _SPEECH_PRONOUNS:
         if base.startswith(prefix):
@@ -216,8 +233,10 @@ def extract_mentions(
     anaphors: List[Mention] = []  # key unresolved yet: kind + plural + rank set
     subject_of: Dict[int, Mention] = {}  # predicate token id -> its subject mention
 
-    def anaphor(kind: str, rank: float, pos: int, plural: bool, form: str) -> None:
-        anaphors.append(Mention("", rank, pos, plural, kind, form))
+    def anaphor(
+        kind: str, rank: float, pos: int, plural: bool, form: str, animate: bool = False
+    ) -> None:
+        anaphors.append(Mention("", rank, pos, plural, kind, form, animate))
 
     def speech(person: str, number: str) -> str:
         return f"@{person}{'pl' if number == 'Plur' else 'sg'}"
@@ -228,17 +247,30 @@ def extract_mentions(
             rel = "nmod:poss"  # KeNet labels genitive possessors plain nmod
         rank = ROLE_RANK.get(rel, 0.0) - penalty
         plural = t.feats.get("Number") == "Plur"
+        ranked = rel in ROLE_RANK and (rel != "nmod" or identity is not None)
 
-        if t.upos in ("NOUN", "PROPN") and rel in ROLE_RANK:
-            mentions.append(Mention(entity_key(t), rank, t.id, plural, "noun"))
+        if t.upos in ("NOUN", "PROPN") and ranked:
+            mentions.append(
+                Mention(entity_key(t), rank, t.id, plural, "noun", "", _animate_noun(t))
+            )
             if t.deprel in _SUBJECTS:
                 subject_of[t.head] = mentions[-1]
-        elif t.upos == "PRON" and rel in ROLE_RANK:
+        elif t.upos == "PRON" and ranked:
             base = _base(t.form)
             if base in _THIRD:
                 anaphor("pronoun", rank, t.id, base.startswith("onlar"), "")
             elif (key := _speech_key(base)) is not None:
-                mentions.append(Mention(key, rank, t.id, key.endswith("pl"), "pronoun"))
+                mentions.append(
+                    Mention(key, rank, t.id, key.endswith("pl"), "pronoun", "", True)
+                )
+            elif identity is not None:
+                # "bu", "bunlar", "kendisi", "hepsi": function words that anchor to a
+                # noun just like "o", but the rules cannot tell which one, so they
+                # are candidates only when a coreference model decides
+                # (+0.007 strict on Turkish-ITCC with the model, +0.019 ceiling)
+                anaphor(
+                    "pronoun", rank, t.id, plural, "", base.startswith(HUMAN_PRONOUNS)
+                )
 
         # possessive suffix without an explicit genitive NP -> implicit possessor
         psor = t.feats.get("Person[psor]")
@@ -249,7 +281,15 @@ def extract_mentions(
             if psor in ("1", "2"):
                 key = speech(psor, t.feats.get("Number[psor]", ""))
                 mentions.append(
-                    Mention(key, ROLE_RANK["nmod:poss"], t.id, False, "possessor", form)
+                    Mention(
+                        key,
+                        ROLE_RANK["nmod:poss"],
+                        t.id,
+                        False,
+                        "possessor",
+                        form,
+                        True,
+                    )
                 )
             else:
                 anaphor("possessor", ROLE_RANK["nmod:poss"], t.id, pl, form)
@@ -277,7 +317,7 @@ def extract_mentions(
         form = _ZERO_FORM.get((person, number == "Plur"), "o")
         if person in ("1", "2"):
             mentions.append(
-                Mention(speech(person, number), 4.0, pos, False, "zero", form)
+                Mention(speech(person, number), 4.0, pos, False, "zero", form, True)
             )
         else:
             anaphor("zero", 4.0, pos, number == "Plur", form)
@@ -341,13 +381,19 @@ def extract_mentions(
 
 
 def _merge_cf(mentions: Sequence[Mention]) -> List[Mention]:
-    """One Mention per entity (best rank, earliest position), salience-ordered."""
+    """One Mention per entity (best rank, earliest position), salience-ordered:
+    animate entities first, then by grammatical role.
+
+    On Turkish-ITCC gold mentions the top of the list is the next sentence's Cb 73% of
+    the time with this order and 68% with any role-only order: an animate object
+    outranks an inanimate subject.
+    """
     best: Dict[str, Mention] = {}
     for m in mentions:
         cur = best.get(m.key)
         if cur is None or (m.rank, -m.pos) > (cur.rank, -cur.pos):
             best[m.key] = m
-    return sorted(best.values(), key=lambda m: (-m.rank, m.pos))
+    return sorted(best.values(), key=lambda m: (not m.animate, -m.rank, m.pos))
 
 
 def _transition(
@@ -403,6 +449,7 @@ def analyze_parsed(
             stacklevel=2,
         )
     states: List[UtteranceState] = []
+    animate: set = set()  # entities seen as a person / animal anywhere so far
     for i, (text, tokens) in enumerate(zip(sentences, parses)):
         if not tokens:
             continue
@@ -414,6 +461,10 @@ def analyze_parsed(
             prev.cb if prev else None,
             (lambda m, i=i: identity(i, m)) if identity else None,
         )
+        # animacy belongs to the entity: "o" is animate once it is tied to "Ali"
+        animate.update(m.key for m in mentions if m.animate)
+        for m in mentions:
+            m.animate = m.key in animate
         cf = _merge_cf(mentions)
         cb, cp, transition = _transition(prev, cf)
         states.append(UtteranceState(text, cf, cb, cp, transition, unresolved))

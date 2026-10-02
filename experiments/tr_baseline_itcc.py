@@ -73,9 +73,11 @@ def anchor(node):
     return int(node.deps[0]["parent"].ord) if node.deps else None
 
 
-def evaluate(sents, parses, make_identity=None):
+def evaluate(sents, parses, make_identity=None, animate=frozenset()):
     """`make_identity(para)` -> identity(i, mention) lets a coref model set entity
-    keys (see tr_coref_centering.py); None = lgram.tr's rule-based resolution."""
+    keys (see tr_coref_centering.py); None = lgram.tr's rule-based resolution.
+    `animate`: gold entity ids that are people / animals; the gold Cf ranks them
+    first, as lgram.tr does (empty: role order only, the gold used before)."""
     paras, cur = [], []
     for s, p in zip(sents, parses):
         if s["newpar"] and cur:
@@ -163,7 +165,7 @@ def evaluate(sents, parses, make_identity=None):
 
             best = {}
             for eid, mt, node in s["mentions"]:
-                k = (gold_role(mt, node), mt == "overt", float(node.ord))
+                k = (eid not in animate, gold_role(mt, node), mt == "overt", float(node.ord))  # fmt: skip
                 if eid not in best or k < best[eid]:
                     best[eid] = k
             gold_cf = sorted(best, key=best.get)

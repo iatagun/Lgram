@@ -371,6 +371,83 @@ class TestIdentityHook(unittest.TestCase):
         zero = next(m for m in u2.cf if m.kind == "zero")
         self.assertEqual(zero.form, "o")  # placeholder handed to the model
 
+    def test_demonstrative_is_a_candidate_only_with_a_model(self):
+        # "Bunu gördü": the rules cannot resolve "bu", a coreference model can
+        bunu = [tok(1, "Bunu", "PRON", 2, "obj", Case="Acc"), verb(2, "gördü")]
+        u2 = run(AYSE_GITTI, bunu).utterances[1]
+        self.assertNotIn(1, [m.pos for m in u2.cf if m.kind == "pronoun"])
+
+        def identity(i, m):
+            return "E2" if m.kind == "pronoun" else None
+
+        u2 = analyze_parsed(["s0", "s1"], [AYSE_GITTI, bunu], identity=identity)
+        self.assertIn("E2", [m.key for m in u2.utterances[1].cf])
+
+
+class TestCandidates(unittest.TestCase):
+    def test_noun_modifier_carries_the_link_with_a_model(self):
+        # "Naci geldi. Naci Beyin yanına gittim." - "Naci" modifies a noun in U2.
+        # Only with a coreference model: by word match alone such modifiers tie
+        # unrelated sentences (Wikipedia order test 0.59 -> 0.54).
+        parses = [
+            [tok(1, "Naci", "PROPN", 2, "nsubj"), verb(2, "geldi")],
+            [
+                tok(1, "Naci", "PROPN", 2, "nmod"),
+                tok(2, "yanına", "NOUN", 3, "obl", Case="Dat"),
+                verb(3, "gittim", Person="1"),
+            ],
+        ]
+        self.assertIsNone(run(*parses).utterances[1].cb)
+        report = analyze_parsed(["s0", "s1"], parses, identity=lambda i, m: None)
+        self.assertEqual(report.utterances[1].cb, "naci")
+
+
+class TestAnimacy(unittest.TestCase):
+    def test_inflected_forms_of_listed_nouns(self):
+        from lgram.tr.animacy import is_animate_noun
+
+        for form in "anne annesi çocuğu çocuklarına oğlu kurdu kuşlar".split():
+            self.assertTrue(is_animate_noun(form), form)
+        # look-alikes: "eş"+"ya", "kaz"+"an", "at"+"ölye", "kız"+"gınlık", "dev"+"let"
+        for form in "eşya kazan atölye kızgınlık devlet masa telefonu".split():
+            self.assertFalse(is_animate_noun(form), form)
+
+    def test_animate_object_outranks_inanimate_subject(self):
+        # "Kitap Ayşe'yi etkiledi.": the person, not the book, heads the Cf
+        report = run(
+            [
+                tok(1, "Kitap", "NOUN", 3, "nsubj"),
+                tok(2, "Ayşe'yi", "PROPN", 3, "obj", Case="Acc"),
+                verb(3, "etkiledi"),
+            ]
+        )
+        self.assertEqual(report.utterances[0].cp, "ayşe")
+
+    def test_place_names_and_acronyms_are_not_people(self):
+        report = run(
+            [
+                tok(1, "Ankara", "PROPN", 3, "nsubj"),
+                tok(2, "çocuğu", "NOUN", 3, "obj", Case="Acc"),
+                verb(3, "büyüttü"),
+            ]
+        )
+        self.assertEqual(
+            report.utterances[0].cp, entity_key(tok(2, "çocuğu", "NOUN", 3, "obj"))
+        )
+
+    def test_animacy_belongs_to_the_entity(self):
+        # a model ties the dropped subject of U2 to Ayşe: that zero is animate too
+        def identity(i, m):
+            return "E1" if m.kind == "zero" or m.key == "ayşe" else None
+
+        report = analyze_parsed(
+            ["s0", "s1"],
+            [AYSE_GITTI, [tok(1, "Elma", "NOUN", 2, "obj"), verb(2, "aldı")]],
+            identity=identity,
+        )
+        zero = next(m for m in report.utterances[1].cf if m.kind == "zero")
+        self.assertTrue(zero.animate)
+
 
 class TestEntityKey(unittest.TestCase):
     def test_proper_names_are_not_stemmed(self):

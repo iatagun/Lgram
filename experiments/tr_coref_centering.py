@@ -22,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tr_baseline_itcc as B  # noqa: E402
 
-from lgram.tr.centering import analyze_parsed  # noqa: E402
+from lgram.tr.centering import _base, analyze_parsed  # noqa: E402
 
 
 def build_stream(parses):
@@ -58,16 +58,47 @@ def build_stream(parses):
     return stream, where
 
 
-def cluster_words(model, stream):
-    """Stream index -> cluster id, for the last word of every clustered span."""
+def proper_names(parses, where):
+    """Stream index -> name, for every proper-noun token ("Ayşe'yi" -> "ayşe")."""
+    return {
+        where[(i, "tok", t.id)]: _base(t.form)
+        for i, toks in enumerate(parses)
+        for t in toks
+        if t.upos == "PROPN"
+    }
+
+
+def split_by_name(res, spans, names):
+    """Group id per span, so that no group holds two different proper names.
+
+    The model links mention to mention, so a pronoun that looks like both "Ali" and
+    "Ayşe" welds their chains together. Name mentions found their group by name; every
+    other mention joins the group of the mention it is most strongly linked to.
+    """
+    group = {s: names[s[1] - 1] for s in spans if s[1] - 1 in names}
+    if len(set(group.values())) < 2:
+        return {s: "" for s in spans}
+    for s in sorted(spans):
+        if s not in group:
+            placed = [o for o in spans if o in group]
+            group[s] = group[max(placed, key=lambda o: float(res.get_logit(s, o)))]
+    return group
+
+
+def cluster_words(model, stream, names=None):
+    """Stream index -> cluster id, for the last word of every clustered span.
+
+    `names` (from proper_names): split clusters that mix different proper names.
+    """
     res = model.predict(texts=stream, is_split_into_words=True)
     # for pretokenized input fastcoref returns word spans [start, end)
     word_cluster = {}
     for ci, cluster in enumerate(res.get_clusters(as_strings=False)):
-        for span in cluster:
-            if span is not None:  # None: mention on a special token
-                # Turkish NPs are head-final: the span's last word
-                word_cluster[span[1] - 1] = f"C{ci}"
+        spans = [s for s in cluster if s is not None]  # None: on a special token
+        group = split_by_name(res, spans, names) if names else {}
+        for span in spans:
+            # Turkish NPs are head-final: the span's last word
+            word_cluster[span[1] - 1] = f"C{ci}{group.get(span, '')}"
     return word_cluster
 
 
@@ -77,10 +108,12 @@ def slot_index(where, i, m):
     return where.get((i, "tok", m.pos))
 
 
-def make_identity_factory(model, fallback):
+def make_identity_factory(model, fallback, split_names=False):
     def make_identity(para):
-        stream, where = build_stream([p for _, p in para])
-        word_cluster = cluster_words(model, stream)
+        parses = [p for _, p in para]
+        stream, where = build_stream(parses)
+        names = proper_names(parses, where) if split_names else None
+        word_cluster = cluster_words(model, stream, names)
 
         def identity(i, m):
             cid = word_cluster.get(slot_index(where, i, m))
