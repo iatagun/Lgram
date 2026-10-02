@@ -11,10 +11,22 @@
       "Annesi telefonu açtı."
     ],
     "expect": [
-      {"cp": "ali", "cb": null},
-      {"cp": "ali", "cb": "ali"},
-      {"cp": "ayşe", "cb": "ayşe"},
-      {"cp": "anne", "cb": "ayşe"}
+      {
+        "cp": "ali",
+        "cb": null
+      },
+      {
+        "cp": "ali",
+        "cb": "ali"
+      },
+      {
+        "cp": "ayşe",
+        "cb": "ayşe"
+      },
+      {
+        "cp": "anne",
+        "cb": "ayşe"
+      }
     ]
   },
   {
@@ -30,11 +42,420 @@
       "Bana indirim yapmadı."
     ],
     "expect": [
-      {"cp": "ben", "cb": null},
-      {"cp": "ben", "cb": "ben"},
-      {"cp": "domates", "cb": "domates"},
-      {"cp": "ben", "cb": null},
-      {"cp": "satıcı", "cb": "ben"}
+      {
+        "cp": "ben",
+        "cb": null
+      },
+      {
+        "cp": "ben",
+        "cb": "ben"
+      },
+      {
+        "cp": "domates",
+        "cb": "domates"
+      },
+      {
+        "cp": "ben",
+        "cb": null
+      },
+      {
+        "cp": "satıcı",
+        "cb": "ben"
+      }
+    ]
+  },
+  {
+    "id": "not-ali-annesi",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İçerme (iyelikle): 'Annesi'nin sahibi Ali; 3. cümlenin düşürülmüş öznesi notlarda Ali'ye demirleniyor.",
+    "sentences": [
+      "Ali eve geldi.",
+      "Annesi mutfaktaydı.",
+      "O gün çok yorulmuştu."
+    ],
+    "expect": [
+      {
+        "cp": "ali",
+        "cb": null
+      },
+      {
+        "cp": "anne",
+        "cb": "ali",
+        "move": "içerme"
+      },
+      {
+        "cp": "ali",
+        "cb": "ali"
+      }
+    ]
+  },
+  {
+    "id": "not-mustafa-araba",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İçerme (iyelikle): arabanın sahibi Mustafa. Canlı-önce sıralamada odak Mustafa.",
+    "sentences": [
+      "Mustafa çok para harcıyor.",
+      "Yeni arabası harika."
+    ],
+    "expect": [
+      {
+        "cp": "mustafa",
+        "cb": null
+      },
+      {
+        "cp": "mustafa",
+        "cb": "mustafa",
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-ali-ayse-o-kizi",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Düşürülmüş özne Ali; 'o kızı' Ayşe (farklı adla anma).",
+    "sentences": [
+      "Ali Ayşe'yi seviyor.",
+      "O kızı yıllardır unutmadı."
+    ],
+    "expect": [
+      {
+        "cp": "ali",
+        "cb": null
+      },
+      {
+        "cp": "ali",
+        "cb": "ali",
+        "move": "devam"
+      }
+    ]
+  },
+  {
+    "id": "not-ali-ayse-sevemedi",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Notlarda 'yumuşak dönüş'. BFP'ye göre ilk cümlenin bağı tanımsız olduğu için Retain çıkıyor (bağ Ali, odak Ayşe).",
+    "sentences": [
+      "Ali Ayşe'yi seviyor.",
+      "Ayşe bir türlü Ali'yi sevemedi."
+    ],
+    "expect": [
+      {
+        "cp": "ali",
+        "cb": null
+      },
+      {
+        "cp": "ayşe",
+        "cb": "ali",
+        "move": "yumuşak dönüş"
+      }
+    ]
+  },
+  {
+    "id": "not-ali-ayse-onu",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Notlarda 'yumuşak dönüş'. 'onu' Ali.",
+    "sentences": [
+      "Ali Ayşe'yi seviyor.",
+      "Ayşe de onu seviyor."
+    ],
+    "expect": [
+      {
+        "cp": "ali",
+        "cb": null
+      },
+      {
+        "cp": "ayşe",
+        "cb": "ali",
+        "move": "yumuşak dönüş"
+      }
+    ]
+  },
+  {
+    "id": "not-cocuklar-ders",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Akla uygunluk: kuşlar ders çalışmaz; düşürülmüş özne çocuklar. Bir önceki cümlede çocuklar olmadığı için bağ yok.",
+    "sentences": [
+      "Çocuklar evde.",
+      "Kuşlar ötüyor.",
+      "Ders çalışıyorlar."
+    ],
+    "expect": [
+      {
+        "cp": "çocuk",
+        "cb": null
+      },
+      {
+        "cp": "kuş",
+        "cb": null
+      },
+      {
+        "cp": "çocuk",
+        "cb": null
+      }
+    ]
+  },
+  {
+    "id": "not-cocuklar-kavga",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Akla uygunluk: 'onlar' önce +canlı +insan; kavga edenler çocuklar.",
+    "sentences": [
+      "Çocuklar evde.",
+      "Kuşlar ötüyor.",
+      "Kavga ediyorlar."
+    ],
+    "expect": [
+      {
+        "cp": "çocuk",
+        "cb": null
+      },
+      {
+        "cp": "kuş",
+        "cb": null
+      },
+      {
+        "cp": "çocuk",
+        "cb": null
+      }
+    ]
+  },
+  {
+    "id": "not-cocuklar-rahat",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Stratejik eksilti: en yakın özneye demirlenir; rahat vermeyenler kuşlar.",
+    "sentences": [
+      "Çocuklar evde.",
+      "Kuşlar ötüyor.",
+      "Rahat vermiyorlar."
+    ],
+    "expect": [
+      {
+        "cp": "çocuk",
+        "cb": null
+      },
+      {
+        "cp": "kuş",
+        "cb": null
+      },
+      {
+        "cp": "kuş",
+        "cb": "kuş"
+      }
+    ]
+  },
+  {
+    "id": "not-mert-sinav",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İçerme (iyelikle): sınavların sahibi Mert. Canlı-önce sıralamada odak Mert.",
+    "sentences": [
+      "Mert bu hafta çok yoğun.",
+      "Üst üste sınavları var."
+    ],
+    "expect": [
+      {
+        "cp": "mert",
+        "cb": null
+      },
+      {
+        "cp": "mert",
+        "cb": "mert",
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-ev-duvar",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İçerme (iyelikle), cansız varlıklar: duvarların sahibi ev; 'üstlerine' duvarlar.",
+    "sentences": [
+      "Ev çok güzel görünüyor.",
+      "Duvarları mor boyalı.",
+      "Üstlerine harika resimler çizilmiş."
+    ],
+    "expect": [
+      {
+        "cp": "ev",
+        "cb": null
+      },
+      {
+        "cp": "duvar",
+        "cb": "ev",
+        "move": "içerme"
+      },
+      {
+        "cp": "resim",
+        "cb": "duvar",
+        "move": "tam dönüş"
+      }
+    ]
+  },
+  {
+    "id": "not-kizlar-neriman",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Grup-üye bağı eşgönderge değil: Neriman kızlarla aynı varlık sayılmamalı (bizim ölçütte bağ yok).",
+    "sentences": [
+      "Bütün kızlar toplandık.",
+      "Neriman dolma getirdi."
+    ],
+    "expect": [
+      {
+        "cp": "kız",
+        "cb": null
+      },
+      {
+        "cp": "neriman",
+        "cb": null,
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-oglan-annesi",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler ve geçiş adları; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Notlardaki dizi: yumuşak dönüş, tam dönüş (\"Oğlan\" Ali'yi yeni bir adla anıyor), içerme (Ali'nin annesi).",
+    "sentences": [
+      "Ali Ayşe'yi seviyor.",
+      "Ayşe bir türlü Ali'yi sevemedi.",
+      "Oğlan çok mutsuz.",
+      "Annesi bu duruma çok üzülüyor."
+    ],
+    "expect": [
+      {
+        "cp": "ali",
+        "cb": null
+      },
+      {
+        "cp": "ayşe",
+        "cb": "ali",
+        "move": "yumuşak dönüş"
+      },
+      {
+        "cp": "ali",
+        "cb": "ali",
+        "move": "tam dönüş"
+      },
+      {
+        "cp": "anne",
+        "cb": "ali",
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-kadinlar-ablam",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler ve geçiş adları; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İyeliksiz içerme (grup-üye): abla, evdeki kadınlardan biri. Eşgönderge yok.",
+    "sentences": [
+      "Bizim evdeki bütün kadınlar çalışıyor.",
+      "Ablam 3 yıllık sınıf öğretmeni."
+    ],
+    "expect": [
+      {
+        "cp": "kadın",
+        "cb": null
+      },
+      {
+        "cp": "abla",
+        "cb": null,
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-evdeki-kizlar-meltem",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler ve geçiş adları; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İyeliksiz içerme (grup-üye): Meltem, evdeki kızlardan biri.",
+    "sentences": [
+      "Evdeki kızlar çok gürültü yapıyor.",
+      "Meltem cıyak cıyak bağırıyor."
+    ],
+    "expect": [
+      {
+        "cp": "kız",
+        "cb": null
+      },
+      {
+        "cp": "meltem",
+        "cb": null,
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-hepimiz-leyla",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler ve geçiş adları; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "İyeliksiz içerme (grup-üye): Leylâ \"hepimiz\"den biri.",
+    "sentences": [
+      "Hepimiz açız.",
+      "Leylâ ölüyor açlıktan."
+    ],
+    "expect": [
+      {
+        "cp": "biz",
+        "cb": null
+      },
+      {
+        "cp": "leylâ",
+        "cb": null,
+        "move": "içerme"
+      }
+    ]
+  },
+  {
+    "id": "not-camlar-kus",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler ve geçiş adları; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Tam dönüş: yepyeni bir ad öbeğine geçiş.",
+    "sentences": [
+      "Camlar açık.",
+      "Kuş sesleri geliyor."
+    ],
+    "expect": [
+      {
+        "cp": "cam",
+        "cb": null
+      },
+      {
+        "cp": "ses",
+        "cb": null,
+        "move": "tam dönüş"
+      }
+    ]
+  },
+  {
+    "id": "not-ev-kapi-babam",
+    "source": "kullanıcının ders notları (lessons/, 2026-10-02)",
+    "annotator": "ders notlarındaki gönderimler ve geçiş adları; Cp/Cb'yi claude BFP + canlı-önce sıralamayla türetti",
+    "note": "Notlardaki \"ev\" metninin devamı: her cümlenin konusu yeni (tam dönüş); metnin konusu ev.",
+    "sentences": [
+      "Üstlerine harika resimler çizilmiş.",
+      "Kapı insanı çok romantik bir manzaraya alıp çekecek gibi.",
+      "Babam nasıl da yapmış bu evi."
+    ],
+    "expect": [
+      {
+        "cp": "resim",
+        "cb": null
+      },
+      {
+        "move": "tam dönüş"
+      },
+      {
+        "move": "tam dönüş"
+      }
     ]
   }
 ]

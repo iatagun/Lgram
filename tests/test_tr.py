@@ -449,6 +449,72 @@ class TestAnimacy(unittest.TestCase):
         self.assertTrue(zero.animate)
 
 
+class TestTopicMove(unittest.TestCase):
+    """Devam / yumuşak dönüş / içerme / tam dönüş: the topic against the previous Cf."""
+
+    ALI_AYSE = [
+        tok(1, "Ali", "PROPN", 3, "nsubj"),
+        tok(2, "Ayşe'yi", "PROPN", 3, "obj", Case="Acc"),
+        verb(3, "seviyor"),
+    ]
+
+    def move(self, *sentences, **kw):
+        names = [f"s{i}" for i in range(len(sentences))]
+        return analyze_parsed(names, sentences, **kw).utterances[-1].topic_move
+
+    def test_first_utterance_has_none(self):
+        self.assertIsNone(self.move(self.ALI_AYSE))
+
+    def test_devam_keeps_the_strongest_entity(self):
+        o = [tok(1, "O", "PRON", 2, "nsubj"), verb(2, "uyuyor")]
+        self.assertEqual(self.move(self.ALI_AYSE, o), "devam")
+
+    def test_devam_with_a_repeated_name(self):
+        # "Ali geldi. Ali oturdu.": a repeated name continues, like a pronoun would
+        ali = [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "oturdu")]
+        self.assertEqual(self.move(self.ALI_AYSE, ali), "devam")
+
+    def test_yumusak_donus_moves_to_another_entity_of_the_previous_one(self):
+        ayse = [
+            tok(1, "Ayşe", "PROPN", 3, "nsubj"),
+            tok(2, "onu", "PRON", 3, "obj", Case="Acc"),
+            verb(3, "seviyor"),
+        ]
+        self.assertEqual(self.move(self.ALI_AYSE, ayse), "yumuşak dönüş")
+
+    def test_icerme_through_an_unexpressed_possessor(self):
+        psor = {"Person[psor]": "3", "Number[psor]": "Sing"}
+        ali = [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "geldi")]
+        annesi = [tok(1, "Annesi", "NOUN", 2, "nsubj", **psor), verb(2, "bekliyordu")]
+        self.assertEqual(self.move(ali, annesi), "içerme")
+
+    def test_icerme_member_of_a_group(self):
+        kizlar = [
+            tok(1, "Kızlar", "NOUN", 2, "nsubj", Number="Plur"),
+            verb(2, "toplandı"),
+        ]
+        neriman = [tok(1, "Neriman", "PROPN", 2, "nsubj"), verb(2, "geldi")]
+        self.assertEqual(self.move(kizlar, neriman), "içerme")
+
+    def test_icerme_part_of_a_whole(self):
+        ev = [tok(1, "Ev", "NOUN", 2, "nsubj"), verb(2, "güzeldi")]
+        kapi = [tok(1, "Kapı", "NOUN", 2, "nsubj"), verb(2, "maviydi")]
+        self.assertEqual(self.move(ev, kapi), "içerme")
+
+    def test_tam_donus_for_a_new_topic(self):
+        yagmur = [tok(1, "Yağmur", "NOUN", 2, "nsubj"), verb(2, "yağıyor")]
+        self.assertEqual(self.move(self.ALI_AYSE, yagmur), "tam dönüş")
+
+    def test_new_description_of_a_known_entity_is_tam_donus(self):
+        # a model says "Oğlan" is Ali; for the reader it is still a new noun phrase
+        ali = [tok(1, "Ali", "PROPN", 2, "nsubj"), verb(2, "geldi")]
+        oglan = [tok(1, "Oğlan", "NOUN", 2, "nsubj"), verb(2, "üzgündü")]
+        move = self.move(
+            ali, oglan, identity=lambda i, m: "E1" if m.kind == "noun" else None
+        )
+        self.assertEqual(move, "tam dönüş")
+
+
 class TestEntityKey(unittest.TestCase):
     def test_proper_names_are_not_stemmed(self):
         # snowball turns "Çadır" into "ça"; names keep their base form

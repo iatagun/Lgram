@@ -64,6 +64,23 @@
   0.55, rules 0.48 (role-only ranking would score 0.72 / 0.53 / 0.46; hand-labelled
   animacy instead of the embedded list 0.78 / 0.56 / 0.49). Out of domain, the
   Wikipedia sentence-order test moves from 0.59 to 0.60 (144 paragraphs, p = 0.0001).
+- **Topic moves in `lgram.tr`: devam, yumuşak dönüş, içerme, tam dönüş.** Next to the
+  BFP transition every utterance now carries `topic_move`, the classification used in
+  Turkish discourse teaching: it looks at the topic (the highest-role entity) rather
+  than the Cb. Devam: the topic is the strongest entity of the previous utterance;
+  yumuşak dönüş: another entity of it; içerme: a new topic anchored to one, through a
+  possessor ("Annesi", "Duvarları"), as a member of a group ("Bütün kızlar toplandık.
+  Neriman dolma getirdi.") or as a listed part of a whole (`lgram/tr/inclusion.py`);
+  tam dönüş: anything else, including a known entity under a new noun. The group and
+  part rules are first guesses, not a trained linker. On the 18 moves labelled in the
+  lecture notes they come from the rules get 17. ITCC has no such labels.
+- **Teaching examples for the Turkish model.** `experiments/tr_taught_examples.txt`:
+  140 short hand-written texts with every dropped subject, possessor and name tagged,
+  for the patterns a reader resolves without thinking; `tr_taught_data.py` turns them
+  into training lines. Mixed into the story stage they leave ITCC unchanged (0.55) and
+  fix the "Annesi telefonu açtı" example, while over-generalising elsewhere (23 of 30
+  transitions on `tr_hard_examples.json`, 24 before). `tr_hard_examples.json` now holds
+  the lecture-note examples (19 texts) and is never trained on.
 - **`python -m lgram.transition_eval`:** transition accuracy against a hand-annotated
   Cp/Cb sheet, plus inter-annotator kappa (`--agree`). The bundled English sheet is a
   single-annotator annotation. `experiments/coref_centering.py` shows the built-in

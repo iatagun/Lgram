@@ -5,7 +5,8 @@ Written for readers, not linguists: words that refer to the same person or thing
 an underline colour, dropped subjects / possessors appear in parentheses, and a thread
 between consecutive sentences shows what ties them (or that the tie is cut). A dropped
 subject says who the model tied it to: "(o = Ali)". "Show
-details" adds the technical names (transition, Cb, Cp, Cf) and what the rules say.
+details" adds the technical names (topic move, transition, Cb, Cp, Cf) and what the
+rules say.
 Hover a word for its DizgeBERT analysis.
 
 Usage:
@@ -87,6 +88,7 @@ def analyze_sentences(sentences) -> dict:
             out.append(
                 {
                     "transition": u.transition.value,
+                    "move": u.topic_move,
                     "cb": lab.get(u.cb),
                     "cp": lab.get(u.cp),
                     "cb_key": u.cb,
@@ -213,6 +215,7 @@ body.detail .more{display:block}
 const $=s=>document.querySelector(s);
 const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
 const PLAIN={Continue:'Aynı konu sürüyor','Retain':'Konu aynı, odak kayıyor','Smooth-Shift':'Konu değişti','Rough-Shift':'Konu sertçe değişti',NOCB:'Bağ koptu'};
+const MOVE={'devam':'Aynı konu sürüyor','yumuşak dönüş':'Konu, az önce anılan bir başkasına geçti','içerme':'Yeni konu, öncekine ait ya da onun parçası','tam dönüş':'Yepyeni bir konu'};
 const KIND={zero:'söylenmeyen özne',possessor:'söylenmeyen sahip',pronoun:'zamir'};
 let color=new Map(),named=new Map();
 const paint=(node,key)=>{if(color.has(key)){node.classList.add('e');node.style.setProperty('--c','var(--e'+color.get(key)+')')}return node};
@@ -227,8 +230,8 @@ function words(tokens){const p=el('span');let open=true;
     p.append(w);open=/^[(\[‘“]+$/.test(t.form)});
   return p}
 function tech(name,u,other){const d=el('div');
-  d.append(name+': '+u.transition+', bağ (Cb) '+(u.cb||'yok')+', odak (Cp) '+(u.cp||'yok')+'. Sıra (Cf): '+(u.cf.map(m=>m.label).join(', ')||'boş')+'.');
-  if(other&&other.transition!==u.transition)d.className='differs';return d}
+  d.append(name+': '+(u.move?u.move+' ('+u.transition+')':u.transition)+', bağ (Cb) '+(u.cb||'yok')+', odak (Cp) '+(u.cp||'yok')+'. Sıra (Cf): '+(u.cf.map(m=>m.label).join(', ')||'boş')+'.');
+  if(other&&(other.transition!==u.transition||other.move!==u.move))d.className='differs';return d}
 function render(d){color=new Map(d.entities.map((e,i)=>[e.id,i%8]));named=new Map(d.entities.map(e=>[e.id,e.name]));
   const who=$('#who');who.textContent=d.entities.length?'Metindeki kişi ve şeyler:':'Model bu metinde tekrar eden bir kişi ya da şey bulamadı.';
   d.entities.forEach(e=>who.append(paint(el('span',null,e.name),e.id)));
@@ -237,10 +240,10 @@ function render(d){color=new Map(d.entities.map((e,i)=>[e.id,i%8]));named=new Ma
   const thread=(node,u)=>{if(tie(u))node.style.setProperty('--c',color.has(u.cb_key)?'var(--e'+color.get(u.cb_key)+')':'var(--soft)');else node.classList.add('cut')};
   S.forEach((s,i)=>{const u=s.model;
     if(i){const li=el('li','link');li.style.setProperty('--n',i*2-1);thread(li,u);
-      li.append(el('b',null,PLAIN[u.transition]));
+      li.append(el('b',null,MOVE[u.move]||PLAIN[u.transition]));
       if(u.cb){li.append('. Bağ: ');li.append(paint(el('span',null,u.cb),u.cb_key));
         if(u.cp&&u.cp_key!==u.cb_key){li.append(', odak: ');li.append(paint(el('span',null,u.cp),u.cp_key))}li.append('.')}
-      else li.append('. Önceki cümleyle ortak bir kişi ya da şey yok.');
+      else li.append(u.move==='içerme'?'. Önceki cümlede anılanın bir üyesi ya da parçası.':'. Önceki cümleyle ortak bir kişi ya da şey yok.');
       const m=el('div','more');m.append(tech('Model',u,null));if(s.rules)m.append(tech('Kurallar',s.rules,u));li.append(m);flow.append(li)}
     const li=el('li','sent');li.style.setProperty('--n',i*2);
     if(i){const up=el('i','up');thread(up,u);li.append(up)}

@@ -33,6 +33,7 @@ except ImportError as e:  # pragma: no cover
 
 from ..models.centering_theory import TransitionType
 from .animacy import HUMAN_PRONOUNS, PLACES, is_animate_noun
+from .inclusion import is_part_of
 from .parser import JointParser, Token, split_sentences
 
 _STEM = snowballstemmer.stemmer("turkish")
@@ -57,6 +58,13 @@ ROLE_RANK = {
     "nmod": 0.5,
 }
 _SUBJECTS = frozenset({"nsubj", "nsubj:outer", "csubj"})
+# How the topic of an utterance (its highest-role entity) relates to the previous
+# utterance, in the terms of Turkish discourse teaching. Unlike the BFP transition
+# it looks at the topic, not at the Cb, and knows inclusion.
+DEVAM = "devam"  # the topic is the strongest entity of the previous utterance
+YUMUSAK_DONUS = "yumuşak dönüş"  # the topic is another entity of the previous one
+ICERME = "içerme"  # a new topic that belongs to one: "Annesi", "Duvarları", "Kapı"
+TAM_DONUS = "tam dönüş"  # a new topic with no such anchor
 # pronoun a dropped subject / possessor stands for, by (person, plural)
 _ZERO_FORM = {("1", False): "ben", ("2", False): "sen", ("3", False): "o",
               ("1", True): "biz", ("2", True): "siz", ("3", True): "onlar"}  # fmt: skip
@@ -73,6 +81,8 @@ _SPEECH_PRONOUNS = (  # prefix -> speaker/addressee key; PRON upos guards "benze
     ("san", "@2sg"),
     ("biz", "@1pl"),
     ("siz", "@2pl"),
+    ("hepimiz", "@1pl"),
+    ("hepiniz", "@2pl"),
 )
 
 
@@ -100,6 +110,8 @@ class UtteranceState:
     transition: TransitionType
     # anaphor kinds ("zero" | "pronoun" | "possessor") with no compatible antecedent
     unresolved: List[str] = field(default_factory=list)
+    # DEVAM | YUMUSAK_DONUS | ICERME | TAM_DONUS; None for the first utterance
+    topic_move: Optional[str] = None
 
     @property
     def zero_subject(self) -> bool:
@@ -415,6 +427,59 @@ def _transition(
     )
 
 
+def _nouns(cf: Sequence[Mention], tokens: Sequence[Token]) -> List[Tuple[Mention, str]]:
+    """Overt noun mentions with their lower-cased word form."""
+    return [
+        (m, _base(tokens[m.pos - 1].form))
+        for m in cf
+        if m.kind == "noun" and 0 < m.pos <= len(tokens)
+    ]
+
+
+def _topic_move(
+    prev: Optional[UtteranceState],
+    prev_tokens: Sequence[Token],
+    cf: Sequence[Mention],
+    mentions: Sequence[Mention],
+    tokens: Sequence[Token],
+) -> Optional[str]:
+    """Devam / yumuşak dönüş / içerme / tam dönüş for the utterance whose Cf is `cf`."""
+    if prev is None or not cf:
+        return None
+    # the topic is the highest grammatical role (the subject), whatever its animacy:
+    # in "Üst üste sınavları var" the topic is the exams, not their owner
+    topic = max(cf, key=lambda m: (m.rank, -m.pos))
+    before = {m.key for m in prev.cf}
+    if topic.key in before:
+        # the same entity under a new description ("Ali ... Oğlan çok mutsuz") is a
+        # new topic for the reader, not a continuation
+        was = next(m for m in prev.cf if m.key == topic.key)
+        if topic.kind == "noun" and was.kind == "noun" and 0 < topic.pos <= len(tokens):
+            if 0 < was.pos <= len(prev_tokens) and entity_key(
+                tokens[topic.pos - 1]
+            ) != entity_key(prev_tokens[was.pos - 1]):
+                return TAM_DONUS
+        return DEVAM if topic.key == prev.cf[0].key else YUMUSAK_DONUS
+    # inclusion through a possessor: unexpressed ("Annesi") or genitive ("Ali'nin annesi")
+    owners = {c.id for c in tokens if c.head == topic.pos and _is_possessor(c)}
+    for m in mentions:
+        owned = m.kind == "possessor" and m.pos == topic.pos
+        if topic.pos and (owned or m.pos in owners) and m.key in before:
+            return ICERME
+    if topic.kind == "noun" and 0 < topic.pos <= len(tokens):
+        # a member of a group: "Bütün kızlar toplandık. Neriman dolma getirdi."
+        # ponytail: any new single person after a plural group of people; a learned
+        # linker should replace this guess
+        group = any(m.animate and (m.plural or m.key.endswith("pl")) for m in prev.cf)
+        if topic.animate and not topic.plural and group:
+            return ICERME
+        # a part of a whole: "Ev güzeldi. Kapı maviydi."
+        part = _base(tokens[topic.pos - 1].form)
+        if any(is_part_of(part, whole) for _, whole in _nouns(prev.cf, prev_tokens)):
+            return ICERME
+    return TAM_DONUS
+
+
 def _marks_finiteness(parses: Sequence[Sequence[Token]]) -> bool:
     """False when verbs agree in person but none is marked VerbForm=Fin: the sign
     of a parser scheme (IMST, BOUN) under which zero subjects silently vanish."""
@@ -449,6 +514,7 @@ def analyze_parsed(
             stacklevel=2,
         )
     states: List[UtteranceState] = []
+    prev_tokens: Sequence[Token] = []
     animate: set = set()  # entities seen as a person / animal anywhere so far
     for i, (text, tokens) in enumerate(zip(sentences, parses)):
         if not tokens:
@@ -467,7 +533,9 @@ def analyze_parsed(
             m.animate = m.key in animate
         cf = _merge_cf(mentions)
         cb, cp, transition = _transition(prev, cf)
-        states.append(UtteranceState(text, cf, cb, cp, transition, unresolved))
+        move = _topic_move(prev, prev_tokens, cf, mentions, tokens)
+        states.append(UtteranceState(text, cf, cb, cp, transition, unresolved, move))
+        prev_tokens = tokens
     return TurkishReport(states)
 
 
