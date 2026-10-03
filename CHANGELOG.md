@@ -81,6 +81,10 @@
   fix the "Annesi telefonu açtı" example, while over-generalising elsewhere (23 of 30
   transitions on `tr_hard_examples.json`, 24 before). `tr_hard_examples.json` now holds
   the lecture-note examples (19 texts) and is never trained on.
+  A second batch (96 texts, 236 in all) aimed at what the first over-taught did not
+  help: ITCC strict 0.54 with the set repeated five times, 0.53 with it repeated
+  twice (single training runs). Kept as a measured negative result: at this scale
+  hand-written examples steer single cases, not accuracy.
 - **`python -m lgram.transition_eval`:** transition accuracy against a hand-annotated
   Cp/Cb sheet, plus inter-annotator kappa (`--agree`). The bundled English sheet is a
   single-annotator annotation. `experiments/coref_centering.py` shows the built-in

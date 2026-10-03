@@ -159,3 +159,119 @@ Gönül/1 torununu/2/p1 giydirdi. Ayakkabıları/p2 küçülmüştü. Yenilerini
 Antrenör/1 Kaya'yı/2 oyundan çıkardı. Dizi/p2 sakatlanmıştı. Doktora gönderdi/s1.
 Nuri/1 atı/2 ahırdan çıkardı. Nalı/p2 düşmüştü. Onu/2 nalbanta götürdü/s1.
 Selma/1 kızını/2/p1 okula bıraktı. Öğretmeni/p2 kapıdaydı. Ona/2 el salladı/s1.
+#
+# ===== second batch (2026-10-03): balance for what the first batch over-taught =====
+#
+# --- the nearest subject, when the predicate fits it
+Misafirler/1 salondaydı. Sinekler/2 vızıldıyordu. Hiç durmuyorlardı/s2.
+Yolcular/1 uyuyordu. Tekerlekler/2 tıkırdıyordu. Hiç susmuyorlardı/s2.
+İşçiler/1 dinleniyordu. Martılar/2 çığlık atıyordu. Tepede dönüp duruyorlardı/s2.
+Köylüler/1 meydandaydı. Köpekler/2 havlıyordu. Kimseyi uyutmuyorlardı/s2.
+Öğrenciler/1 sıradaydı. Güvercinler/2 çatıdaydı. Kanat çırpıyorlardı/s2.
+Hastalar/1 koridorda bekliyordu. Hemşireler/2 odadan odaya koşuyordu. Çok yorgundular/s2.
+Seyirciler/1 yerlerini/p1 aldı. Oyuncular/2 sahneye çıktı. Hep birlikte selam verdiler/s2.
+Askerler/1 nöbetteydi. Kurtlar/2 uzakta uluyordu. Sabaha kadar susmadılar/s2.
+Çiftçiler/1 kahvedeydi. Karıncalar/2 ekmek kırıntılarını taşıyordu. Sıra sıra yürüyorlardı/s2.
+Müşteriler/1 kasadaydı. Çocuklar/2 raflar arasında koşuyordu. Bir kavanozu devirdiler/s2.
+Annem/1/p9 balkondaydı. Kedi/2 saksıların arasındaydı. Yaprakları kemiriyordu/s2.
+Dedem/1/p9 uyuyordu. Saat/2 duvarda asılıydı. Tik tak ediyordu/s2.
+Nöbetçi/1 kulübedeydi. Köpek/2 kapının önündeydi. Kuyruğunu/p2 sallıyordu/s2.
+Bahçıvan/1 gölgede oturuyordu. Arılar/2 çiçeklerin üstündeydi. Bal topluyorlardı/s2.
+Kaptan/1 köprüdeydi. Martılar/2 geminin peşindeydi. Ekmek kapmaya çalışıyorlardı/s2.
+#
+# --- no reason to change: the dropped subject is still the one we were following
+Kerem/1 eve geç geldi. Karısı/2/p1 mutfaktaydı. O gün çok çalışmıştı/s1.
+Sevil/1 kapıyı açtı. Oğlu/2/p1 kapıdaydı. Onu/2 görünce çok şaşırdı/s1.
+Rıfat/1 dükkâna girdi. Çırağı/2/p1 tezgâhtaydı. Paltosunu/p1 çıkardı/s1.
+Nalan/1 odasına/p1 çıktı. Kız kardeşi/2/p1 uyuyordu. Sessizce yatağına/p1 girdi/s1.
+İlhan/1 sınıfa girdi. Öğrencileri/2/p1 ayaktaydı. Onlara/2 gülümsedi/s1.
+Feride/1 bahçeye baktı. Kedisi/2/p1 ağacın altındaydı. Pencereyi kapattı/s1.
+Osman/1 köye döndü. Babası/2/p1 hastaydı. Hemen doktor çağırdı/s1.
+Aysu/1 işe gitti. Müdürü/2/p1 toplantıdaydı. Raporu masasına/p2 bıraktı/s1.
+Cemal/1 atölyeye girdi. Ustası/2/p1 yoktu. Tezgâhı temizledi/s1.
+Gülşen/1 hastaneye vardı. Annesi/2/p1 ameliyattaydı. Koridorda bekledi/s1.
+Bülent/1 arabadan indi. Kardeşi/2/p1 direksiyondaydı. Bagajdan çantasını/p1 aldı/s1.
+Macide/1 pazardan döndü. Komşusu/2/p1 merdivendeydi. Ona/2 selam verdi/s1.
+#
+# --- but the possessed one takes over when the sentence is about them
+Kerem/1 eve geç geldi. Karısı/2/p1 mutfaktaydı. Yemeği ısıtıyordu/s2.
+Sevil/1 kapıyı açtı. Oğlu/2/p1 kapıdaydı. Çok üşümüştü/s2.
+Osman/1 köye döndü. Babası/2/p1 hastaydı. Günlerdir yataktan kalkamıyordu/s2.
+Aysu/1 işe gitti. Müdürü/2/p1 toplantıdaydı. Öğleden sonra dönecekti/s2.
+Feride/1 bahçeye baktı. Kedisi/2/p1 ağacın altındaydı. Bir kuşu kovalıyordu/s2.
+İlhan/1 sınıfa girdi. Öğrencileri/2/p1 ayaktaydı. Hep birlikte günaydın dediler/s2.
+#
+# --- the same person under another word
+Hasan/1 sınavı kazanamadı. Delikanlı/1 çok üzgündü. Babası/p1 onu/1 teselli etti.
+Nurten/1 otuz yıl öğretmenlik yaptı. Yaşlı kadın/1 şimdi köyünde/p1 yaşıyor. Eski öğrencileri/p1 onu/1 sık sık ziyaret ediyor.
+Selim/1 dün işten çıkarıldı. Adam/1 ne yapacağını bilmiyordu. Karısına/p1 hiçbir şey söylemedi/s1.
+Elçin/1 yarışmayı kazandı. Genç kız/1 sevinçten ağladı. Ailesi/p1 onunla/1 gurur duydu.
+Tekin/1 yirmi yıldır balıkçılık yapıyor. Yaşlı balıkçı/1 denizi çok iyi tanır. Teknesini/p1 her sabah kendisi/1 hazırlar.
+Kemal/1 Zehra'yı/2 bir saat bekledi/s1. Kız/2 gelmedi. Adam/1 eve döndü.
+Halide/1 Tuncer'i/2 hastaneye götürdü/s1. Çocuk/2 çok korkmuştu. Kadın/1 onun/2 elini tuttu.
+Dursun/1 komşusu/p1 Remzi'yle/2 kavga etti/s1. İhtiyar/2 çok sinirlenmişti. Dursun/1 sonunda özür diledi.
+Pamuk/1 bütün gün ortalıkta yoktu. Kedi/1 akşam eve döndü. Tüyleri/p1 çamur içindeydi.
+Doktor Ayhan/1 gece nöbetteydi. Hekim/1 sabaha kadar uyumadı. Hastaları/p1 ona/1 minnettardı.
+Bora/1 maçta iki gol attı. Genç futbolcu/1 maçın yıldızıydı. Antrenörü/p1 onu/1 kutladı.
+Gülizar/1 köyden hiç çıkmamıştı. Yaşlı kadın/1 şehri ilk kez görüyordu. Torunu/p1 ona/1 her yeri gezdirdi.
+Karabaş/1 kapının önünde yatıyordu. Köpek/1 birden ayağa kalktı. Sahibi/p1 geliyordu.
+Sedat/1 Meryem'le/2 evlendi/s1. Gelin/2 çok mutluydu. Damat/1 biraz heyecanlıydı.
+Münir/1 kırk yıl bu okulda çalıştı. Emekli öğretmen/1 hâlâ her sabah okula uğrar. Öğrenciler onu/1 çok sever.
+#
+# --- the absent one: the person spoken about, through several sentences
+Gökhan/1 öğleden sonra Aslı'yı/2 ziyarete gitti/s1. Ona/2 notlarını/p2 götürecekti/s1. Ama yurtta/s2 değildi. Oda arkadaşı/p2 kapıyı açtı.
+Reşat/1 akşam Hilmi'yi/2 aradı/s1. Ondan/2 borcunu/p2 isteyecekti/s1. Fakat telefonu/p2 kapalıydı. Karısı/p2 sonradan geri aradı.
+Canan/1 sabah Figen'e/2 uğradı/s1. Ona/2 anahtarını/p2 bırakacaktı/s1. Ama evde yoktu/s2. Kızı/p2 anahtarı aldı.
+Cevdet/1 dün Sami'yi/2 dükkânda aradı/s1. Ona/2 siparişini/p2 teslim edecekti/s1. Fakat tatildeydi/s2. Ortağı/p2 paketi teslim aldı.
+Lale/1 hafta sonu Nesrin'i/2 görmeye gitti/s1. Ona/2 fotoğraflarını/p2 gösterecekti/s1. Ancak köyde/s2 değildi. Annesi/p2 onu/1 içeri davet etti.
+Recep/1 bayramda Şükrü'yü/2 ziyaret etti/s1. Çok hastaydı/s2. Oğlu/p2 başından/p2 ayrılmıyordu.
+Vildan/1 okulda Tarık'ı/2 sordu/s1. O gün gelmemişti/s2. Arkadaşları/p2 nerede olduğunu bilmiyordu.
+Tahsin/1 limanda İlyas'ı/2 bekledi/s1. Gemisi/p2 fırtınaya yakalanmıştı. Ancak ertesi sabah varabildi/s2.
+Semra/1 düğünde Nuran'ı/2 aradı/s1. Erken ayrılmıştı/s2. Kocası/p2 hasta olduğunu söyledi.
+İhsan/1 pazarda Mahmut'u/2 göremedi/s1. Tezgâhı/p2 boştu. Meğer hastaneye yatmış/s2.
+#
+# --- taking turns: each sentence about the other one
+Hülya/1 Kenan'a/2 bir soru sordu/s1. Cevap vermedi/s2. Bir daha sordu/s1. Yine sustu/s2.
+Nevzat/1 Güler'e/2 çiçek uzattı/s1. Almak istemedi/s2. Masaya bıraktı/s1.
+Taner/1 Eda'yı/2 dansa kaldırdı/s1. Önce çekindi/s2. Sonra gülümseyerek kalktı/s2.
+Hacer/1 Salih'e/2 çay getirdi/s1. Teşekkür etti/s2. Karşısına/p2 oturdu/s1.
+Ragıp/1 Cevat'ı/2 satrançta yendi/s1. Buna çok bozuldu/s2. Bir oyun daha istedi/s2. Kabul etti/s1.
+Nur/1 Efe'yi/2 uyandırdı/s1. Gözlerini/p2 açmadı/s2. Perdeyi çekti/s1.
+Yiğit/1 Damla'ya/2 şemsiyesini/p1 verdi/s1. Çok teşekkür etti/s2. Yağmurda ıslanarak yürüdü/s1.
+Saadet/1 Bekir'e/2 mektubu okudu/s1. Sessizce dinledi/s2. Sonunda derin bir iç çekti/s2.
+Kâmil/1 Mürüvvet'i/2 kapıya kadar geçirdi/s1. Elini/p1 öptü/s2. Arkasından/p2 su döktü/s1.
+Sena/1 Batu'ya/2 yolu tarif etti/s1. Yine de kayboldu/s2. Onu/2 gidip buldu/s1.
+#
+# --- plural things own things too
+Ağaçlar/1 çiçek açmıştı. Dallarında/p1 kuşlar vardı. Gölgeleri/p1 yola düşüyordu.
+Evler/1 tepeye sıralanmıştı. Bacalarından/p1 duman çıkıyordu. Pencereleri/p1 ışıl ışıldı.
+Tekneler/1 kıyıya çekilmişti. Üstlerine/p1 branda örtülmüştü. Boyaları/p1 dökülmüştü.
+Kitaplar/1 sandıktan çıktı. Sayfaları/p1 sararmıştı. Aralarında/p1 eski bir mektup vardı.
+Dağlar/1 uzakta görünüyordu. Tepelerinde/p1 kar vardı. Etekleri/p1 yemyeşildi.
+Masalar/1 bahçeye dizilmişti. Üzerlerine/p1 beyaz örtüler serilmişti. Ortalarında/p1 çiçekler duruyordu.
+Çocuklar/1 okuldan çıktı. Çantaları/p1 sırtlarındaydı/p1. Anneleri/p1 kapıda bekliyordu.
+Arabalar/1 yol kenarına park etmişti. Camları/p1 buz tutmuştu. Üstleri/p1 karla kaplıydı.
+Dükkânlar/1 yeni açılmıştı. Vitrinleri/p1 pırıl pırıldı. Önlerinde/p1 müşteriler bekliyordu.
+Atlar/1 ahırdan çıkarıldı. Yeleleri/p1 taranmıştı. Sırtlarına/p1 eyer vuruldu.
+#
+# --- nothing ties these sentences: leave them apart
+Sokak lambaları yandı. Bir kedi miyavladı. Uzakta bir tren düdüğü duyuldu.
+Hava kararmıştı. Kahvede televizyon açıktı. Fırından ekmek kokusu geliyordu.
+Yağmur dinmişti. Çocuklar/1 sokağa çıktı. Simitçi köşede bağırıyordu. Top oynamaya başladılar/s1.
+Deniz dalgalıydı. Balıkçılar/1 kahvede oturuyordu. Rüzgâr kepenkleri çarpıyordu. Tavla oynuyorlardı/s1.
+Sınıf sessizdi. Dışarıda kar yağıyordu. Öğretmen/1 tahtaya bir soru yazdı. Sonra pencereye yürüdü/s1.
+Kızlar/1 bahçede toplandı. Nermin limonata getirdi. Hepsi/1 çok susamıştı.
+Bütün işçiler/1 yemekhanedeydi. Halil Usta çorbasını içiyordu. Hepsi/1 yarım saat sonra işbaşı yapacaktı.
+Takım/1 sahaya çıktı. Kaleci eldivenlerini giydi. Seyirciler onları/1 alkışladı.
+Bizim sınıfta herkes çalışkandır. Sıra arkadaşım/1/p9 bu yıl birinci oldu. Onu/1 çok kutladım/s9.
+Köyde herkes erken kalkar. Muhtar/1 en erken kalkandır. Sabah ezanından önce tarlasına/p1 gider/s1.
+#
+# --- longer: follow one person, then another, then back
+Zeliha/1 sabah erkenden kalktı. Çayı demledi/s1. Kocası/2/p1 hâlâ uyuyordu. Onu/2 uyandırmadı/s1. Kahvaltısını/p1 tek başına etti/s1. Sonra pazara gitti/s1. Döndüğünde uyanmıştı/s2. Çayını/p2 içiyordu/s2.
+Yaşar/1 otuz yıl sonra köyüne/p1 döndü. Evini/p1 tanıyamadı/s1. Kapıyı bir çocuk/2 açtı. Ona/2 adını/p1 söyledi/s1. İçeri koştu/s2. Biraz sonra ninesi/3/p2 çıktı. Yaşar'ı/1 görünce ağladı/s3.
+Tuğba/1 kütüphanede Cihan'la/2 karşılaştı/s1. Onu/2 yıllardır görmemişti/s1. Çok değişmişti/s2. Saçları/p2 ağarmıştı. Yine de onu/2 hemen tanıdı/s1.
+Şaban/1 dükkânı erken açtı. İlk müşterisi/2/p1 yaşlı bir kadındı. Bir kilo şeker istedi/s2. Parasını/p2 evde unutmuştu/s2. Şekeri veresiye verdi/s1. Ertesi gün borcunu/p2 ödedi/s2.
+Köpek/1 bütün gece havladı. Sahibi/2/p1 uyuyamadı. Sabah bahçeye çıktı/s2. Kulübesinin/p1 arkasında bir kirpi/3 buldu/s2. Onu/3 ormana bıraktı/s2. Köpek/1 o gece hiç havlamadı.
+Songül/1 eski bir sandık/2 buldu. Kapağını/p2 açtı/s1. İçinde/p2 mektuplar/3 vardı. Onları/3 tek tek okudu/s1. Hepsi/3 annesine/4/p1 yazılmıştı. Akşam ona/4 sandığı/2 gösterdi/s1. Uzun süre konuşmadı/s4.
+Kadir/1 minibüse bindi. Şoför/2 parayı aldı. Üstünü vermedi/s2. Ona/2 bir şey demedi/s1. Arka koltuğa oturdu/s1. İneceği yerde ona/2 seslendi/s1. Minibüsü durdurdu/s2.
+Elmas/1 kızını/2/p1 okula götürdü. Öğretmeni/3/p2 kapıda bekliyordu/s3. Onu/2 içeri aldı/s3. Biraz ağladı/s2. Pencereden el salladı/s1. Sonra işe gitti/s1.
