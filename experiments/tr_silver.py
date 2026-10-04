@@ -11,6 +11,7 @@ turns its output into fastcoref training lines.
 
     python experiments/tr_silver.py fetch DOCS.jsonl --docs 400
     python experiments/tr_silver.py fetch-category DOCS.jsonl CATEGORY --site tr.wikisource.org
+        [--min-words 300]   (news items are short: tr.wikinews.org needs about 100)
     python experiments/tr_silver.py conllu DOCS.jsonl OUT.conllu
 
 fetch takes random long Wikipedia articles (expository prose); fetch-category takes every
@@ -55,7 +56,7 @@ def paragraphs(extract, prose_only=True):
     return [p for p in paras if len(p.split()) >= 40 and p.count(". ") >= 2]
 
 
-def page_doc(pageid, prose_only, max_words):
+def page_doc(pageid, prose_only, max_words, min_words=300):
     """One page as a document, or None if it is too short or overlaps a test set."""
     d = api(action="query", prop="extracts|revisions", rvprop="ids",
             explaintext=1, pageids=pageid)  # fmt: skip
@@ -68,21 +69,21 @@ def page_doc(pageid, prose_only, max_words):
         words += len(para.split())
     held_out = "".join(f.read_text(encoding="utf-8")
                        for f in (ROOT / "benchmark_data").glob("tr_*.txt"))  # fmt: skip
-    if words < 300 or any(len(k) >= 60 and k[:60] in held_out for k in keep):
+    if words < min_words or any(len(k) >= 60 and k[:60] in held_out for k in keep):
         return None
     rev = page.get("revisions", [{}])[0].get("revid")
     return {"id": pageid, "title": page["title"], "revid": rev, "site": SITE,
             "words": words, "paragraphs": keep}  # fmt: skip
 
 
-def fetch_category(out, category, max_words=3000):
+def fetch_category(out, category, max_words=3000, min_words=300):
     cont = {}
     with open(out, "a", encoding="utf-8") as f:
         while True:
             d = api(action="query", list="categorymembers", cmtitle=category,
                     cmnamespace=0, cmlimit=500, **cont)  # fmt: skip
             for m in d.get("query", {}).get("categorymembers", []):
-                doc = page_doc(m["pageid"], False, max_words)
+                doc = page_doc(m["pageid"], False, max_words, min_words)
                 if doc is not None:
                     f.write(json.dumps(doc, ensure_ascii=False) + "\n")
                     print(doc["title"], doc["words"], flush=True)
@@ -223,7 +224,8 @@ if __name__ == "__main__":
     if "--site" in sys.argv:
         SITE = sys.argv[sys.argv.index("--site") + 1]
     if sys.argv[1] == "fetch-category":
-        fetch_category(sys.argv[2], sys.argv[3])
+        mw = int(sys.argv[sys.argv.index("--min-words") + 1]) if "--min-words" in sys.argv else 300
+        fetch_category(sys.argv[2], sys.argv[3], min_words=mw)
     elif sys.argv[1] == "fetch":
         n = int(sys.argv[sys.argv.index("--docs") + 1]) if "--docs" in sys.argv else 400
         fetch(sys.argv[2], n)
