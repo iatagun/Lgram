@@ -244,6 +244,29 @@ class TestResolution(unittest.TestCase):
         )
         self.assertIsNone(report.utterances[1].cb)
 
+    def test_suffixes_the_parser_takes_for_a_possessive(self):
+        # found with hand labels: the model tied "bir evi", "1453 yılında" and
+        # "Osmanlı İmparatorluğu" to an owner that does not exist
+        psor = {"Person[psor]": "3"}
+        seen = []
+        analyze_parsed(
+            ["s"],
+            [
+                [
+                    tok(1, "1453", "NUM", 2, "nummod"),
+                    tok(2, "yılında", "NOUN", 8, "obl", Case="Loc", **psor),
+                    tok(3, "Osmanlı", "PROPN", 8, "nmod", Case="Nom"),
+                    tok(4, "İmparatorluğu", "NOUN", 8, "nsubj", **psor),
+                    tok(5, "bir", "DET", 6, "det"),
+                    tok(6, "evi", "NOUN", 8, "obj", Case="Acc", **psor),
+                    tok(7, "annesini", "NOUN", 8, "obj", Case="Acc", **psor),
+                    verb(8, "aldı"),
+                ]
+            ],
+            identity=lambda i, m: seen.append((m.kind, m.pos)),
+        )
+        self.assertEqual([p for k, p in seen if k == "possessor"], [7])
+
     def test_possessed_object_does_not_look_back(self):
         # "Ayşe pazara gitti. Kitabını buldum."  Measured on ITCC: linking a
         # non-subject implicit possessor to the previous sentence is wrong more

@@ -214,6 +214,30 @@ def _is_possessor(dep: Token) -> bool:
     )
 
 
+def _suffix_is_not_a_possessor(tok: Token, tokens: Sequence[Token]) -> bool:
+    """The parser read a third-person possessive into `tok`, but nobody owns it.
+
+    - "bir evi aldı", "durumu açar": a possessed object is always accusative
+      ("evini"), so an object in -(y)I without the -nI carries the accusative only.
+    - "Osmanlı İmparatorluğu", "Marmara Denizi": the -(s)I of a name compound, whose
+      first part the parser often hangs elsewhere.
+    - "1453 yılında": the date compound.
+    Of the possessor slots hand-labelled "nobody" in experiments/tr_label.py's first
+    batch, 11 of 19 are one of these.
+    """
+    form = _lower(tok.form)
+    if (tok.feats.get("Case") == "Acc" or tok.deprel == "obj") and not form.endswith(
+        ("nı", "ni", "nu", "nü")
+    ):
+        return True
+    before = tokens[tok.id - 2] if 2 <= tok.id <= len(tokens) else None
+    if before is None:
+        return False
+    if tok.form[0].isupper() and before.form[0].isupper():
+        return True
+    return before.upos == "NUM" and form.startswith("yıl")
+
+
 def _finite_carrier(root: Token, children: Dict[int, List[Token]]) -> Optional[Token]:
     """The token carrying tense/person agreement: the root, or its copula/aux."""
     for cand in [root] + [
@@ -287,6 +311,8 @@ def extract_mentions(
         # possessive suffix without an explicit genitive NP -> implicit possessor
         psor = t.feats.get("Person[psor]")
         has_genitive = any(_is_possessor(c) for c in children.get(t.id, []))
+        if psor == "3" and _suffix_is_not_a_possessor(t, tokens):
+            psor = None
         if t.upos in ("NOUN", "PROPN") and psor and not has_genitive:
             pl = t.feats.get("Number[psor]") == "Plur"
             form = _PSOR_FORM.get((psor, pl), "onun")
